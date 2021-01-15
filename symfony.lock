@@ -102,6 +102,9 @@
     "php": {
         "version": "7.4"
     },
+    "php-on-couch/php-on-couch": {
+        "version": "3.0.2"
+    },
     "phpdocumentor/reflection-common": {
         "version": "2.2.0"
     },
@@ -110,6 +113,9 @@
     },
     "phpdocumentor/type-resolver": {
         "version": "1.4.0"
+    },
+    "phpoption/phpoption": {
+        "version": "1.7.5"
     },
     "psr/cache": {
         "version": "1.0.1"
@@ -513,6 +519,9 @@
     },
     "twig/twig": {
         "version": "v3.2.1"
+    },
+    "vlucas/phpdotenv": {
+        "version": "v4.1.8"
     },
     "webmozart/assert": {
         "version": "1.9.1"

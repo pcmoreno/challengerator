@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0f3e84892ad50204785e267a43ffd0d8",
+    "content-hash": "79958187ff2054f5ae2100ef0aa2ea84",
     "packages": [
         {
             "name": "composer/package-versions-deprecated",
@@ -1751,6 +1751,72 @@
             "time": "2020-12-14T13:15:25+00:00"
         },
         {
+            "name": "php-on-couch/php-on-couch",
+            "version": "3.0.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/PHP-on-Couch/PHP-on-Couch.git",
+                "reference": "ad0f3ce14f5514eecdd97aedc51324d3b0b3be9b"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/PHP-on-Couch/PHP-on-Couch/zipball/ad0f3ce14f5514eecdd97aedc51324d3b0b3be9b",
+                "reference": "ad0f3ce14f5514eecdd97aedc51324d3b0b3be9b",
+                "shasum": ""
+            },
+            "require": {
+                "php": ">=5.6.0",
+                "vlucas/phpdotenv": "^4.1.7"
+            },
+            "require-dev": {
+                "phpcheckstyle/phpcheckstyle": "*",
+                "phpunit/phpunit": "5.5.*"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "PHPOnCouch\\": "src/",
+                    "PHPOnCouch\\Exceptions\\": "src/Exceptions/",
+                    "PHPOnCouch\\Adapter\\": "src/Adapter/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "LGPL-3.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Michael Bailly",
+                    "email": "mickael.bailly@free.fr",
+                    "homepage": "https://github.com/dready92/",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Clemens Sahs",
+                    "email": "clemens.sahs@slides-worker.org",
+                    "homepage": "https://github.com/ClemensSahs",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Alexis Côté",
+                    "email": "alexiscote19@hotmail.com",
+                    "homepage": "https://popojargo.github.io/",
+                    "role": "Developer"
+                }
+            ],
+            "description": "CouchDB NoSQL database access in PHP",
+            "homepage": "https://github.com/PHP-on-Couch/PHP-on-Couch",
+            "keywords": [
+                "apache",
+                "couch",
+                "couchdb",
+                "db",
+                "driver",
+                "nosql"
+            ],
+            "time": "2020-07-06T00:45:50+00:00"
+        },
+        {
             "name": "phpdocumentor/reflection-common",
             "version": "2.2.0",
             "source": {
@@ -1895,6 +1961,71 @@
             ],
             "description": "A PSR-5 based resolver of Class names, Types and Structural Element Names",
             "time": "2020-09-17T18:55:26+00:00"
+        },
+        {
+            "name": "phpoption/phpoption",
+            "version": "1.7.5",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/schmittjoh/php-option.git",
+                "reference": "994ecccd8f3283ecf5ac33254543eb0ac946d525"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/schmittjoh/php-option/zipball/994ecccd8f3283ecf5ac33254543eb0ac946d525",
+                "reference": "994ecccd8f3283ecf5ac33254543eb0ac946d525",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^5.5.9 || ^7.0 || ^8.0"
+            },
+            "require-dev": {
+                "bamarni/composer-bin-plugin": "^1.4.1",
+                "phpunit/phpunit": "^4.8.35 || ^5.7.27 || ^6.5.6 || ^7.0 || ^8.0 || ^9.0"
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "1.7-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "PhpOption\\": "src/PhpOption/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "Apache-2.0"
+            ],
+            "authors": [
+                {
+                    "name": "Johannes M. Schmitt",
+                    "email": "schmittjoh@gmail.com"
+                },
+                {
+                    "name": "Graham Campbell",
+                    "email": "graham@alt-three.com"
+                }
+            ],
+            "description": "Option Type for PHP",
+            "keywords": [
+                "language",
+                "option",
+                "php",
+                "type"
+            ],
+            "funding": [
+                {
+                    "url": "https://github.com/GrahamCampbell",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/phpoption/phpoption",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2020-07-20T17:29:33+00:00"
         },
         {
             "name": "psr/cache",
@@ -7100,6 +7231,80 @@
                 }
             ],
             "time": "2021-01-05T15:40:36+00:00"
+        },
+        {
+            "name": "vlucas/phpdotenv",
+            "version": "v4.1.8",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/vlucas/phpdotenv.git",
+                "reference": "572af79d913627a9d70374d27a6f5d689a35de32"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/vlucas/phpdotenv/zipball/572af79d913627a9d70374d27a6f5d689a35de32",
+                "reference": "572af79d913627a9d70374d27a6f5d689a35de32",
+                "shasum": ""
+            },
+            "require": {
+                "php": "^5.5.9 || ^7.0 || ^8.0",
+                "phpoption/phpoption": "^1.7.3",
+                "symfony/polyfill-ctype": "^1.17"
+            },
+            "require-dev": {
+                "bamarni/composer-bin-plugin": "^1.4.1",
+                "ext-filter": "*",
+                "ext-pcre": "*",
+                "phpunit/phpunit": "^4.8.35 || ^5.7.27 || ^6.5.6 || ^7.0"
+            },
+            "suggest": {
+                "ext-filter": "Required to use the boolean validator.",
+                "ext-pcre": "Required to use most of the library."
+            },
+            "type": "library",
+            "extra": {
+                "branch-alias": {
+                    "dev-master": "4.1-dev"
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Dotenv\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "BSD-3-Clause"
+            ],
+            "authors": [
+                {
+                    "name": "Graham Campbell",
+                    "email": "graham@alt-three.com",
+                    "homepage": "https://gjcampbell.co.uk/"
+                },
+                {
+                    "name": "Vance Lucas",
+                    "email": "vance@vancelucas.com",
+                    "homepage": "https://vancelucas.com/"
+                }
+            ],
+            "description": "Loads environment variables from `.env` to `getenv()`, `$_ENV` and `$_SERVER` automagically.",
+            "keywords": [
+                "dotenv",
+                "env",
+                "environment"
+            ],
+            "funding": [
+                {
+                    "url": "https://github.com/GrahamCampbell",
+                    "type": "github"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/vlucas/phpdotenv",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2020-07-14T19:22:52+00:00"
         },
         {
             "name": "webmozart/assert",
