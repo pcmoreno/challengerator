@@ -1,3 +1,28 @@
-#index:
-#    path: /
-#    controller: App\Controller\DefaultController::index
+index:
+    path: /
+    controller: App\Controller\DefaultController::index
+
+apitest:
+    path: /apitest/
+    controller: App\Controller\ApiController::apitest
+
+createDB:
+    path: /couch/createdb/{dbName}
+    controller: App\Controller\ApiController::createDB
+    defaults:
+        dbName: null
+
+listDBInfo:
+    path: /couch/info/{dbName}
+    controller: App\Controller\ApiController::databaseInfos
+    defaults:
+        dbName: null
+
+getDocumentFromCouch:
+    path: /couch/get/{id}
+    controller: App\Controller\ApiController::fetchDocumentWithId
+
+addGenericDocumentToCouchDb:
+    path: /couch/add/
+    controller: App\Controller\ApiController::createDocument
+    methods: POST
