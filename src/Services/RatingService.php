@@ -5,7 +5,6 @@ namespace App\Services;
 
 use App\Entity\Challenge\Outcome;
 use App\Entity\Challenge\Rating;
-use phpDocumentor\Reflection\Types\Self_;
 
 class RatingService
 {
