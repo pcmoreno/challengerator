@@ -36,9 +36,9 @@ class RatingServiceTest extends TestCase
 
     public function test_it_should_compare_and_adjust_ratings_correctly_for_a_draw()
     {
-        $originalRatingB = new Rating();
-        $ratingA = new Rating();
-        $ratingB = new Rating();
+        $originalRatingB = Rating::createNew();
+        $ratingA = Rating::createNew();
+        $ratingB = Rating::createNew();
 
         // should stay the same for a draw and equal rating
         RatingService::compareAndAdjust($ratingA, $ratingB, Outcome::DRAW);
@@ -53,9 +53,9 @@ class RatingServiceTest extends TestCase
 
     public function test_it_should_compare_and_adjust_ratings_correctly_for_a_win_or_loss()
     {
-        $originalRating = new Rating();
-        $ratingA = new Rating();
-        $ratingB = new Rating();
+        $originalRating = Rating::createNew();
+        $ratingA = Rating::createNew();
+        $ratingB = Rating::createNew();
 
         // LEFT SIDE WINS
         RatingService::compareAndAdjust($ratingA, $ratingB, Outcome::LEFT_WINS);

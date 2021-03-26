@@ -37,26 +37,35 @@ class CouchDbService
             $result = $this->client->createDatabase();
         } catch (CouchException $e) {
             return new JsonResponse(
-                "We issued the request, but couch server returned an error.\n" .
-                "We can have HTTP Status code returned by couchDB using \$e->getCode() : " . $e->getCode() . "\n" .
-                "We can have error message returned by couchDB using \$e->getMessage() : " . $e->getMessage() . "\n" .
-                "Finally, we can have CouchDB's complete response body using \$e->getBody() : " . $e->getBody(). "\n" .
-                "Are you sure that your CouchDB server is at $this->couchDsn, and that database does not exist ?\n",
+                'CouchException: ' . $e->getMessage(),
                 500
             );
         } catch (Exception $e) {
             return new JsonResponse(
-                "It seems that something wrong happened. You can have more details using :\n" .
-                "the exception class with get_class(\$e) : " . get_class($e) . "\n" .
-                "the exception error code with \$e->getCode() : " . $e->getCode() . "\n" .
-                "the exception error message with \$e->getMessage() : " . $e->getMessage(),
+                $e->getMessage(),
                 500
             );
         }
         return new JsonResponse(
-            "Database successfully created. CouchDB sent the response :" . $result ."\n",
+            "Database successfully created.",
             JsonResponse::HTTP_CREATED
         );
+    }
+
+    public function deleteDb(string $dbName): JsonResponse
+    {
+        if ($this->listDatabasesInfo($dbName)->getStatusCode() !== 200)
+        {
+            return new JsonResponse('db not found', 404);
+        }
+        try {
+            $this->client = new CouchClient($this->couchDsn, $dbName);
+            $this->client->deleteDatabase();
+        } catch (Exception $exception) {
+            return new JsonResponse('Error', 500);
+        }
+
+        return new JsonResponse('Database ' . $dbName . ' deleted.');
     }
 
     public function listDatabasesInfo(?string $dbName): JsonResponse
@@ -71,12 +80,37 @@ class CouchDbService
         }
     }
 
-    public function fetchDocument(string $id): JsonResponse
+    public function getDatabaseList(): array
     {
+        try {
+            return (array) $this->client->listDatabases();
+        } catch (Exception $exception) {
+            return ['error' => $exception->getMessage()];
+        }
+    }
+
+    public function fetchDocument(string $id, ?string $dbName): JsonResponse
+    {
+        if ($dbName !== null) {
+            $this->client = new CouchClient($this->couchDsn, $dbName);
+        }
         try {
             return new JsonResponse($this->client->getDoc($id));
         } catch (Exception $exception) {
             return new JsonResponse($exception->getMessage(), 400);
+        }
+    }
+
+    // probs not getting used
+    public function fetchDocumentData(string $id, ?string $dbName)
+    {
+        if ($dbName !== null) {
+            $this->client = new CouchClient($this->couchDsn, $dbName);
+        }
+        try {
+            return (array)($this->client->getDoc($id));
+        } catch (Exception $exception) {
+            return ['error'];
         }
     }
 
@@ -88,7 +122,7 @@ class CouchDbService
         $doc = new stdClass();
         $id = $id === null ? Uuid::uuid4()->toString() : $id;
         $doc->_id = $id;
-        foreach ($docBody as $key=>$value) {
+        foreach ($docBody as $key => $value) {
             $doc->$key = $value;
         }
         try {
@@ -98,9 +132,18 @@ class CouchDbService
         }
     }
 
-    public function updateDocument(?string $id, array $docBody): JsonResponse
+    public function updateDocument(string $id, string $dbName, array $docBody): JsonResponse
     {
-        // TODO
-        return new JsonResponse('not done yet', 666);
+        try {
+            $this->client = new CouchClient($this->couchDsn, $dbName);
+
+            $doc = $this->client->getDoc($id);
+            foreach ($docBody as $key => $value) {
+                $doc->$key = $value;
+            }
+            return new JsonResponse($this->client->storeDoc($doc));
+        } catch (Exception $exception) {
+            return new JsonResponse($exception->getMessage(), 400);
+        }
     }
 }

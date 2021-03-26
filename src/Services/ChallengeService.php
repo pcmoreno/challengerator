@@ -1,0 +1,258 @@
+<?php
+declare(strict_types=1);
+
+namespace App\Services;
+
+use App\Entity\Challenge\Car;
+use App\Entity\Challenge\Challenge;
+use App\Entity\Challenge\Voter;
+use Doctrine\Common\Collections\ArrayCollection;
+use phpDocumentor\Reflection\Types\This;
+use PHPOnCouch\CouchClient;
+use PHPOnCouch\Exceptions\CouchNotFoundException;
+use Symfony\Component\HttpFoundation\JsonResponse;
+
+class ChallengeService
+{
+    private CouchDbService $service;
+    private CouchClient $client;
+    private string $dsn;
+
+    public function __construct(
+        CouchDbService $service,
+        string $dsn
+    ) {
+        $this->service = $service;
+        $this->dsn = $dsn;
+    }
+
+    public function createNewChallenge(string $name, string $owner): JsonResponse
+    {
+        $this->client = $this->getCouchClient($name);
+        try {
+            $this->client->createDatabase();
+        } catch (\Exception $exception) {
+            return new JsonResponse($exception->getMessage(), 400);
+        }
+        $challenge = Challenge::create($name, $owner);
+
+        $infoDoc = $challenge->toCouchDocument();
+
+        try {
+            $this->client->storeDoc($infoDoc);
+            return new JsonResponse('added: ' . $name);
+        } catch (\Exception $exception) {
+            return new JsonResponse(
+                ['error' => $exception->getMessage()]
+            );
+        }
+    }
+
+    public function addCar(string $challengeName, array $carData): JsonResponse
+    {
+        try {
+            $car = Car::create($carData);
+        } catch (\Exception $exception) {
+            return new JsonResponse($exception->getMessage(), 400);
+        }
+        $carClient = $this->getCouchClient('cars');
+        $challengeClient = $this->getCouchClient($challengeName);
+
+        $carClient->storeDoc($car->toCouchDocument());
+
+        $data = json_decode(json_encode($challengeClient->getDoc('info')), true);
+        $challenge = Challenge::fromCouchDocument($data);
+        $challenge->addCarToChallenge($car);
+        $challenge->setRevisionNumber($data['_rev']);
+        $challengeClient->storeDoc($challenge->toCouchDocument());
+
+        return new JsonResponse('success', 201);
+    }
+
+    public function addVoter(string $challengeName, array $voterData): JsonResponse
+    {
+        try {
+            $voter = Voter::createForChallenge($voterData['username'], $voterData['pass'], $challengeName);
+        } catch (\Exception $exception) {
+            return new JsonResponse($exception->getMessage(), 400);
+        }
+        $voterClient = $this->getCouchClient('voters');
+        $challengeClient = $this->getCouchClient($challengeName);
+
+        $voterClient->storeDoc($voter->toCouchDocument());
+
+        $data = json_decode(json_encode($challengeClient->getDoc('info')), true);
+        $challenge = Challenge::fromCouchDocument($data);
+
+        $challenge->addVoterToChallenge($voter);
+        $challenge->setRevisionNumber($data['_rev']);
+        $challengeClient->storeDoc($challenge->toCouchDocument());
+
+        return new JsonResponse('success', 201);
+    }
+
+    public function getCarsForChallenge(string $challengeName, bool $json = true)
+    {
+        $carClient = $this->getCouchClient('cars');
+        $challengeClient = $this->getCouchClient($challengeName);
+
+        $challengeData = json_decode(json_encode($challengeClient->getDoc('info')), true);
+        /** @var Challenge $challenge */
+        $challenge = Challenge::fromCouchDocument($challengeData);
+        $challengeCarsIds = $challenge->getCars();
+
+        $result = [];
+        foreach ($challengeCarsIds as $challengeCarId) {
+            $carDoc = $carClient->getDoc($challengeCarId);
+            $result[$challengeCarId] = json_decode(json_encode($carDoc), true);
+        }
+        if ($json) {
+            return new JsonResponse($result);
+        } else {
+            $cars = array_map(function ($item) {
+                return Car::create($item);
+            },$result);
+            return $cars;
+        }
+    }
+
+    public function initializeChallenge($challengeName): JsonResponse
+    {
+        $challengeClient = $this->getCouchClient($challengeName);
+        $voterClient = $this->getCouchClient('voters');
+
+        $challengeData = json_decode(json_encode($challengeClient->getDoc('info')), true);
+
+        $voterIds = $challengeData['voters'];
+        foreach ($voterIds as $voterId) {
+            $voter = $this->getVoter($voterId);
+            if ($voter !== null) {
+                $voter->addCarsToSelf($challengeData['cars'], $challengeName, true);
+                $voterDocRev = $voterClient->getDoc($voterId)->_rev;
+                $voterDocToSave = $voter->toCouchDocument();
+                $voterDocToSave->_rev = $voterDocRev;
+                $voterClient->storeDoc($voterDocToSave);
+            }
+        }
+        $challenge = Challenge::fromCouchDocument($challengeData);
+        $challenge->activate();
+        $challengeDocToUpdate = $challenge->toCouchDocument();
+        $challengeDocToUpdate->_rev = $challengeData['_rev'];
+
+        $challengeClient->storeDoc($challengeDocToUpdate);
+
+        return new JsonResponse('nit done', 200);
+    }
+
+    public function getTwoCarsToBeVotedByUser(string $challengeName, string $userId): array
+    {
+        $voter = $this->getVoter($userId);
+        $carsToVote = $voter->getUnvotedCarsForChallenge($challengeName);
+
+        if (count($carsToVote) < 2) {
+            return [[],[]];
+        }
+        $selectedCarsForVote = [];
+        while (count($selectedCarsForVote) < 2) {
+            $random = rand(0, count($carsToVote) -1);
+            $selectedCarsForVote[] = $carsToVote[$random];
+            array_splice($carsToVote, $random, 1);
+        }
+        $dataToReturn = [];
+        $carClient = $this->getCouchClient('cars');
+        foreach ($selectedCarsForVote as $item) {
+            $carDoc = $carClient->getDoc($item);
+            $arrayOfCar = json_decode(json_encode($carDoc), true);
+            $dataToReturn[] = $arrayOfCar;
+        }
+
+        return [$dataToReturn, $carsToVote];
+    }
+
+    public function listChallenges(): JsonResponse
+    {
+        $dbList = $this->service->getDatabaseList();
+        $array = array_filter($dbList, function ($entry) {
+            return !in_array($entry, ['cars', 'voters', '_users', '_replicator', '_global_changes']);
+        });
+        return new JsonResponse(array_values($array));
+    }
+
+    public function voteOnCars(string $cars, $result, string $challengeId, string $userId)
+    {
+        if (!in_array($result, [0,1,0.5])) {
+            return new JsonResponse('Wrong Result Chosen', 400);
+        }
+        $carIds = explode('XXX', $cars);
+
+        $voterClient = $this->getCouchClient('voters');
+
+        $voterDoc = $voterClient->getDoc($userId);
+        $voterArray = json_decode(json_encode($voterDoc), true);
+
+        // check if cars are on the user list to be voted...
+        foreach ($carIds as $carId) {
+            if (!in_array($carId, $voterArray['challenges'][$challengeId]['carsToVote'])) {
+                throw new \Exception('Car already voted', JsonResponse::HTTP_CONFLICT);
+            }
+        }
+        $voter = Voter::fromCouchDocument($voterArray);
+
+        // adjust the voter's cars voted/not voted
+        $voter->setCarsToVotedForChallenge($carIds, $challengeId);
+        dump($voter);
+
+        // apply the rating changes to the cars
+        $carClient = $this->getCouchClient('cars');
+        $carsDocs = array_map(function (string $car) use ($carClient){
+            $carDoc = $carClient->getDoc($car);
+            return (json_decode(json_encode($carDoc), true));
+        }, $carIds);
+
+        $carA = Car::fromCouchData($carsDocs[0]);
+        $carB = Car::fromCouchData($carsDocs[1]);
+        $ratingA = $carA->getRating();
+        $ratingB = $carB->getRating();
+        dump($carA->getRating());
+        RatingService::compareAndAdjust($ratingA, $ratingB, $result);
+        dump($carA->getRating());
+        dump($ratingB);
+        $updatedVoterDoc = $voter->toCouchDocument();
+        $updatedVoterDoc->_rev = $voterDoc->_rev;
+
+        //persist updated cars
+        $counter = 0;
+        foreach ([$carA, $carB] as $updatedCar) {
+            $updatedCarDoc = $updatedCar->toCouchDocument();
+            $updatedCarDoc->_rev = $carsDocs[$counter]['_rev'];
+
+            $carClient->storeDoc($updatedCarDoc);
+            $counter++;
+        }
+        //persist updated voter
+        $voterClient->storeDoc($updatedVoterDoc);
+
+        return $this->getTwoCarsToBeVotedByUser($challengeId, $userId);
+    }
+
+    private function getVoter($id): ?Voter
+    {
+        $voterClient = $this->getCouchClient('voters');
+        try {
+            $voterDoc = $voterClient->getDoc($id);
+            return Voter::fromCouchDocument(json_decode(json_encode($voterDoc), true));
+        } catch (CouchNotFoundException $exception) {
+            return null;
+        }
+    }
+
+    private function getCouchClient(string $dbName): CouchClient
+    {
+        return new CouchClient($this->dsn, $dbName);
+    }
+
+    public function test(): JsonResponse
+    {
+        return new JsonResponse($this->dsn, 200);
+    }
+}

@@ -29,9 +29,17 @@ services:
         resource: '../src/Controller/'
         tags: ['controller.service_arguments']
 
+    App\Controller\ApiController:
+        arguments:
+            $dsn: '%couchDsn%'
+
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
     App\Services\CouchDbService:
         arguments:
             $couchDsn: '%couchDsn%'
             $couchDB: '%couchDB%'
+
+    App\Services\ChallengeService:
+        arguments:
+            $dsn: '%couchDsn%'

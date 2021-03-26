@@ -6,10 +6,11 @@ namespace App\Entity\Challenge;
 class Rating
 {
     private int $rating;
+    private const STARTING_RATING = 1500;
 
-    public function __construct()
+    private function __construct($rating)
     {
-        $this->rating = 1500;
+        $this->rating = $rating;
     }
 
     public function getRating(): int
@@ -20,5 +21,15 @@ class Rating
     public function setRating(int $number): void
     {
         $this->rating = $number;
+    }
+
+    public static function createNew(): self
+    {
+        return new Rating(self::STARTING_RATING);
+    }
+
+    public static function fromInt(int $int): self
+    {
+        return new Rating($int);
     }
 }

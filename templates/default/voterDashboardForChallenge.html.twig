@@ -1,0 +1,27 @@
+{% extends 'base.html.twig' %}
+
+{% block head %}
+    <meta charset="UTF-8" />
+    <title>{% block title %}Challenge Car Index{% endblock %}</title>
+{% endblock %}
+
+{% block body %}
+    <table>
+        <tr>
+            <td>{{ carA.name }}</td>
+            <td>{{ carB.name }}</td>
+        </tr>
+        <tr>
+            <td><a href="{{ path('voteCarLeft') }}" class="btn btn-lg btn-default highlight_black stylish ">This is better</a>
+            </td>
+            <td><a href="{{ path('voteCarReft') }}" class="btn btn-lg btn-default highlight_black stylish ">No, this is better</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+{% endblock %}
+
+{% block stylesheets %}
+    <style>
+    </style>
+{% endblock %}

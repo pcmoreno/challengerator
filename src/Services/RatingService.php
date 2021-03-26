@@ -8,8 +8,8 @@ use App\Entity\Challenge\Rating;
 
 class RatingService
 {
-    const K = 100;
-    const D = 400;
+    protected const K = 100;
+    protected const D = 400;
 
     public static function compareAndAdjust(Rating $ratingA, Rating $ratingB, string $outcome): void
     {

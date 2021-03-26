@@ -6,11 +6,19 @@ apitest:
     path: /apitest/
     controller: App\Controller\ApiController::apitest
 
+challengeapitest:
+    path: /challengeapitest/
+    controller: App\Controller\ChallengeController::challengeApiTest
+
 createDB:
     path: /couch/createdb/{dbName}
-    controller: App\Controller\ApiController::createDB
+    controller: App\Controller\ApiController::createDb
     defaults:
         dbName: null
+
+deleteDB:
+    path: /couch/deletedb/{dbName}
+    controller: App\Controller\ApiController::deleteDb
 
 listDBInfo:
     path: /couch/info/{dbName}
@@ -19,10 +27,54 @@ listDBInfo:
         dbName: null
 
 getDocumentFromCouch:
-    path: /couch/get/{id}
+    path: /couch/get/{dbName}/{id}
     controller: App\Controller\ApiController::fetchDocumentWithId
 
-addGenericDocumentToCouchDb:
-    path: /couch/add/
-    controller: App\Controller\ApiController::createDocument
-    methods: POST
+#updateDocumentFromCouch:
+#    path: /couch/update/{dbName}/{id}
+#    controller: App\Controller\ApiController::updateDocumentWithId
+
+# -----------------------------------------------
+# Challenge routes:
+addCarAndVoterToChallenge:
+    path: /couch/addCar/{challengeName}
+    controller: App\Controller\ApiController::addCarAndVoterToChallenge
+
+createChallenge:
+    path: /challenge/create/{challengeName}/{owner}
+    controller: App\Controller\ChallengeController::createChallenge
+
+startChallenge:
+    path: /challenge/initialize/{challengeName}
+    controller: App\Controller\ChallengeController::startChallenge
+
+addCarToChallenge:
+    path: /challenge/addCar/{challengeName}
+    controller: App\Controller\ChallengeController::addCarToChallenge
+    methods: [ post ]
+
+addVoterToChallenge:
+    path: /challenge/addVoter/{challengeName}
+    controller: App\Controller\ChallengeController::addVoterToChallenge
+    methods: [ post ]
+
+getCarsForChallenge:
+    path: /challenge/cars/{challengeName}
+    controller: App\Controller\ChallengeController::getCarsForChallenge
+
+listChallenges:
+    path: /challenge/listAll
+    controller: App\Controller\ChallengeController::listChallenges
+
+#----FE routes
+indexCars:
+    path: /challengeIndex/{challengeName}
+    controller: App\Controller\DefaultController::challengeIndex
+
+voteDashboardForUser:
+    path: /voteCarForUserDashboard/{challengeName}/{userId}
+    controller: App\Controller\DefaultController::votingDashBoardForUser
+
+voteCarForUser:
+    path: /voteCarForUser/{challengeName}/{userId}/{cars}/{result}
+    controller: App\Controller\DefaultController::voteForCarForUser

@@ -4,7 +4,7 @@
     "minimum-stability": "dev",
     "prefer-stable": true,
     "require": {
-        "php": ">=7.2.5",
+        "php": ">=7.4",
         "ext-ctype": "*",
         "ext-iconv": "*",
         "composer/package-versions-deprecated": "1.11.99.1",
@@ -14,7 +14,6 @@
         "doctrine/orm": "^2.8",
         "php-on-couch/php-on-couch": "^3.0",
         "phpdocumentor/reflection-docblock": "^5.2",
-        "ramsey/uuid": "^4.1",
         "sensio/framework-extra-bundle": "^5.1",
         "symfony/asset": "5.2.*",
         "symfony/browser-kit": "^5.2",
@@ -45,7 +44,8 @@
         "symfony/web-link": "5.2.*",
         "symfony/yaml": "5.2.*",
         "twig/extra-bundle": "^2.12|^3.0",
-        "twig/twig": "^3.0"
+        "twig/twig": "^3.0",
+        "ext-json": "*"
     },
     "require-dev": {
         "mockery/mockery": "^1.4",
