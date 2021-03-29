@@ -53,10 +53,27 @@ addCarToChallenge:
     controller: App\Controller\ChallengeController::addCarToChallenge
     methods: [ post ]
 
+addCarToChallengeFormPage:
+    path: /challenge/addCarForm/{challengeName}
+    controller: App\Controller\ChallengeController::newCarFormPage
+
 addVoterToChallenge:
     path: /challenge/addVoter/{challengeName}
     controller: App\Controller\ChallengeController::addVoterToChallenge
     methods: [ post ]
+
+deleteUser:
+    path: /challenge/deleteVoter/{challengeName}/{voterId}
+    controller: App\Controller\ChallengeController::deleteVoterFromChallenge
+
+resetVotesForVoterOnChallenge:
+    path: /challenge/resetVoter/
+    controller: App\Controller\ChallengeController::resetVotesForVoterOnChallenge
+    methods: [ post ]
+
+addVoterToChallengeFormPage:
+    path: /challenge/addVoterForm/{challengeName}
+    controller: App\Controller\ChallengeController::newUserFormPage
 
 getCarsForChallenge:
     path: /challenge/cars/{challengeName}
@@ -78,3 +95,11 @@ voteDashboardForUser:
 voteCarForUser:
     path: /voteCarForUser/{challengeName}/{userId}/{cars}/{result}
     controller: App\Controller\DefaultController::voteForCarForUser
+
+listChallengesMenu:
+    path: /challenges
+    controller: App\Controller\DefaultController::ListChallengesMenu
+
+loginMenu:
+    path: /login/{challengeName}
+    controller: App\Controller\ChallengeController::loginFormPage

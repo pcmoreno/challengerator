@@ -1,0 +1,11 @@
+<table>
+    {% for item in challenges %}
+        <tr><td>{{ item }}</td>
+                <td>
+                        <button><a href = {{ path('loginMenu', {
+                                        'challengeName': 'test_challenge'
+                                }) }}>GO TO</a></button>
+                </td>
+        </tr>
+    {% endfor %}
+</table>

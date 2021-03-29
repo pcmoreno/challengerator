@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Services\ChallengeService;
-use phpDocumentor\Reflection\Types\This;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -77,6 +76,17 @@ class DefaultController extends AbstractController
                 'carsToVote' => $carsToVote,
                 'carsNotVoted' => $carsNotVoted,
                 'user' => $userId,
+            ]
+        );
+    }
+
+    public function listChallengesMenu(): Response
+    {
+        $challenges = json_decode($this->challengeService->listChallenges()->getContent(), true);
+        return $this->render(
+            'default/challengeMenu.html.twig',
+            [
+                'challenges' => $challenges,
             ]
         );
     }

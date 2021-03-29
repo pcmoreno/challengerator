@@ -118,4 +118,19 @@ class Voter
            $this->roundsOfComparison->moveCarFromNotVotedToComparedForChallenge($carId, $challengeId);
         }
     }
+
+    public function getAuthKey(): string
+    {
+        return $this->authKey;
+    }
+
+    public function setName(string $name): void
+    {
+        $this->name = $name;
+    }
+
+    public function setAuthKey(string $authKey): void
+    {
+        $this->authKey = $authKey;
+    }
 }

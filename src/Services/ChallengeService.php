@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Entity\Auth\Role;
 use App\Entity\Challenge\Car;
 use App\Entity\Challenge\Challenge;
 use App\Entity\Challenge\Voter;
@@ -48,13 +49,20 @@ class ChallengeService
         }
     }
 
-    public function addCar(string $challengeName, array $carData): JsonResponse
+    public function addCarFromDataArray(string $challengeName, array $carData): JsonResponse
     {
         try {
             $car = Car::create($carData);
         } catch (\Exception $exception) {
             return new JsonResponse($exception->getMessage(), 400);
         }
+        $this->addCar($challengeName, $car);
+
+        return new JsonResponse('success', 201);
+    }
+
+    public function addCar(string $challengeName, Car $car): void
+    {
         $carClient = $this->getCouchClient('cars');
         $challengeClient = $this->getCouchClient($challengeName);
 
@@ -65,17 +73,22 @@ class ChallengeService
         $challenge->addCarToChallenge($car);
         $challenge->setRevisionNumber($data['_rev']);
         $challengeClient->storeDoc($challenge->toCouchDocument());
-
-        return new JsonResponse('success', 201);
     }
 
-    public function addVoter(string $challengeName, array $voterData): JsonResponse
+    public function addVoterFromDataArray(string $challengeName, array $voterData): JsonResponse
     {
         try {
             $voter = Voter::createForChallenge($voterData['username'], $voterData['pass'], $challengeName);
         } catch (\Exception $exception) {
             return new JsonResponse($exception->getMessage(), 400);
         }
+        $this->addVoter($challengeName, $voter);
+
+        return new JsonResponse('success', 201);
+    }
+
+    public function addVoter(string $challengeName, Voter $voter): void
+    {
         $voterClient = $this->getCouchClient('voters');
         $challengeClient = $this->getCouchClient($challengeName);
 
@@ -87,8 +100,21 @@ class ChallengeService
         $challenge->addVoterToChallenge($voter);
         $challenge->setRevisionNumber($data['_rev']);
         $challengeClient->storeDoc($challenge->toCouchDocument());
+    }
 
-        return new JsonResponse('success', 201);
+    public function deleteVoter(string $challengeName, string $voterId): void
+    {
+        $voterClient = $this->getCouchClient('voters');
+        $challengeClient = $this->getCouchClient($challengeName);
+
+        $voterClient->deleteDoc($voterClient->getDoc($voterId));
+
+        $data = json_decode(json_encode($challengeClient->getDoc('info')), true);
+        $challenge = Challenge::fromCouchDocument($data);
+
+        $challenge->removeVoterFromChallenge($voterId);
+        $challenge->setRevisionNumber($data['_rev']);
+        $challengeClient->storeDoc($challenge->toCouchDocument());
     }
 
     public function getCarsForChallenge(string $challengeName, bool $json = true)
@@ -116,6 +142,23 @@ class ChallengeService
         }
     }
 
+    public function getAllVotersForTheChallenge(string $challengeName): array
+    {
+        $challengeClient = $this->getCouchClient($challengeName);
+        $data = json_decode(json_encode($challengeClient->getDoc('info')), true);
+        $challenge = Challenge::fromCouchDocument($data);
+        $votersIds = $challenge->getVoters();
+        $voterClient = $this->getCouchClient('voters');
+        $voters = [];
+        foreach ($votersIds as $voterId) {
+            $voter = Voter::fromCouchDocument(json_decode(json_encode($voterClient->getDoc($voterId)), true));
+            $voters[] = $voter;
+        }
+
+        return $voters;
+    }
+
+    // TODO: should do it to only do to non active challenges.
     public function initializeChallenge($challengeName): JsonResponse
     {
         $challengeClient = $this->getCouchClient($challengeName);
@@ -141,7 +184,27 @@ class ChallengeService
 
         $challengeClient->storeDoc($challengeDocToUpdate);
 
-        return new JsonResponse('nit done', 200);
+        return new JsonResponse('initialization done', 200);
+    }
+
+    public function resetRoundOfVoteForUserOfChallenge($challengeName, $voterId)
+    {
+        $challengeClient = $this->getCouchClient($challengeName);
+        $voterClient = $this->getCouchClient('voters');
+
+        $challengeData = json_decode(json_encode($challengeClient->getDoc('info')), true);
+        $challenge = Challenge::fromCouchDocument($challengeData);
+        if ($challenge->hasVoter($voterId)) {
+            $voter = $this->getVoter($voterId);
+            $voter->addCarsToSelf($challengeData['cars'], $challengeName, true);
+            $voterDocRev = $voterClient->getDoc($voterId)->_rev;
+            $voterDocToSave = $voter->toCouchDocument();
+            $voterDocToSave->_rev = $voterDocRev;
+            $voterClient->storeDoc($voterDocToSave);
+
+            return new JsonResponse('success' ,200);
+        }
+        return new JsonResponse('this voter is not part of this challenge', 400);
     }
 
     public function getTwoCarsToBeVotedByUser(string $challengeName, string $userId): array
@@ -233,6 +296,42 @@ class ChallengeService
         $voterClient->storeDoc($updatedVoterDoc);
 
         return $this->getTwoCarsToBeVotedByUser($challengeId, $userId);
+    }
+
+    public function verifyLogin($login, $challengeName)
+    {
+        $challengeClient = $this->getCouchClient($challengeName);
+
+        $challengeDoc = $challengeClient->getDoc('info');
+        if ($login->user === Role::ADMIN && $login->pass === $challengeDoc->owner){
+            return Role::ADMIN;
+        }
+
+        $voterClient = $this->getCouchClient('voters');
+        try {
+            $voterDoc = $voterClient->find([
+                'name' => $login->user
+            ]);
+            if ($voterDoc !== [] && password_verify($login->pass, $voterDoc[0]->key)) {
+                $challege = Challenge::fromCouchDocument(json_decode(json_encode($challengeDoc), true));
+                if ($challege->hasVoter($voterDoc[0]->_id)) {
+                    return [Role::VOTER, $voterDoc[0]->_id];
+                } else {
+                    return Role::VOTER_OF_A_DIFFERENT_CHALLENGE;
+                }
+            }
+        } catch (\Exception $exception) {
+            dump($exception); die;
+        }
+        return Role::NONE;
+    }
+
+    public function verifyAdmin($challengeName, $adminpass): bool
+    {
+        $challengeClient = $this->getCouchClient($challengeName);
+
+        $challengeDoc = $challengeClient->getDoc('info');
+        return $adminpass === $challengeDoc->owner;
     }
 
     private function getVoter($id): ?Voter

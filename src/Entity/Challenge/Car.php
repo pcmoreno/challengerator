@@ -74,6 +74,17 @@ class Car
         return $stdClass;
     }
 
+    public static function empty(): Car
+    {
+        return Car::create([
+                'name' => 'fill name of car here',
+                'imageUrlA' => 'imageA url from google drive',
+                'imageUrlB' => 'imageB url from google drive',
+                'challengeId' => ''
+            ]
+        );
+    }
+
 
     // --- boilerplate getters and setters --- //
     public function getId(): string

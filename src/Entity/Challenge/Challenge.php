@@ -47,12 +47,20 @@ class Challenge
 
     public function addVoterToChallenge(Voter $voter): void
     {
-        foreach ($this->voters as $voterInChallengeUsername) {
-            if ($voter->getName() === $voterInChallengeUsername) {
+        foreach ($this->voters as $voterInChallengeId) {
+            if ($voter->getId() === $voterInChallengeId) {
                 throw new \Exception('Voter Already Added');
             }
         }
-        array_push($this->voters, $voter->getName());
+        array_push($this->voters, $voter->getId());
+    }
+
+    public function removeVoterFromChallenge($voterId): void
+    {
+        if (in_array($voterId, $this->voters)) {
+            $key = array_search($voterId, $this->voters);
+            unset($this->voters[$key]);
+        }
     }
 
     public function toCouchDocument(): \stdClass
@@ -115,6 +123,11 @@ class Challenge
     public function deactivate()
     {
         $this->isActive = false;
+    }
+
+    public function hasVoter($voterId): bool
+    {
+        return in_array($voterId, $this->voters);
     }
 
 }

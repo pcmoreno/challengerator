@@ -1,0 +1,8 @@
+{{ form(form) }}
+
+<br>
+<table>
+    {% for item in allCarsInChallenge %}
+        <tr><td>{{ item.name }}</td><td>{{ item.imageUrlA }}</td><td>{{ item.imageUrlB }}</td></tr>
+    {% endfor %}
+</table>
