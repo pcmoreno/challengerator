@@ -15,6 +15,7 @@ createDB:
     controller: App\Controller\ApiController::createDb
     defaults:
         dbName: null
+    methods: [get, put]
 
 deleteDB:
     path: /couch/deletedb/{dbName}
