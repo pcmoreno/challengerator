@@ -2,9 +2,9 @@
 
 <br>
 <table>
-    <tr><td>NAME</td><td>ImageUrlA</td><td>ImageUrlB</td><td>Id</td></tr>
+    <tr><td>NAME</td><td>rating</td><td>ImageUrlA</td><td>ImageUrlB</td><td>Id</td></tr>
     {% for item in allCarsInChallenge %}
-        <tr><td>{{ item.name }}</td><td>{{ item.imageUrlA }}</td><td>{{ item.imageUrlB }}</td><td>{{ item.id }}</td></tr>
+        <tr><td>{{ item.name }}</td><td>{{ item.rating.rating() }}</td><td>{{ item.imageUrlA }}</td><td>{{ item.imageUrlB }}</td><td>{{ item.id }}</td></tr>
     {% endfor %}
 </table>
 
