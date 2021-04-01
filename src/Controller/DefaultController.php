@@ -55,6 +55,7 @@ class DefaultController extends AbstractController
                 'carsToVote' => $carsToVote,
                 'carsNotVoted' => $carsNotVoted,
                 'user' => $userId,
+                'challengeName' => $challengeName
             ]
         );
     }

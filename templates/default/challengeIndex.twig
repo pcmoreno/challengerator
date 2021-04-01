@@ -18,7 +18,7 @@
                 <td>{{ item.name }}</td>
                 <td>{{ item.rating }}</td>
                 <td><button><a href = {{ path('voteCarForUser', {
-                            'challengeName': 'test_challenge',
+                            'challengeName': challengeName,
                             'userId': user,
                             'cars': "#{carsToVote[0]['_id']}XXX#{carsToVote[1]['_id']}",
                             'result': turn
@@ -29,7 +29,7 @@
             {% set turn = 'right' %}
         {% endfor %}
         <tr><td></td><td></td><td><button><a href = {{ path('voteCarForUser', {
-                        'challengeName': 'test_challenge',
+                        'challengeName': challengeName,
                         'userId': user,
                         'cars': "#{carsToVote[0]['_id']}XXX#{carsToVote[1]['_id']}",
                         'result': 'draw'
