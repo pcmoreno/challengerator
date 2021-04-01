@@ -63,6 +63,14 @@ class Challenge
         }
     }
 
+    public function removeCarFromChallenge($carId): void
+    {
+        if (in_array($carId, $this->cars)) {
+            $key = array_search($carId, $this->cars);
+            unset($this->cars[$key]);
+        }
+    }
+
     public function toCouchDocument(): \stdClass
     {
         $stdclass = new \stdClass();

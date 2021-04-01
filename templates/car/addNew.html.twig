@@ -2,7 +2,26 @@
 
 <br>
 <table>
+    <tr><td>NAME</td><td>ImageUrlA</td><td>ImageUrlB</td><td>Id</td></tr>
     {% for item in allCarsInChallenge %}
-        <tr><td>{{ item.name }}</td><td>{{ item.imageUrlA }}</td><td>{{ item.imageUrlB }}</td></tr>
+        <tr><td>{{ item.name }}</td><td>{{ item.imageUrlA }}</td><td>{{ item.imageUrlB }}</td><td>{{ item.id }}</td></tr>
     {% endfor %}
 </table>
+
+<br>------------------------------<br>
+{{ form(adminDeleteCarForm) }}
+<style>
+    table, th, td {
+        border: 2px solid darkred;
+        margin: 1px;
+    }
+    table {
+        width: 100%;
+    }
+    th, td {
+        padding: 15px;
+        text-align: left;
+    }
+    tr:nth-child(even) {background-color: #f2f2f2;}
+
+</style>

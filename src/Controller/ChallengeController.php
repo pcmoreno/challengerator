@@ -6,6 +6,7 @@ namespace App\Controller;
 use App\Entity\Auth\Role;
 use App\Entity\Challenge\Car;
 use App\Entity\Challenge\Voter;
+use App\Form\AdminDeleteCarType;
 use App\Form\AdminDeleteVoterType;
 use App\Form\CarType;
 use App\Form\LoginType;
@@ -57,7 +58,7 @@ class ChallengeController extends AbstractController
 
     public function deleteVoterFromChallenge(Request $request, $challengeName, $voterId)
     {
-        $this->challengeService->deleteVoter($challengeName, $voterId);
+        $this->challengeService->deleteVoterFromChallenge($challengeName, $voterId);
 
         return $this->redirectToRoute('addVoterToChallengeFormPage', [
             'challengeName' => $challengeName
@@ -87,10 +88,23 @@ class ChallengeController extends AbstractController
             $this->challengeService->addCar($challengeName, $car);
         }
 
+        $adminDeleteCar = new \stdClass();
+        $adminDeleteCar->carToDelete = 'car Id to delete';
+        $adminDeleteCar->adminPass = 'type admin password';
+
+        $adminDeleteCarForm = $this->createForm(AdminDeleteCarType::class, $adminDeleteCar);
+        $adminDeleteCarForm->handleRequest($request);
+        if ($adminDeleteCarForm->isSubmitted() && $adminDeleteCarForm->isValid()) {
+            if ($this->challengeService->verifyAdmin($challengeName, $adminDeleteCar->adminPass)) {
+                $this->challengeService->deleteCarFromChallenge($challengeName, $adminDeleteCar->carToDelete);
+            }
+        }
+
         $allCarsInChallenge = $this->challengeService->getCarsForChallenge($challengeName, false);
         return $this->render('car/addNew.html.twig', [
             'form' => $form->createView(),
-            'allCarsInChallenge' => $allCarsInChallenge
+            'allCarsInChallenge' => $allCarsInChallenge,
+            'adminDeleteCarForm' => $adminDeleteCarForm->createView(),
         ]);
     }
 
@@ -99,22 +113,21 @@ class ChallengeController extends AbstractController
         $voter = Voter::createForChallenge('Fill the user name here', 'give it a password', $challengeName);
         $form = $this->createForm(VoterType::class, $voter);
 
-        $adminDeleteVoter = new \stdClass();
-        $adminDeleteVoter->voterToDelete = 'id of voter';
-        $adminDeleteVoter->adminPass = 'type in admin password';
-
-        $adminDeleteVoterForm = $this->createForm(AdminDeleteVoterType::class, $adminDeleteVoter);
-
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
 
             $voter = Voter::createForChallenge($voter->getName(), $voter->getAuthKey(), $challengeName);
             $this->challengeService->addVoter($challengeName, $voter);
         }
+        $adminDeleteVoter = new \stdClass();
+        $adminDeleteVoter->voterToDelete = 'id of voter';
+        $adminDeleteVoter->adminPass = 'type in admin password';
+
+        $adminDeleteVoterForm = $this->createForm(AdminDeleteVoterType::class, $adminDeleteVoter);
         $adminDeleteVoterForm->handleRequest($request);
         if ($adminDeleteVoterForm->isSubmitted() && $adminDeleteVoterForm->isValid()) {
             if ($this->challengeService->verifyAdmin($challengeName, $adminDeleteVoter->adminPass)) {
-                $this->challengeService->deleteVoter($challengeName, $adminDeleteVoter->voterToDelete);
+                $this->challengeService->deleteVoterFromChallenge($challengeName, $adminDeleteVoter->voterToDelete);
             }
         }
 

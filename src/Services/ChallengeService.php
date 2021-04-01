@@ -102,7 +102,7 @@ class ChallengeService
         $challengeClient->storeDoc($challenge->toCouchDocument());
     }
 
-    public function deleteVoter(string $challengeName, string $voterId): void
+    public function deleteVoterFromChallenge(string $challengeName, string $voterId): void
     {
         $voterClient = $this->getCouchClient('voters');
         $challengeClient = $this->getCouchClient($challengeName);
@@ -116,6 +116,20 @@ class ChallengeService
         $challenge->setRevisionNumber($data['_rev']);
         $challengeClient->storeDoc($challenge->toCouchDocument());
     }
+
+    public function deleteCarFromChallenge(string $challengeName, string $carId): void
+    {
+        $carClient = $this->getCouchClient('cars');
+        $challengeClient = $this->getCouchClient($challengeName);
+
+        $carClient->deleteDoc($carClient->getDoc($carId));
+
+        $data = json_decode(json_encode($challengeClient->getDoc('info')), true);
+        $challenge = Challenge::fromCouchDocument($data);
+
+        $challenge->removeCarFromChallenge($carId);
+        $challenge->setRevisionNumber($data['_rev']);
+        $challengeClient->storeDoc($challenge->toCouchDocument());    }
 
     public function getCarsForChallenge(string $challengeName, bool $json = true)
     {
