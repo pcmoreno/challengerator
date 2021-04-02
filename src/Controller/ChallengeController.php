@@ -77,7 +77,6 @@ class ChallengeController extends AbstractController
 
     public function newCarFormPage(Request $request, $challengeName): Response
     {
-//        dump($allCarsInChallenge); die;
         $car = Car::empty();
         $form = $this->createForm(CarType::class, $car);
 
@@ -103,8 +102,8 @@ class ChallengeController extends AbstractController
         $allCarsInChallenge = $this->challengeService->getCarsForChallenge($challengeName, false);
         return $this->render('car/addNew.html.twig', [
             'form' => $form->createView(),
-            'allCarsInChallenge' => $allCarsInChallenge,
             'adminDeleteCarForm' => $adminDeleteCarForm->createView(),
+            'allCarsInChallenge' => $allCarsInChallenge,
         ]);
     }
 

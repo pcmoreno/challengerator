@@ -150,7 +150,7 @@ class ChallengeService
             return new JsonResponse($result);
         } else {
             $cars = array_map(function ($item) {
-                return Car::create($item);
+                return Car::fromCouchData($item);
             },$result);
             return $cars;
         }
