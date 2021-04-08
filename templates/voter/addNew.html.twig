@@ -1,31 +1,25 @@
+
+<div class="formcontainer">
 {{ form(form) }}
+</div>
 
-<br>
-<h3>Users in this challenge</h3>
-<table>
-    <tr><td>NAME</td><td>HASHKEY</td><td>ID</td></tr>
-    {% for voter in allUsersInTheChallenge %}
-        <tr>
-            <td>{{ voter.name }}</td>
-            <td>{{ voter.authKey }}</td>
-            <td>{{ voter.id }}</td>
-        </tr>
-    {% endfor %}
-</table>
-<br>------------------------------<br>
-    {{ form(adminDeleteForm) }}
-<style>
-    table, th, td {
-        border: 2px solid darkred;
-        margin: 1px;
-    }
-    table {
-        width: 100%;
-    }
-    th, td {
-        padding: 15px;
-        text-align: left;
-    }
-    tr:nth-child(even) {background-color: #f2f2f2;}
+    <br>
+    <h3>Users in this challenge</h3>
+    <table>
+        <tr><td>NAME</td><td>HASHKEY</td><td>ID</td></tr>
+        {% for voter in allUsersInTheChallenge %}
+            <tr>
+                <td>{{ voter.name }}</td>
+                <td>{{ voter.authKey }}</td>
+                <td>{{ voter.id }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+    <br><br>
 
-</style>
+<div class="formcontainer">
+{{ form(adminDeleteForm) }}
+</div>
+
+{% include 'default/generalStyle.html.twig' %}
+

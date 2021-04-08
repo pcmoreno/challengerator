@@ -1,4 +1,7 @@
+{% block main %}
+<div class="formcontainer">
 {{ form(form) }}
+</div>
 
 <br>
 <table>
@@ -8,20 +11,9 @@
     {% endfor %}
 </table>
 
-<br>------------------------------<br>
+<div class="formcontainer">
 {{ form(adminDeleteCarForm) }}
-<style>
-    table, th, td {
-        border: 2px solid darkred;
-        margin: 1px;
-    }
-    table {
-        width: 100%;
-    }
-    th, td {
-        padding: 15px;
-        text-align: left;
-    }
-    tr:nth-child(even) {background-color: #f2f2f2;}
+</div>
+{% endblock %}
 
-</style>
+{% include 'default/generalStyle.html.twig' %}
