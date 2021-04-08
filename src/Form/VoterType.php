@@ -18,7 +18,7 @@ class VoterType extends AbstractType
         $builder
             ->add('name', TextType::class)
             ->add('authKey', PasswordType::class)
-            ->add('save', SubmitType::class);
+            ->add('add_voter', SubmitType::class);
     }
 
     public function configureOptions(OptionsResolver $resolver): void

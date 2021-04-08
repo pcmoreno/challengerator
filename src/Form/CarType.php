@@ -18,7 +18,7 @@ class CarType extends AbstractType
             ->add('name', TextType::class)
             ->add('imageUrlA', TextType::class)
             ->add('imageUrlB', TextType::class)
-            ->add('save', SubmitType::class);
+            ->add('add_car', SubmitType::class);
     }
 
     public function configureOptions(OptionsResolver $resolver): void
