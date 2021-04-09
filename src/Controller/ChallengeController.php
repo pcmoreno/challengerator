@@ -104,6 +104,7 @@ class ChallengeController extends AbstractController
             'form' => $form->createView(),
             'adminDeleteCarForm' => $adminDeleteCarForm->createView(),
             'allCarsInChallenge' => $allCarsInChallenge,
+            'challengeName' => $challengeName,
         ]);
     }
 
@@ -134,7 +135,8 @@ class ChallengeController extends AbstractController
         return $this->render('voter/addNew.html.twig', [
             'form' => $form->createView(),
             'adminDeleteForm' => $adminDeleteVoterForm->createView(),
-            'allUsersInTheChallenge' => $allUsersInTheChallenge
+            'allUsersInTheChallenge' => $allUsersInTheChallenge,
+            'challengeName' => $challengeName,
         ]);
     }
 

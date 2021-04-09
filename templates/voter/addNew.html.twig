@@ -1,4 +1,4 @@
-
+<h1>Dashboard for {{ challengeName }}</h1>
 <div class="formcontainer">
 {{ form(form) }}
 </div>
@@ -6,7 +6,9 @@
     <br>
     <h3>Users in this challenge</h3>
     <table>
-        <tr><td>NAME</td><td>HASHKEY</td><td>ID</td></tr>
+        {% block topRow %}
+        <td>NAME</td><td>HASHKEY</td><td>ID</td>
+        {% endblock %}
         {% for voter in allUsersInTheChallenge %}
             <tr>
                 <td>{{ voter.name }}</td>
