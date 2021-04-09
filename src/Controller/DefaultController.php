@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Services\ChallengeService;
+use phpDocumentor\Reflection\Types\This;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -71,15 +72,13 @@ class DefaultController extends AbstractController
         if ($carsToVote === []) {
             return new JsonResponse('Voting Complete', 200);
         }
-        return $this->render(
-            'default/challengeIndex.twig',
-            [
-                'carsToVote' => $carsToVote,
-                'carsNotVoted' => $carsNotVoted,
-                'user' => $userId,
-                'challengeName' => $challengeName
-            ]
-        );
+        return $this->redirectToRoute('voteDashboardForUser', [
+            'userId' => $userId,
+            'carsToVote' => $carsToVote,
+            'carsNotVoted' => $carsNotVoted,
+            'user' => $userId,
+            'challengeName' => $challengeName
+        ]);
     }
 
     public function listChallengesMenu(): Response
