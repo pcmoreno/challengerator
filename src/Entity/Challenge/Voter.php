@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Entity\Challenge;
 
 use DateInterval;
+use phpDocumentor\Reflection\Types\This;
 use Symfony\Component\Uid\Uuid;
 
 class Voter
@@ -153,6 +154,9 @@ class Voter
 
     public function getToken(): ?string
     {
+        if ((new \DateTime())->getTimestamp() > $this->getTokenExpirationDate()) {
+            $this->token = null;
+        }
         return $this->token;
     }
 
