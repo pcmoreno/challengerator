@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Entity\Challenge;
 
+use DateInterval;
 use Symfony\Component\Uid\Uuid;
 
 class Voter
@@ -12,18 +13,21 @@ class Voter
     private RoundOfComparisons $roundsOfComparison;
     private string $authKey;
     private ?string $token;
+    private ?int $tokenExpirationDate;
 
     public static function createForChallenge(string $name, string $pass, string $challengeId): Voter
     {
         $voter = new Voter();
         $voter->id = Uuid::v6()->jsonSerialize();
         $voter->name = $name;
+        $voter->tokenExpirationDate = null;
+        $voter->token = null;
         $hashed_password = password_hash($pass, PASSWORD_BCRYPT);
         if ($hashed_password === false || $hashed_password === null) {
             throw new \Exception('Failed Hashing Password, creation of Voter aborted');
         }
         $voter->authKey = $hashed_password;
-        $round = new RoundOfComparisons(); // TODO: not great looking
+        $round = new RoundOfComparisons();
         $round->setCarsToBeVotedForChallenge([], $challengeId);
         $round->setCarsAlreadyComparedForChallenge([], $challengeId);
 
@@ -133,4 +137,23 @@ class Voter
     {
         $this->authKey = $authKey;
     }
+
+    public function generateToken(): void
+    {
+        $token = Uuid::v4()->jsonSerialize();
+        $this->token = $token;
+        $endTime = (new \DateTime())->add(new DateInterval('PT20M'));
+        $this->tokenExpirationDate = $endTime->getTimestamp();
+    }
+
+    public function getTokenExpirationDate(): ?int
+    {
+        return $this->tokenExpirationDate;
+    }
+
+    public function getToken(): ?string
+    {
+        return $this->token;
+    }
+
 }
