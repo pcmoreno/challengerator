@@ -100,7 +100,7 @@ class ChallengeController extends AbstractController
         }
 
         $allCarsInChallenge = $this->challengeService->getCarsForChallenge($challengeName, false);
-        return $this->render('car/addNew.html.twig', [
+        return $this->render('car/carDashboard.html.twig', [
             'form' => $form->createView(),
             'adminDeleteCarForm' => $adminDeleteCarForm->createView(),
             'allCarsInChallenge' => $allCarsInChallenge,
@@ -166,7 +166,8 @@ class ChallengeController extends AbstractController
             }
         }
         return $this->render('default/login.html.twig', [
-            'form' => $form->createView()
+            'form' => $form->createView(),
+            'challengeName' => $challengeName
     ]);
     }
 
