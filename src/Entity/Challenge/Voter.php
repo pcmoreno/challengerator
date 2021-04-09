@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Entity\Challenge;
 
 use DateInterval;
-use phpDocumentor\Reflection\Types\This;
 use Symfony\Component\Uid\Uuid;
 
 class Voter
@@ -48,9 +47,6 @@ class Voter
     {
         return $this->name;
     }
-
-    // TODO:
-    // needs to get a token on login
 
     public function toCouchDocument(): \stdClass
     {
@@ -158,6 +154,12 @@ class Voter
             $this->token = null;
         }
         return $this->token;
+    }
+
+    public function countComparisonsMadeForChallenge($challengeName): int
+    {
+        $total = $this->roundsOfComparison->getCarsComparedForChallenge($challengeName);
+        return (count($total))/2;
     }
 
 }

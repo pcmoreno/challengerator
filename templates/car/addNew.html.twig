@@ -1,4 +1,5 @@
 <h1>Dashboard for {{ challengeName }}</h1>
+<a href="{{ path('addVoterToChallengeFormPage', {'challengeName': challengeName }) }}">go to voters</a>
 <div class="formcontainer">
 {{ form(form) }}
 </div>
@@ -6,7 +7,7 @@
 <br>
 <table>
     <tr><td>NAME</td><td>rating</td><td>ImageUrlA</td><td>ImageUrlB</td><td>Id</td></tr>
-    {% for item in allCarsInChallenge %}
+    {% for item in allCarsInChallenge | sort((a,b) => b.rating.rating() <=> a.rating.rating())%}
         <tr><td>{{ item.name }}</td><td>{{ item.rating.rating() }}</td><td>{{ item.imageUrlA }}</td><td>{{ item.imageUrlB }}</td><td>{{ item.id }}</td></tr>
     {% endfor %}
 </table>

@@ -318,7 +318,7 @@ class ChallengeService
 
         $challengeDoc = $challengeClient->getDoc('info');
         if ($login->user === Role::ADMIN && $login->pass === $challengeDoc->owner){
-            return Role::ADMIN;
+            return [Role::ADMIN, null];
         }
 
         $voterClient = $this->getCouchClient('voters');
@@ -331,13 +331,13 @@ class ChallengeService
                 if ($challege->hasVoter($voterDoc[0]->_id)) {
                     return [Role::VOTER, $voterDoc[0]->_id];
                 } else {
-                    return Role::VOTER_OF_A_DIFFERENT_CHALLENGE;
+                    return [Role::VOTER_OF_A_DIFFERENT_CHALLENGE, $voterDoc[0]->_id];
                 }
             }
         } catch (\Exception $exception) {
             dump($exception); die;
         }
-        return Role::NONE;
+        return [Role::NONE, null];
     }
 
     public function verifyAdmin($challengeName, $adminpass): bool

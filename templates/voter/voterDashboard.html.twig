@@ -1,4 +1,5 @@
-<h1>Dashboard for {{ challengeName }}</h1>
+<h1>Voter Dashboard for {{ challengeName }}</h1>
+<a href="{{ path('addCarToChallengeFormPage', {'challengeName': challengeName }) }}">go to cars</a>
 <div class="formcontainer">
 {{ form(form) }}
 </div>
@@ -7,12 +8,12 @@
     <h3>Users in this challenge</h3>
     <table>
         {% block topRow %}
-        <td>NAME</td><td>HASHKEY</td><td>ID</td>
+        <td>NAME</td><td>#comparisons made</td><td>ID</td>
         {% endblock %}
         {% for voter in allUsersInTheChallenge %}
             <tr>
                 <td>{{ voter.name }}</td>
-                <td>{{ voter.authKey }}</td>
+                <td>{{ voter.countComparisonsMadeForChallenge(challengeName) }}</td>
                 <td>{{ voter.id }}</td>
             </tr>
         {% endfor %}

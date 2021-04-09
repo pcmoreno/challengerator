@@ -132,7 +132,7 @@ class ChallengeController extends AbstractController
         }
 
         $allUsersInTheChallenge = $this->challengeService->getAllVotersForTheChallenge($challengeName);
-        return $this->render('voter/addNew.html.twig', [
+        return $this->render('/voter/voterDashboard.html.twig', [
             'form' => $form->createView(),
             'adminDeleteForm' => $adminDeleteVoterForm->createView(),
             'allUsersInTheChallenge' => $allUsersInTheChallenge,
@@ -150,12 +150,12 @@ class ChallengeController extends AbstractController
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
             [$role, $userId] = $this->challengeService->verifyLogin($login, $challengeName);
-            dump($role);
-            dump($login);
+
             switch ($role) {
                 case Role::ADMIN:
-                    dump('admin'); die;
-                    break;
+                    return $this->redirectToRoute('addVoterToChallengeFormPage', [
+                        'challengeName' => $challengeName
+                    ]);
                 case Role::VOTER:
                     return $this->redirectToRoute('voteDashboardForUser',[
                         'challengeName' => $challengeName,
