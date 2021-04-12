@@ -55,7 +55,7 @@ addCarToChallenge:
     methods: [ post ]
 
 addCarToChallengeFormPage:
-    path: /challenge/addCarForm/{challengeName}
+    path: /challenge/addCarForm/{challengeName}/{token}
     controller: App\Controller\ChallengeController::newCarFormPage
 
 addVoterToChallenge:
@@ -73,7 +73,7 @@ resetVotesForVoterOnChallenge:
     methods: [ post ]
 
 addVoterToChallengeFormPage:
-    path: /challenge/addVoterForm/{challengeName}
+    path: /challenge/addVoterForm/{challengeName}/{token}
     controller: App\Controller\ChallengeController::newUserFormPage
 
 getCarsForChallenge:

@@ -1,5 +1,5 @@
 <h1>Car Dashboard for {{ challengeName }}</h1>
-<a href="{{ path('addVoterToChallengeFormPage', {'challengeName': challengeName }) }}">go to voters</a>
+<a href="{{ path('addVoterToChallengeFormPage', {'challengeName': challengeName, 'token': token }) }}">go to voters</a>
 <div class="formcontainer">
 {{ form(form) }}
 </div>

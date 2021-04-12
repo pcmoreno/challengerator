@@ -7,6 +7,7 @@ use App\Entity\Auth\Role;
 use App\Entity\Challenge\Car;
 use App\Entity\Challenge\Challenge;
 use App\Entity\Challenge\Voter;
+use phpDocumentor\Reflection\Types\This;
 use PHPOnCouch\CouchClient;
 use PHPOnCouch\Exceptions\CouchNotFoundException;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -316,7 +317,9 @@ class ChallengeService
         $challengeClient = $this->getCouchClient($challengeName);
 
         $challengeDoc = $challengeClient->getDoc('info');
+        $challenge = Challenge::fromCouchDocument(json_decode(json_encode($challengeDoc), true));
         if ($login->user === Role::ADMIN && $login->pass === $challengeDoc->owner){
+            $token = $this->doLoginForAdmin($challenge);
             return [Role::ADMIN, null, $token];
         }
 
@@ -328,8 +331,7 @@ class ChallengeService
             if ($voterDoc !== [] && password_verify($login->pass, $voterDoc[0]->key)) {
                 $voter = Voter::fromCouchDocument($voterDoc[0]);
                 $token = $this->doLoginForUser($voter);
-                $challege = Challenge::fromCouchDocument(json_decode(json_encode($challengeDoc), true));
-                if ($challege->hasVoter($voterDoc[0]->_id)) {
+                if ($challenge->hasVoter($voterDoc[0]->_id)) {
                     return [Role::VOTER, $voterDoc[0]->_id, $token];
                 } else {
                     return [Role::VOTER_OF_A_DIFFERENT_CHALLENGE, $voterDoc[0]->_id, $token];
@@ -382,10 +384,26 @@ class ChallengeService
         return $voter->getToken();
     }
 
+    private function doLoginForAdmin(Challenge $challenge): string
+    {
+        $challenge->generateAdminToken();
+        $client = $this->getCouchClient($challenge->getName());
+        $client->storeDoc($challenge->toCouchDocument());
+        return $challenge->getAdminToken();
+    }
+
     public function isVoterTokenValid(string $tokenShown, $voterId): bool
     {
         $voter = $this->getVoter($voterId);
 
         return ($voter->getToken() !== null && $voter->getToken() === $tokenShown);
+    }
+
+    public function isAdminTokenValid(string $tokenShown, $challengeName): bool
+    {
+        $challengeInfo = $this->getCouchClient($challengeName)->getDoc('info');
+        $challenge = Challenge::fromCouchDocument(json_decode(json_encode($challengeInfo), true));
+
+        return ($challenge->getAdminToken() !== null && $challenge->getAdminToken() === $tokenShown);
     }
 }

@@ -75,8 +75,15 @@ class ChallengeController extends AbstractController
         return $this->challengeService->initializeChallenge($challengeName);
     }
 
-    public function newCarFormPage(Request $request, $challengeName): Response
+    public function newCarFormPage(Request $request, $challengeName, $token): Response
     {
+        if (!$this->challengeService->isAdminTokenValid($token, $challengeName)) {
+            return $this->redirectToRoute('loginMenu',
+                [
+                    'challengeName' => $challengeName,
+                    'request' => $request
+                ]);
+        }
         $car = Car::empty();
         $form = $this->createForm(CarType::class, $car);
 
@@ -105,11 +112,19 @@ class ChallengeController extends AbstractController
             'adminDeleteCarForm' => $adminDeleteCarForm->createView(),
             'allCarsInChallenge' => $allCarsInChallenge,
             'challengeName' => $challengeName,
+            'token' => $token
         ]);
     }
 
-    public function newUserFormPage(Request $request, $challengeName): Response
+    public function newUserFormPage(Request $request, $challengeName, $token): Response
     {
+        if (!$this->challengeService->isAdminTokenValid($token, $challengeName)) {
+            return $this->redirectToRoute('loginMenu',
+                [
+                    'challengeName' => $challengeName,
+                    'request' => $request
+                ]);
+        }
         $voter = Voter::createForChallenge('Fill the user name here', 'give it a password', $challengeName);
         $form = $this->createForm(VoterType::class, $voter);
 
@@ -137,6 +152,7 @@ class ChallengeController extends AbstractController
             'adminDeleteForm' => $adminDeleteVoterForm->createView(),
             'allUsersInTheChallenge' => $allUsersInTheChallenge,
             'challengeName' => $challengeName,
+            'token' => $token
         ]);
     }
 
@@ -154,7 +170,8 @@ class ChallengeController extends AbstractController
             switch ($role) {
                 case Role::ADMIN:
                     return $this->redirectToRoute('addVoterToChallengeFormPage', [
-                        'challengeName' => $challengeName
+                        'challengeName' => $challengeName,
+                        'token' => $token
                     ]);
                 case Role::VOTER:
                     return $this->redirectToRoute('voteDashboardForUser',[

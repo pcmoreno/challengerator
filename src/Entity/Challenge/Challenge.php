@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace App\Entity\Challenge;
 
+use DateInterval;
+use Symfony\Component\Uid\Uuid;
+
 class Challenge
 {
     private string $id;
@@ -12,6 +15,8 @@ class Challenge
     private bool $isActive;
     private string $owner;
     private ?string $revision;
+    private ?string $adminToken;
+    private ?int $adminTokenExpirationDate;
 
     private function __construct(string $id, string $name, array $cars, array $voters, bool $isActive, string $owner)
     {
@@ -22,6 +27,8 @@ class Challenge
         $this->isActive = $isActive;
         $this->owner = $owner;
         $this->revision = null;
+        $this->adminToken = null;
+        $this->adminTokenExpirationDate = null;
     }
 
     public static function create(string $name, string $owner): Challenge
@@ -83,19 +90,30 @@ class Challenge
         if ($this->revision !== null) {
             $stdclass->_rev = $this->revision;
         }
+        if ($this->adminToken !== null) {
+            $stdclass->adminToken = $this->adminToken;
+        }
+        if ($this->adminTokenExpirationDate !== null) {
+            $stdclass->adminTokenExpirationDate = $this->adminTokenExpirationDate;
+        }
         return $stdclass;
     }
 
     public static function fromCouchDocument(array $doc): Challenge
     {
-        return new Challenge(
-          $doc['_id'],
-          $doc['name'],
-          $doc['cars'],
-          $doc['voters'],
-          $doc['isActive'],
-          $doc['owner'],
+        $challenge = new Challenge(
+            $doc['_id'],
+            $doc['name'],
+            $doc['cars'],
+            $doc['voters'],
+            $doc['isActive'],
+            $doc['owner']
         );
+        $challenge->adminToken = $doc['adminToken'] ?? null;
+        $challenge->adminTokenExpirationDate = $doc['adminTokenExpirationDate'] ?? null;
+        $challenge->revision = $doc['_rev'] ?? null;
+
+        return $challenge;
     }
 
     public function getCars(): array
@@ -138,4 +156,29 @@ class Challenge
         return in_array($voterId, $this->voters);
     }
 
+    public function getName(): string
+    {
+        return $this->name;
+    }
+
+    public function getAdminToken(): ?string
+    {
+        if ((new \DateTime())->getTimestamp() > $this->getAdminTokenExpirationDate()) {
+            $this->adminToken = null;
+        }
+        return $this->adminToken;
+    }
+
+    public function generateAdminToken(): void
+    {
+        $token = Uuid::v4()->jsonSerialize();
+        $this->adminToken = $token;
+        $endTime = (new \DateTime())->add(new DateInterval('PT10M'));
+        $this->adminTokenExpirationDate = $endTime->getTimestamp();
+    }
+
+    private function getAdminTokenExpirationDate(): ?int
+    {
+        return $this->adminTokenExpirationDate;
+    }
 }

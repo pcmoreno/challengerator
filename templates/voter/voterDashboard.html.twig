@@ -1,9 +1,8 @@
 <h1>Voter Dashboard for {{ challengeName }}</h1>
-<a href="{{ path('addCarToChallengeFormPage', {'challengeName': challengeName }) }}">go to cars</a>
+<a href="{{ path('addCarToChallengeFormPage', {'challengeName': challengeName, 'token': token }) }}">go to cars</a>
 <div class="formcontainer">
 {{ form(form) }}
 </div>
-
     <br>
     <h3>Users in this challenge</h3>
     <table>
