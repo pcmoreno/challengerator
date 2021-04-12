@@ -7,8 +7,6 @@ use App\Entity\Auth\Role;
 use App\Entity\Challenge\Car;
 use App\Entity\Challenge\Challenge;
 use App\Entity\Challenge\Voter;
-use Doctrine\Common\Collections\ArrayCollection;
-use phpDocumentor\Reflection\Types\This;
 use PHPOnCouch\CouchClient;
 use PHPOnCouch\Exceptions\CouchNotFoundException;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -314,11 +312,12 @@ class ChallengeService
 
     public function verifyLogin($login, $challengeName)
     {
+        $token = null;
         $challengeClient = $this->getCouchClient($challengeName);
 
         $challengeDoc = $challengeClient->getDoc('info');
         if ($login->user === Role::ADMIN && $login->pass === $challengeDoc->owner){
-            return [Role::ADMIN, null];
+            return [Role::ADMIN, null, $token];
         }
 
         $voterClient = $this->getCouchClient('voters');
@@ -327,17 +326,19 @@ class ChallengeService
                 'name' => $login->user
             ]);
             if ($voterDoc !== [] && password_verify($login->pass, $voterDoc[0]->key)) {
+                $voter = Voter::fromCouchDocument($voterDoc[0]);
+                $token = $this->doLoginForUser($voter);
                 $challege = Challenge::fromCouchDocument(json_decode(json_encode($challengeDoc), true));
                 if ($challege->hasVoter($voterDoc[0]->_id)) {
-                    return [Role::VOTER, $voterDoc[0]->_id];
+                    return [Role::VOTER, $voterDoc[0]->_id, $token];
                 } else {
-                    return [Role::VOTER_OF_A_DIFFERENT_CHALLENGE, $voterDoc[0]->_id];
+                    return [Role::VOTER_OF_A_DIFFERENT_CHALLENGE, $voterDoc[0]->_id, $token];
                 }
             }
         } catch (\Exception $exception) {
             dump($exception); die;
         }
-        return [Role::NONE, null];
+        return [Role::NONE, null, $token];
     }
 
     public function verifyAdmin($challengeName, $adminpass): bool
@@ -367,5 +368,24 @@ class ChallengeService
     public function test(): JsonResponse
     {
         return new JsonResponse($this->dsn, 200);
+    }
+
+    private function doLoginForUser(Voter $voter): string
+    {
+        $voter->generateToken();
+        $client = $this->getCouchClient('voters');
+        $voterDoc = $client->getDoc($voter->getId());
+        $updatedVoterDoc = $voter->toCouchDocument();
+        $updatedVoterDoc->_rev = $voterDoc->_rev;
+
+        $client->storeDoc($updatedVoterDoc);
+        return $voter->getToken();
+    }
+
+    public function isVoterTokenValid(string $tokenShown, $voterId): bool
+    {
+        $voter = $this->getVoter($voterId);
+
+        return ($voter->getToken() !== null && $voter->getToken() === $tokenShown);
     }
 }
