@@ -85,10 +85,6 @@ listChallenges:
     controller: App\Controller\ChallengeController::listChallenges
 
 #----FE routes
-indexCars:
-    path: /challengeIndex/{challengeName}
-    controller: App\Controller\DefaultController::challengeIndex
-
 voteDashboardForUser:
     path: /voteCarForUserDashboard/{challengeName}/{userId}/{token}
     controller: App\Controller\DefaultController::votingDashBoardForUser
