@@ -47,7 +47,7 @@
             </td>
         </tr>
     </table>
-    <table>
+    <table class="listOfCarsLeft">
         <tr><td>cars left to be voted</td></tr>
         {% for item in carsNotVoted %}
             <tr>
@@ -56,5 +56,11 @@
         {% endfor %}
     </table>
     {% include 'default/generalStyle.html.twig' %}
+
+    <style>
+        table.listOfCarsLeft {
+            width: 50%;
+        }
+    </style>
 {% endblock %}
 
