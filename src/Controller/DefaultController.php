@@ -35,14 +35,6 @@ class DefaultController extends AbstractController
         ]);
     }
 
-    public function challengeIndex($challengeName): Response
-    {
-        $cars = $this->challengeService->getCarsForChallenge($challengeName, false);
-        return $this->render(
-            'default/challengeIndex.twig', ['cars' => $cars]
-        );
-    }
-
     public function votingDashBoardForUser($challengeName, $userId, ?string $token): Response
     {
         [$carsToVote, $carsNotVoted] = $this->challengeService->getTwoCarsToBeVotedByUser($challengeName, $userId);
@@ -50,7 +42,7 @@ class DefaultController extends AbstractController
             return new JsonResponse('Voting Complete', 200);
         }
         return $this->render(
-            'default/challengeIndex.twig',
+            'default/votingCarsForUser.html.twig',
             [
                 'carsToVote' => $carsToVote,
                 'carsNotVoted' => $carsNotVoted,
