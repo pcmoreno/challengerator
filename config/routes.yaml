@@ -18,7 +18,7 @@ createDB:
     methods: [get, put]
 
 deleteDB:
-    path: /couch/deletedb/{dbName}
+    path: /couch/deletedb/{dbName}/{adminpass}
     controller: App\Controller\ApiController::deleteDb
 
 listDBInfo:
@@ -58,14 +58,14 @@ addCarToChallengeFormPage:
     path: /challenge/addCarForm/{challengeName}/{token}
     controller: App\Controller\ChallengeController::newCarFormPage
 
-addVoterToChallenge:
-    path: /challenge/addVoter/{challengeName}
-    controller: App\Controller\ChallengeController::addVoterToChallenge
-    methods: [ post ]
+#addVoterToChallenge:
+#    path: /challenge/addVoter/{challengeName}
+#    controller: App\Controller\ChallengeController::addVoterToChallenge
+#    methods: [ post ]
 
-deleteUser:
-    path: /challenge/deleteVoter/{challengeName}/{voterId}
-    controller: App\Controller\ChallengeController::deleteVoterFromChallenge
+#deleteUser:
+#    path: /challenge/deleteVoter/{challengeName}/{voterId}
+#    controller: App\Controller\ChallengeController::deleteVoterFromChallenge
 
 resetVotesForVoterOnChallenge:
     path: /challenge/resetVoter/

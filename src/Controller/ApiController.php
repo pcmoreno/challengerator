@@ -37,9 +37,9 @@ class ApiController extends AbstractController
         return $this->couchService->createDB($dbName);
     }
 
-    public function deleteDb(string $dbName): JsonResponse
+    public function deleteDb(string $dbName, string $adminPass): JsonResponse
     {
-        return $this->couchService->deleteDb($dbName);
+        return $this->couchService->deleteDb($dbName, $adminPass);
     }
 
     public function databaseInfos(?string $dbName): JsonResponse
