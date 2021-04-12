@@ -1,7 +1,7 @@
 {% extends 'base.html.twig' %}
 
 {% block head %}
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8"/>
     <title>{% block title %}Challenge Car Index{% endblock %}</title>
 {% endblock %}
 
@@ -17,31 +17,44 @@
             <tr>
                 <td>{{ item.name }}</td>
                 <td>{{ item.rating }}</td>
-                <td><button><a href = {{ path('voteCarForUser', {
+                <td>
+                    <button><a href= {{ path('voteCarForUser', {
                             'challengeName': challengeName,
                             'userId': user,
                             'cars': "#{carsToVote[0]['_id']}XXX#{carsToVote[1]['_id']}",
                             'result': turn,
                             'token': token
-                        }) }}>THIS ONE IS NICER</a></button></td>
-                <td><img class="article-img" src="https://drive.google.com/uc?id={{item.imageUrlA}}" alt="{{ item.name }}" height="450" width="800"></td>
-                <td><img class="article-img" src="https://drive.google.com/uc?id={{item.imageUrlB}}" alt="{{ item.name }}" height="450" width="800"></td>
+                        }) }}>THIS ONE IS NICER</a></button>
+                </td>
+                <td><img class="article-img" src="https://drive.google.com/uc?id={{ item.imageUrlA }}"
+                         alt="{{ item.name }}" height="450" width="800"></td>
+                <td><img class="article-img" src="https://drive.google.com/uc?id={{ item.imageUrlB }}"
+                         alt="{{ item.name }}" height="450" width="800"></td>
             </tr>
             {% set turn = 'right' %}
         {% endfor %}
-        <tr><td></td><td></td><td><button><a href = {{ path('voteCarForUser', {
+        <tr>
+            <td></td>
+            <td></td>
+            <td>
+                <button><a href= {{ path('voteCarForUser', {
                         'challengeName': challengeName,
                         'userId': user,
                         'cars': "#{carsToVote[0]['_id']}XXX#{carsToVote[1]['_id']}",
                         'result': 'draw',
                         'token': token
-                    }) }}>THEY'RE THE SAME</a></button></td></tr>
+                    }) }}>THEY'RE THE SAME</a></button>
+            </td>
+        </tr>
     </table>
-      <table>
-    {% for item in carsNotVoted %}
-        <tr><td>{{ item }}</td></tr>
-    {% endfor %}
-      </table>
-
-
+    <table>
+        <tr><td>cars left to be voted</td></tr>
+        {% for item in carsNotVoted %}
+            <tr>
+                <td>{{ item }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+    {% include 'default/generalStyle.html.twig' %}
 {% endblock %}
+
