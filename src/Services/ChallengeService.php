@@ -75,6 +75,7 @@ class ChallengeService
         }
     }
 
+    // OUTDATED
     public function addVoterFromDataArray(string $challengeName, array $voterData): JsonResponse
     {
         try {
@@ -87,8 +88,11 @@ class ChallengeService
         return new JsonResponse('success', 201);
     }
 
-    public function addVoter(string $challengeName, Voter $voter): void
+    public function addVoter(string $challengeName, Voter $voter, string $token): void
     {
+        if (!$this->isAdminTokenValid($token, $challengeName)) {
+            return;
+        }
         $voterClient = $this->getCouchClient('voters');
         $challengeClient = $this->getCouchClient($challengeName);
 

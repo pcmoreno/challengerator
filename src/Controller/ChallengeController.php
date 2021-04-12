@@ -130,7 +130,7 @@ class ChallengeController extends AbstractController
         if ($form->isSubmitted() && $form->isValid()) {
 
             $voter = Voter::createForChallenge($voter->getName(), $voter->getAuthKey(), $challengeName);
-            $this->challengeService->addVoter($challengeName, $voter);
+            $this->challengeService->addVoter($challengeName, $voter, $token);
         }
         $adminDeleteVoter = new \stdClass();
         $adminDeleteVoter->voterToDelete = 'id of voter';
