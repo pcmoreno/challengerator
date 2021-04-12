@@ -52,7 +52,7 @@ class CouchDbService
         );
     }
 
-    public function deleteDb(string $dbName): JsonResponse
+    public function deleteDb(string $dbName, $pass): JsonResponse
     {
         if ($this->listDatabasesInfo($dbName)->getStatusCode() !== 200)
         {
@@ -60,7 +60,12 @@ class CouchDbService
         }
         try {
             $this->client = new CouchClient($this->couchDsn, $dbName);
-            $this->client->deleteDatabase();
+            $info = $this->client->getDoc('info');
+            if ($info->_owner === $pass) {
+                $this->client->deleteDatabase();
+            } else {
+                return new JsonResponse('Nope', 403);
+            }
         } catch (Exception $exception) {
             return new JsonResponse('Error', 500);
         }
