@@ -5,6 +5,7 @@ namespace App\Entity\Challenge;
 
 use DateInterval;
 use Symfony\Component\Uid\Uuid;
+use function Symfony\Component\Translation\t;
 
 class Voter
 {
@@ -56,6 +57,7 @@ class Voter
         $stdClass->challenges = $this->roundsOfComparison->toArray();
         $stdClass->key = $this->authKey;
         $stdClass->token = isset($this->token)? $this->token : null;
+        $stdClass->tokenExpirationDate = isset($this->tokenExpirationDate)? $this->tokenExpirationDate : null;
         return $stdClass;
     }
 
@@ -79,6 +81,7 @@ class Voter
         $voter->roundsOfComparison = $roundsOfComparisons;
         $voter->authKey = $data['key'];
         $voter->token = $data['token'];
+        $voter->tokenExpirationDate = $data['tokenExpirationDate'] ?? null;
         return $voter;
     }
 
