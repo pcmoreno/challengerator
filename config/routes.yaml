@@ -90,11 +90,11 @@ indexCars:
     controller: App\Controller\DefaultController::challengeIndex
 
 voteDashboardForUser:
-    path: /voteCarForUserDashboard/{challengeName}/{userId}
+    path: /voteCarForUserDashboard/{challengeName}/{userId}/{token}
     controller: App\Controller\DefaultController::votingDashBoardForUser
 
 voteCarForUser:
-    path: /voteCarForUser/{challengeName}/{userId}/{cars}/{result}
+    path: /voteCarForUser/{challengeName}/{userId}/{cars}/{result}/{token}
     controller: App\Controller\DefaultController::voteForCarForUser
 
 listChallengesMenu:

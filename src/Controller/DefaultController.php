@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Services\ChallengeService;
-use phpDocumentor\Reflection\Types\This;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -26,10 +25,10 @@ class DefaultController extends AbstractController
             // where the key is the variable name and the value is the variable value
             // (Twig recommends using snake_case variable names: 'foo_bar' instead of 'fooBar')
             'users' => [
-                ['username' => 'pcmoreno'],
-                ['username' => 'that'],
-                ['username' => 'this'],
-                ['username' => 'nope'],
+                ['username' => 'nothing'],
+                ['username' => 'to'],
+                ['username' => 'see'],
+                ['username' => 'here'],
 
             ],
             'notifications' => 'no',
@@ -44,7 +43,7 @@ class DefaultController extends AbstractController
         );
     }
 
-    public function votingDashBoardForUser($challengeName, $userId): Response
+    public function votingDashBoardForUser($challengeName, $userId, ?string $token): Response
     {
         [$carsToVote, $carsNotVoted] = $this->challengeService->getTwoCarsToBeVotedByUser($challengeName, $userId);
         if ($carsToVote === []) {
@@ -56,17 +55,25 @@ class DefaultController extends AbstractController
                 'carsToVote' => $carsToVote,
                 'carsNotVoted' => $carsNotVoted,
                 'user' => $userId,
-                'challengeName' => $challengeName
+                'challengeName' => $challengeName,
+                'token' => $token
             ]
         );
     }
 
-    public function voteForCarForUser(Request $request, $challengeName, $userId, $cars, $result): Response
+    public function voteForCarForUser(Request $request, $challengeName, $userId, $cars, $result, $token): Response
     {
+        if (!$this->challengeService->isVoterTokenValid($token, $userId)) {
+            return $this->redirectToRoute('loginMenu',
+                [
+                    'challengeName' => $challengeName,
+                    'request' => $request
+                ]);
+        }
         try {
             [$carsToVote, $carsNotVoted] = $this->challengeService->voteOnCars($cars, $result, $challengeName, $userId);
         } catch (\Exception $exception) {
-            return $this->votingDashBoardForUser($challengeName, $userId);
+            return $this->votingDashBoardForUser($challengeName, $userId, $token);
         }
 
         if ($carsToVote === []) {
@@ -77,7 +84,8 @@ class DefaultController extends AbstractController
             'carsToVote' => $carsToVote,
             'carsNotVoted' => $carsNotVoted,
             'user' => $userId,
-            'challengeName' => $challengeName
+            'challengeName' => $challengeName,
+            'token' => $token
         ]);
     }
 

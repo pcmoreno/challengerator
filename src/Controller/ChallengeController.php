@@ -149,7 +149,7 @@ class ChallengeController extends AbstractController
 
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
-            [$role, $userId] = $this->challengeService->verifyLogin($login, $challengeName);
+            [$role, $userId, $token] = $this->challengeService->verifyLogin($login, $challengeName);
 
             switch ($role) {
                 case Role::ADMIN:
@@ -159,7 +159,8 @@ class ChallengeController extends AbstractController
                 case Role::VOTER:
                     return $this->redirectToRoute('voteDashboardForUser',[
                         'challengeName' => $challengeName,
-                        'userId' => $userId
+                        'userId' => $userId,
+                        'token' => $token
                     ]);
                 default:
                     return $this->redirectToRoute('listChallengesMenu');
