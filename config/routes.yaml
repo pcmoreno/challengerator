@@ -49,10 +49,10 @@ startChallenge:
     path: /challenge/initialize/{challengeName}
     controller: App\Controller\ChallengeController::startChallenge
 
-addCarToChallenge:
-    path: /challenge/addCar/{challengeName}
-    controller: App\Controller\ChallengeController::addCarToChallenge
-    methods: [ post ]
+#addCarToChallenge:
+#    path: /challenge/addCar/{challengeName}
+#    controller: App\Controller\ChallengeController::addCarToChallenge
+#    methods: [ post ]
 
 addCarToChallengeFormPage:
     path: /challenge/addCarForm/{challengeName}/{token}

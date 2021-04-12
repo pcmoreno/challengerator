@@ -7,7 +7,6 @@ use App\Entity\Auth\Role;
 use App\Entity\Challenge\Car;
 use App\Entity\Challenge\Challenge;
 use App\Entity\Challenge\Voter;
-use phpDocumentor\Reflection\Types\This;
 use PHPOnCouch\CouchClient;
 use PHPOnCouch\Exceptions\CouchNotFoundException;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -60,18 +59,20 @@ class ChallengeService
         return new JsonResponse('success', 201);
     }
 
-    public function addCar(string $challengeName, Car $car): void
+    public function addCar(string $challengeName, Car $car, string $token): void
     {
-        $carClient = $this->getCouchClient('cars');
-        $challengeClient = $this->getCouchClient($challengeName);
+        if ($this->isAdminTokenValid($token, $challengeName)) {
+            $carClient = $this->getCouchClient('cars');
+            $challengeClient = $this->getCouchClient($challengeName);
 
-        $carClient->storeDoc($car->toCouchDocument());
+            $carClient->storeDoc($car->toCouchDocument());
 
-        $data = json_decode(json_encode($challengeClient->getDoc('info')), true);
-        $challenge = Challenge::fromCouchDocument($data);
-        $challenge->addCarToChallenge($car);
-        $challenge->setRevisionNumber($data['_rev']);
-        $challengeClient->storeDoc($challenge->toCouchDocument());
+            $data = json_decode(json_encode($challengeClient->getDoc('info')), true);
+            $challenge = Challenge::fromCouchDocument($data);
+            $challenge->addCarToChallenge($car);
+            $challenge->setRevisionNumber($data['_rev']);
+            $challengeClient->storeDoc($challenge->toCouchDocument());
+        }
     }
 
     public function addVoterFromDataArray(string $challengeName, array $voterData): JsonResponse

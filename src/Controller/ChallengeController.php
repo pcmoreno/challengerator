@@ -12,7 +12,6 @@ use App\Form\CarType;
 use App\Form\LoginType;
 use App\Form\VoterType;
 use App\Services\ChallengeService;
-use phpDocumentor\Reflection\Types\This;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -42,6 +41,7 @@ class ChallengeController extends AbstractController
         return $this->challengeService->createNewChallenge($challengeName, $owner);
     }
 
+    // NOT UP TO DATE
     public function addCarToChallenge(Request $request, $challengeName): JsonResponse
     {
         $carData = json_decode($request->get('carData'), true);
@@ -89,9 +89,7 @@ class ChallengeController extends AbstractController
 
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
-            // $form->getData() holds the submitted values
-            // but, the original `$task` variable has also been updated
-            $this->challengeService->addCar($challengeName, $car);
+            $this->challengeService->addCar($challengeName, $car, $token);
         }
 
         $adminDeleteCar = new \stdClass();
