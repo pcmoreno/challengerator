@@ -7,12 +7,16 @@ use App\Entity\Auth\Role;
 use App\Entity\Challenge\Car;
 use App\Entity\Challenge\Challenge;
 use App\Entity\Challenge\Voter;
+use Monolog\Handler\StreamHandler;
 use PHPOnCouch\CouchClient;
 use PHPOnCouch\Exceptions\CouchNotFoundException;
 use Symfony\Component\HttpFoundation\JsonResponse;
+use Monolog\Logger;
 
 class ChallengeService
 {
+    private const LOGIN_LOG_PATH = 'logs/logins.log';
+    private const VOTING_LOG_PATH = 'logs/votes.log';
     private CouchDbService $service;
     private CouchClient $client;
     private string $dsn;
@@ -264,6 +268,9 @@ class ChallengeService
         if (!in_array($result, [0,1,0.5])) {
             return new JsonResponse('Wrong Result Chosen', 400);
         }
+        $logger = new Logger("votes");
+        $logger->pushHandler(new StreamHandler(self::VOTING_LOG_PATH, Logger::NOTICE));
+
         $carIds = explode('XXX', $cars);
 
         $voterClient = $this->getCouchClient('voters');
@@ -281,7 +288,6 @@ class ChallengeService
 
         // adjust the voter's cars voted/not voted
         $voter->setCarsToVotedForChallenge($carIds, $challengeId);
-        dump($voter);
 
         // apply the rating changes to the cars
         $carClient = $this->getCouchClient('cars');
@@ -312,12 +318,19 @@ class ChallengeService
         }
         //persist updated voter
         $voterClient->storeDoc($updatedVoterDoc);
+        $logger->notice("Voting received on Challenge: " . $challengeId);
+        $logger->notice($voter->getName() . " voted -- " . $result . " -- between ". $carA->getName() . " and " . $carB->getName());
+
+        $logger->close();
 
         return $this->getTwoCarsToBeVotedByUser($challengeId, $userId);
     }
 
     public function verifyLogin($login, $challengeName)
     {
+        $logger = new Logger("users");
+        $logger->pushHandler(new StreamHandler(self::LOGIN_LOG_PATH, Logger::NOTICE));
+        $logger->notice($login->user . " with pass " . $login->pass . " is trying to login to " . $challengeName);
         $token = null;
         $challengeClient = $this->getCouchClient($challengeName);
 
@@ -325,6 +338,7 @@ class ChallengeService
         $challenge = Challenge::fromCouchDocument(json_decode(json_encode($challengeDoc), true));
         if ($login->user === Role::ADMIN && $login->pass === $challengeDoc->owner){
             $token = $this->doLoginForAdmin($challenge);
+            $logger->notice(Role::ADMIN);
             return [Role::ADMIN, null, $token];
         }
 
@@ -337,14 +351,18 @@ class ChallengeService
                 $voter = Voter::fromCouchDocument($voterDoc[0]);
                 $token = $this->doLoginForUser($voter);
                 if ($challenge->hasVoter($voterDoc[0]->_id)) {
+                    $logger->notice(Role::VOTER);
                     return [Role::VOTER, $voterDoc[0]->_id, $token];
                 } else {
+                    $logger->notice(Role::VOTER_OF_A_DIFFERENT_CHALLENGE);
                     return [Role::VOTER_OF_A_DIFFERENT_CHALLENGE, $voterDoc[0]->_id, $token];
                 }
             }
         } catch (\Exception $exception) {
+            $logger->alert($exception->getMessage());
             dump($exception); die;
         }
+        $logger->notice('failed');
         return [Role::NONE, null, $token];
     }
 
