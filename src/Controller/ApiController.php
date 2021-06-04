@@ -34,6 +34,10 @@ class ApiController extends AbstractController
 
     public function createDb(?string $dbName, string $code): JsonResponse
     {
+        if ($code === null) {
+            return new JsonResponse('no code given', JsonResponse::HTTP_BAD_REQUEST);
+        }
+        dump($code);
         return $this->couchService->createDB($dbName, $code);
     }
 

@@ -14,8 +14,6 @@ class CouchDbService
 {
     /** @var string  */
     private $couchDsn;
-    /** @var string  */
-    private $couchDB;
     /** @var CouchClient  */
     private $client;
 
@@ -24,13 +22,17 @@ class CouchDbService
         string $couchDB
     ) {
         $this->client = new CouchClient($couchDsn, $couchDB);
-        $this->couchDB = $couchDB;
         $this->couchDsn = $couchDsn;
     }
 
-    public function createDB(?string $dbName): JsonResponse
+    public function createDB(?string $dbName, $code): JsonResponse
     {
-//        $codeClient = new CouchClient($this->couchDsn, "codes");
+        $codeService = new CodeService($this->couchDsn);
+        $success = $codeService->validateAndConsumeCode($code);
+        if (!$success) {
+            return new JsonResponse('Code not valid', JsonResponse::HTTP_FORBIDDEN);
+        }
+
         if ($dbName !== null) {
             $this->client = new CouchClient($this->couchDsn, $dbName);
         }

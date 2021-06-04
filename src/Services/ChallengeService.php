@@ -137,7 +137,8 @@ class ChallengeService
 
         $challenge->removeCarFromChallenge($carId);
         $challenge->setRevisionNumber($data['_rev']);
-        $challengeClient->storeDoc($challenge->toCouchDocument());    }
+        $challengeClient->storeDoc($challenge->toCouchDocument());
+    }
 
     public function getCarsForChallenge(string $challengeName, bool $json = true)
     {
