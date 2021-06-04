@@ -8,7 +8,6 @@ use \Mockery as m;
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPOnCouch\CouchClient;
 use PHPUnit\Framework\TestCase;
-use Symfony\Component\HttpFoundation\JsonResponse;
 
 class CouchDbServiceTest extends TestCase
 {
