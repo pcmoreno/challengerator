@@ -30,6 +30,7 @@ class CouchDbService
 
     public function createDB(?string $dbName): JsonResponse
     {
+//        $codeClient = new CouchClient($this->couchDsn, "codes");
         if ($dbName !== null) {
             $this->client = new CouchClient($this->couchDsn, $dbName);
         }

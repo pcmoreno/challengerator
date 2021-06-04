@@ -32,9 +32,9 @@ class ApiController extends AbstractController
         return new JsonResponse($data, JsonResponse::HTTP_OK);
     }
 
-    public function createDb(?string $dbName): JsonResponse
+    public function createDb(?string $dbName, string $code): JsonResponse
     {
-        return $this->couchService->createDB($dbName);
+        return $this->couchService->createDB($dbName, $code);
     }
 
     public function deleteDb(string $dbName, string $adminPass): JsonResponse

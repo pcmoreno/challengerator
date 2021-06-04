@@ -11,7 +11,7 @@ challengeapitest:
     controller: App\Controller\ChallengeController::challengeApiTest
 
 createDB:
-    path: /couch/createdb/{dbName}
+    path: /couch/createdb/{dbName}/{code}
     controller: App\Controller\ApiController::createDb
     defaults:
         dbName: null
