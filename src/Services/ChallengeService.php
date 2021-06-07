@@ -259,7 +259,7 @@ class ChallengeService
     {
         $dbList = $this->service->getDatabaseList();
         $array = array_filter($dbList, function ($entry) {
-            return !in_array($entry, ['cars', 'voters', '_users', '_replicator', '_global_changes']);
+            return !in_array($entry, ['cars', 'voters', '_users', '_replicator', '_global_changes', 'codes']);
         });
         return new JsonResponse(array_values($array));
     }
