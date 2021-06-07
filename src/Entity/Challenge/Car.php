@@ -78,8 +78,8 @@ class Car
     {
         return Car::create([
                 'name' => 'fill name of car here',
-                'imageUrlA' => 'imageA url from google drive',
-                'imageUrlB' => 'imageB url from google drive',
+                'imageUrlA' => 'imageA from google drive (e.g: 1uHXf1OkiQQWoCILAfAv7Rv5Yp6-uWL3i)',
+                'imageUrlB' => 'imageB from google drive (e.g: 1uHXf1OkiQQWoCILAfAv7Rv5Yp6-uWL3i)',
                 'challengeId' => ''
             ]
         );
