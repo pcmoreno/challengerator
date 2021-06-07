@@ -5,7 +5,6 @@ namespace App\Entity\Challenge;
 
 use DateInterval;
 use Symfony\Component\Uid\Uuid;
-use function Symfony\Component\Translation\t;
 
 class Voter
 {
