@@ -29,8 +29,14 @@ class ChallengeService
         $this->dsn = $dsn;
     }
 
-    public function createNewChallenge(string $name, string $owner): JsonResponse
+    public function createNewChallenge(string $name, string $owner, string $code): JsonResponse
     {
+        $codeService = new CodeService($this->dsn);
+        $success = $codeService->validateAndConsumeCode($code);
+        if (!$success) {
+            return new JsonResponse('Code not valid', JsonResponse::HTTP_FORBIDDEN);
+        }
+
         $this->client = $this->getCouchClient($name);
         try {
             $this->client->createDatabase();

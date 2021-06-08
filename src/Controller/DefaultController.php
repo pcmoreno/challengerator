@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Form\CreateChallengeType;
 use App\Services\ChallengeService;
+use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -88,6 +90,37 @@ class DefaultController extends AbstractController
             'default/challengeMenu.html.twig',
             [
                 'challenges' => $challenges,
+            ]
+        );
+    }
+
+    public function createChallenge(Request $request): Response
+    {
+        $createChallenge = new \stdClass();
+        $createChallenge->challengeName = 'name for challenge';
+        $createChallenge->adminPass = 'password for the admin panel of challenge';
+        $createChallenge->creationToken = '';
+
+        $createChallengeForm = $this->createForm(CreateChallengeType::class, $createChallenge);
+        $createChallengeForm->handleRequest($request);
+        if ($createChallengeForm->isSubmitted() && $createChallengeForm->isValid()) {
+            try {
+                $response = $this->challengeService->createNewChallenge(
+                    $createChallenge->challengeName,
+                    $createChallenge->adminPass,
+                    $createChallenge->creationToken
+                );
+
+                return $response->getStatusCode() === 200 ? $this->redirectToRoute('loginMenu', ['challengeName' => $createChallenge->challengeName]) : new JsonResponse($response->getContent(), 400);
+            } catch (Exception $exception) {
+                return new JsonResponse($exception->getMessage(), 400);
+            }
+        }
+
+        return $this->render(
+            'default/adminCreateChallenge.html.twig',
+            [
+                'adminCreateChallengeForm' => $createChallengeForm->createView()
             ]
         );
     }

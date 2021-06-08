@@ -41,9 +41,9 @@ addCarAndVoterToChallenge:
     path: /couch/addCar/{challengeName}
     controller: App\Controller\ApiController::addCarAndVoterToChallenge
 
-createChallenge:
-    path: /challenge/create/{challengeName}/{owner}
-    controller: App\Controller\ChallengeController::createChallenge
+#createChallenge:
+#    path: /challenge/create/{challengeName}/{owner}
+#    controller: App\Controller\ChallengeController::createChallenge
 
 startChallenge:
     path: /challenge/initialize/{challengeName}
@@ -67,7 +67,6 @@ addCarToChallengeFormPage:
 #    path: /challenge/deleteVoter/{challengeName}/{voterId}
 #    controller: App\Controller\ChallengeController::deleteVoterFromChallenge
 
-# TODO
 resetVotesForVoterOnChallenge:
     path: /challenge/resetVoter/
     controller: App\Controller\ChallengeController::resetVotesForVoterOnChallenge
@@ -101,3 +100,7 @@ listChallengesMenu:
 loginMenu:
     path: /login/{challengeName}
     controller: App\Controller\ChallengeController::loginFormPage
+
+createChallengeMenu:
+    path: /challenge/new
+    controller: App\Controller\DefaultController:createChallenge
