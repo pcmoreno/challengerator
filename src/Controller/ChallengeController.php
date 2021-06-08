@@ -36,11 +36,6 @@ class ChallengeController extends AbstractController
         return $this->challengeService->listChallenges();
     }
 
-    public function createChallenge($challengeName, $owner): JsonResponse
-    {
-        return $this->challengeService->createNewChallenge($challengeName, $owner);
-    }
-
     // NOT UP TO DATE
     public function addCarToChallenge(Request $request, $challengeName): JsonResponse
     {
@@ -124,10 +119,10 @@ class ChallengeController extends AbstractController
                 ]);
         }
         $voter = Voter::createForChallenge('Fill the user name here', 'give it a password', $challengeName);
-        $form = $this->createForm(VoterType::class, $voter);
+        $voterForm = $this->createForm(VoterType::class, $voter);
 
-        $form->handleRequest($request);
-        if ($form->isSubmitted() && $form->isValid()) {
+        $voterForm->handleRequest($request);
+        if ($voterForm->isSubmitted() && $voterForm->isValid()) {
 
             $voter = Voter::createForChallenge($voter->getName(), $voter->getAuthKey(), $challengeName);
             $this->challengeService->addVoter($challengeName, $voter, $token);
@@ -146,7 +141,7 @@ class ChallengeController extends AbstractController
 
         $allUsersInTheChallenge = $this->challengeService->getAllVotersForTheChallenge($challengeName);
         return $this->render('/voter/voterDashboard.html.twig', [
-            'form' => $form->createView(),
+            'form' => $voterForm->createView(),
             'adminDeleteForm' => $adminDeleteVoterForm->createView(),
             'allUsersInTheChallenge' => $allUsersInTheChallenge,
             'challengeName' => $challengeName,
