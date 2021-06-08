@@ -189,12 +189,29 @@ class ChallengeController extends AbstractController
 
     public function resetVotesForVoterOnChallenge(Request $request): Response
     {
-        return $this->challengeService->resetRoundOfVoteForUserOfChallenge(
-            $request->get('challengeName'),
-            $request->get('voterId')
+        $challengeName = $request->get('challengeName');
+        $token = $request->get('token');
+
+        $isAdminTokenValid = $this->challengeService->isAdminTokenValid(
+            $token,
+            $challengeName
         );
 
-        // TODO redirect to proper twig.
+        if ($isAdminTokenValid) {
+            $response = $this->challengeService->resetRoundOfVoteForUserOfChallenge(
+                $challengeName,
+                $request->get('voterId')
+            );
+            if ($response->getStatusCode() === 200) {
+                return $this->redirectToRoute('addVoterToChallengeFormPage', [
+                    'challengeName' => $challengeName,
+                    'token' => $token
+                ]);
+            } else {
+                return $response;
+            }
+        }
+        return new JsonResponse('unauthorized', 403);
     }
 
 }

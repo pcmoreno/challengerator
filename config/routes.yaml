@@ -67,10 +67,11 @@ addCarToChallengeFormPage:
 #    path: /challenge/deleteVoter/{challengeName}/{voterId}
 #    controller: App\Controller\ChallengeController::deleteVoterFromChallenge
 
+# TODO
 resetVotesForVoterOnChallenge:
     path: /challenge/resetVoter/
     controller: App\Controller\ChallengeController::resetVotesForVoterOnChallenge
-    methods: [ post ]
+    methods: [ get ]
 
 addVoterToChallengeFormPage:
     path: /challenge/addVoterForm/{challengeName}/{token}

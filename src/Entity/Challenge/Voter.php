@@ -164,4 +164,9 @@ class Voter
         return (count($total))/2;
     }
 
+    public function countCarsLeftToCompareForChallenge($challengeName): int
+    {
+        return count($this->roundsOfComparison->getCarsLeftToVoteForChallenge($challengeName));
+    }
+
 }
