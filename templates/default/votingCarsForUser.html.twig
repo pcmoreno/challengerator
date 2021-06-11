@@ -8,15 +8,20 @@
 {% block body %}
     <table>
         <tr>
+            {% set isDev = app.request.server.get('APP_ENV')  %}
             <td>Car name</td>
+            {% if  (isDev == 'dev') %}
             <td>rating</td>
+            {% endif %}
             <td>Your vote</td>
         </tr>
         {% set turn = 'left' %}
         {% for item in carsToVote %}
             <tr>
                 <td>{{ item.name }}</td>
+                {% if  (isDev == 'dev') %}
                 <td>{{ item.rating }}</td>
+                {% endif %}
                 <td>
                     <button><a href= {{ path('voteCarForUser', {
                             'challengeName': challengeName,
@@ -24,7 +29,7 @@
                             'cars': "#{carsToVote[0]['_id']}XXX#{carsToVote[1]['_id']}",
                             'result': turn,
                             'token': token
-                        }) }}>THIS ONE IS NICER</a></button>
+                        }) }}>THIS ONE</a></button>
                 </td>
                 <td><img class="article-img" src="https://drive.google.com/uc?id={{ item.imageUrlA }}"
                          alt="{{ item.name }}" height="450" width="800"></td>
@@ -37,13 +42,13 @@
             <td></td>
             <td></td>
             <td>
-                <button><a href= {{ path('voteCarForUser', {
+                <button style="white-space: normal"><a href= {{ path('voteCarForUser', {
                         'challengeName': challengeName,
                         'userId': user,
                         'cars': "#{carsToVote[0]['_id']}XXX#{carsToVote[1]['_id']}",
                         'result': 'draw',
                         'token': token
-                    }) }}>THEY'RE THE SAME</a></button>
+                    }) }}>SAME QUALITY</a></button>
             </td>
         </tr>
     </table>
