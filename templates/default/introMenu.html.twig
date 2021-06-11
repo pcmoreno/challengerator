@@ -1,10 +1,19 @@
+<body>
+<div class="content">
+
 <h1>Challengeator</h1>
 
 <p></p>
 <table style="width: 50%; margin-left: auto; margin-right: auto;">
-        <tr><td><h3><center>a voting platform for car design competitions</center></h3></td></tr>
+        <tr><td><h3><div style="text-align: center;">a voting platform for car design competitions</div></h3></td></tr>
+        <tr><td></td></tr>
         <tr><td><button><a href= {{ path('createChallengeMenu') }}>I have a token and want to create a new challenge</a></button></td></tr>
-        <tr><td><button><a href= {{ path('listChallengesMenu') }}>I want to login as a voter or as a user for a challenge</a></button></td></tr>
+        <tr><td><button><a href= {{ path('listChallengesMenu') }}>I want to login as a voter or as an admin for a challenge</a></button></td></tr>
+        <tr><td></td></tr>
 </table>
-
+</div>
+<footer class="footer">
+        <h3>(c)pcmoreno - June 2021</h3>
+</footer>
+</body>
 {% include 'default/generalStyle.html.twig' %}
