@@ -10,7 +10,9 @@
         </tr>
     {% endfor %}
 </table>
-{% if challeges is empty %}
+{% if challenges is empty %}
 <div style="text-align: center;"><h1 style="font-family: 'Arial Narrow',cursive">no challenges available at the moment</h1></div>
 {% endif %}
+
+<div style="text-align: center;"><a href="{{ path('index') }}" >BACK</a></div>
 {% include 'default/generalStyle.html.twig' %}
