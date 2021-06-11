@@ -22,19 +22,7 @@ class DefaultController extends AbstractController
 
     public function index(): Response
     {
-        return $this->render('default/default.html.twig', [
-            // this array defines the variables passed to the template,
-            // where the key is the variable name and the value is the variable value
-            // (Twig recommends using snake_case variable names: 'foo_bar' instead of 'fooBar')
-            'users' => [
-                ['username' => 'nothing'],
-                ['username' => 'to'],
-                ['username' => 'see'],
-                ['username' => 'here'],
-
-            ],
-            'notifications' => 'no',
-        ]);
+        return $this->render('default/introMenu.html.twig');
     }
 
     public function votingDashBoardForUser($challengeName, $userId, ?string $token): Response
