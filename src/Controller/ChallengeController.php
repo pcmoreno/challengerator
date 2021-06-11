@@ -70,7 +70,7 @@ class ChallengeController extends AbstractController
         return $this->challengeService->initializeChallenge($challengeName);
     }
 
-    public function newCarFormPage(Request $request, $challengeName, $token): Response
+    public function carsDashboardPage(Request $request, $challengeName, $token): Response
     {
         if (!$this->challengeService->isAdminTokenValid($token, $challengeName)) {
             return $this->redirectToRoute('loginMenu',
@@ -109,7 +109,7 @@ class ChallengeController extends AbstractController
         ]);
     }
 
-    public function newUserFormPage(Request $request, $challengeName, $token): Response
+    public function votersDashboardPage(Request $request, $challengeName, $token): Response
     {
         if (!$this->challengeService->isAdminTokenValid($token, $challengeName)) {
             return $this->redirectToRoute('loginMenu',
