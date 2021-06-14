@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Form;
 
+use Gregwar\CaptchaBundle\Type\CaptchaType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
@@ -17,6 +18,7 @@ class LoginType extends AbstractType
         $builder
             ->add('user', TextType::class)
             ->add('pass', PasswordType::class)
+            ->add('captcha', CaptchaType::class)
             ->add('login', SubmitType::class);
     }
 
@@ -25,7 +27,7 @@ class LoginType extends AbstractType
         $resolver->setDefaults([
             'csrf_protection' => true,
             'csrf_field_name' => '_token',
-            'csrf_token_id'   => 'login_item',
+            'csrf_token_id'   => 'login_item'
         ]);
     }
 }
