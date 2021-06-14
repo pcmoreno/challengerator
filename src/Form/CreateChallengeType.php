@@ -9,15 +9,32 @@ use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\Length;
+use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\Regex;
 
 class CreateChallengeType extends AbstractType
 {
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
-            ->add('challengeName', TextType::class)
-            ->add('adminPass', PasswordType::class)
-            ->add('creationToken', PasswordType::class)
+            ->add('challengeName', TextType::class, [
+                    'required' => true,
+                    'constraints' => [
+                        new Length(['min' => 5]),
+                        new Regex(['pattern' => "{^[a-z][a-z0-9_$()+/-]*$}", 'message' => "must be lowercase. Digits and _ $ ( ) + - / are allowed"])
+                    ]
+                ]
+            )
+            ->add('adminPass', PasswordType::class, [
+                'constraints' => [
+                    new Length(['min' => 6]),
+                    new NotBlank()
+                ]
+            ])
+            ->add('creationToken', PasswordType::class, [
+                'required' => true
+            ])
             ->add('login', SubmitType::class);
     }
 
