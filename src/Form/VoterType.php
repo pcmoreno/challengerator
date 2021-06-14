@@ -25,6 +25,9 @@ class VoterType extends AbstractType
     {
         $resolver->setDefaults([
             'data_class' => Voter::class,
+            'csrf_protection' => true,
+            'csrf_field_name' => '_token',
+            'csrf_token_id'   => 'login_item',
         ]);
     }
 }
