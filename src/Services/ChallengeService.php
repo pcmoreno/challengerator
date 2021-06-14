@@ -339,16 +339,17 @@ class ChallengeService
         $logger->pushHandler(new StreamHandler(self::LOGIN_LOG_PATH, Logger::NOTICE));
         $logger->notice($login->user . " with pass " . $login->pass . " is trying to login to " . $challengeName);
         $token = null;
-        $challengeClient = $this->getCouchClient($challengeName);
+        if ($challengeName !== 'reset password') {
+            $challengeClient = $this->getCouchClient($challengeName);
 
-        $challengeDoc = $challengeClient->getDoc('info');
-        $challenge = Challenge::fromCouchDocument(json_decode(json_encode($challengeDoc), true));
-        if ($login->user === Role::ADMIN && $login->pass === $challengeDoc->owner){
-            $token = $this->doLoginForAdmin($challenge);
-            $logger->notice(Role::ADMIN);
-            return [Role::ADMIN, null, $token];
+            $challengeDoc = $challengeClient->getDoc('info');
+            $challenge = Challenge::fromCouchDocument(json_decode(json_encode($challengeDoc), true));
+            if ($login->user === Role::ADMIN && $login->pass === $challengeDoc->owner) {
+                $token = $this->doLoginForAdmin($challenge);
+                $logger->notice(Role::ADMIN);
+                return [Role::ADMIN, null, $token];
+            }
         }
-
         $voterClient = $this->getCouchClient('voters');
         try {
             $voterDoc = $voterClient->find([
@@ -357,7 +358,7 @@ class ChallengeService
             if ($voterDoc !== [] && password_verify($login->pass, $voterDoc[0]->key)) {
                 $voter = Voter::fromCouchDocument($voterDoc[0]);
                 $token = $this->doLoginForUser($voter);
-                if ($challenge->hasVoter($voterDoc[0]->_id)) {
+                if ($challengeName !== 'reset password' && $challenge->hasVoter($voterDoc[0]->_id)) {
                     $logger->notice(Role::VOTER);
                     return [Role::VOTER, $voterDoc[0]->_id, $token];
                 } else {
@@ -435,5 +436,35 @@ class ChallengeService
         $challenge = Challenge::fromCouchDocument(json_decode(json_encode($challengeInfo), true));
 
         return ($challenge->getAdminToken() !== null && $challenge->getAdminToken() === $tokenShown);
+    }
+
+    public function changePassForVoter(string $voterName, string $newPass): bool
+    {
+        $logger = new Logger("users");
+        $logger->pushHandler(new StreamHandler(self::LOGIN_LOG_PATH, Logger::NOTICE));
+        try {
+            $logger->notice($voterName . " is resetting password");
+            $voterClient = $this->getCouchClient('voters');
+            $voterDoc = $voterClient->find([
+                'name' => $voterName
+            ])[0];
+
+            $voter = Voter::fromCouchDocument($voterDoc);
+            $hashed_password = password_hash($newPass, PASSWORD_BCRYPT);
+            if ($hashed_password === false || $hashed_password === null) {
+                throw new \Exception('Failed Hashing Password, creation of Voter aborted');
+            }
+            $voter->setAuthKey($hashed_password);
+            $updatedVoterDoc = $voter->toCouchDocument();
+            $updatedVoterDoc->_rev = $voterDoc->_rev;
+
+            $voterClient->storeDoc($updatedVoterDoc);
+            $logger->notice("success");
+            return true;
+        } catch (\Exception $exception) {
+            dump($exception); die;
+            $logger->alert($exception->getMessage());
+            return false;
+        }
     }
 }

@@ -3,9 +3,12 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Entity\Auth\Role;
+use App\Form\ChangePasswordType;
 use App\Form\CreateChallengeType;
 use App\Services\ChallengeService;
 use Exception;
+use phpDocumentor\Reflection\Types\This;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -111,5 +114,39 @@ class DefaultController extends AbstractController
                 'adminCreateChallengeForm' => $createChallengeForm->createView()
             ]
         );
+    }
+
+    public function changePasswordForVoter(Request $request): Response
+    {
+        $changePass = new \stdClass();
+        $changePass->username = '';
+        $changePass->currentPass = '';
+        $changePass->newPass = '';
+
+        $changePassForm = $this->createForm(ChangePasswordType::class, $changePass);
+        $changePassForm->handleRequest($request);
+        if($changePassForm->isSubmitted() && $changePassForm->isValid()) {
+            $login = new \stdClass();
+            $login->user = $request->get('change_password')['username'];
+            $login->pass = $request->get('change_password')['currentPass'];
+            $isValidLogin = $this->challengeService->verifyLogin($login, 'reset password')[0] !== Role::NONE;
+            if ($isValidLogin) {
+                $success = $this->challengeService->changePassForVoter(
+                    $request->get('change_password')['username'],
+                    $request->get('change_password')['newPass']
+                );
+                if ($success) {
+                    return $this->redirectToRoute('listChallengesMenu');
+                } else {
+                    return new JsonResponse('something went wrong', 500);
+                }
+            } else {
+                return $this->redirectToRoute('changePasswordMenu');
+            }
+        }
+        return $this->render('/voter/changePassword.html.twig',
+            [
+                'changePasswordForm' => $changePassForm->createView()
+            ]);
     }
 }

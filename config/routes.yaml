@@ -104,3 +104,7 @@ loginMenu:
 createChallengeMenu:
     path: /challenge/new
     controller: App\Controller\DefaultController:createChallenge
+
+changePasswordMenu:
+    path: /voter/changePass
+    controller: App\Controller\DefaultController:changePasswordForVoter
