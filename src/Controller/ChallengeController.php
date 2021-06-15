@@ -209,4 +209,7 @@ class ChallengeController extends AbstractController
         return new JsonResponse('unauthorized', 403);
     }
 
+    public function addSelfRegisteredVoterForChallenge($challengeName) {
+        return $this->challengeService->AddVoterToChallengeFromIp($challengeName);
+    }
 }
