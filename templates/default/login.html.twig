@@ -1,8 +1,8 @@
 <h1>{{ challengeName }}</h1><br>
 
 {{ form_start(form) }}
-    {{ form_widget(form.user) }}
-    {{ form_widget(form.pass) }}
+    {{ form_row(form.user) }}
+    {{ form_row(form.pass) }}
     {{ form_widget(form.login) }}
 <div class="cap" style="alignment: center; width: 160px; margin-left: auto; margin-right: auto">
     {{ form_widget(form.captcha) }}
