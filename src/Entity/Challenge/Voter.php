@@ -14,8 +14,9 @@ class Voter
     private string $authKey;
     private ?string $token;
     private ?int $tokenExpirationDate;
+    private ?string $ipAddress;
 
-    public static function createForChallenge(string $name, string $pass, string $challengeId): Voter
+    public static function createForChallenge(string $name, string $pass, string $challengeId, string $ip = 'default'): Voter
     {
         $voter = new Voter();
         $voter->id = Uuid::v6()->jsonSerialize();
@@ -32,6 +33,8 @@ class Voter
         $round->setCarsAlreadyComparedForChallenge([], $challengeId);
 
         $voter->roundsOfComparison = $round;
+
+        $voter->ipAddress = $ip;
 
         return $voter;
     }
@@ -55,8 +58,9 @@ class Voter
         $stdClass->name = $this->name;
         $stdClass->challenges = $this->roundsOfComparison->toArray();
         $stdClass->key = $this->authKey;
-        $stdClass->token = isset($this->token)? $this->token : null;
-        $stdClass->tokenExpirationDate = isset($this->tokenExpirationDate)? $this->tokenExpirationDate : null;
+        $stdClass->token = $this->token ?? null;
+        $stdClass->tokenExpirationDate = $this->tokenExpirationDate ?? null;
+        $stdClass->ipAddress = $this->ipAddress ?? null;
         return $stdClass;
     }
 
@@ -81,6 +85,7 @@ class Voter
         $voter->authKey = $data['key'];
         $voter->token = $data['token'];
         $voter->tokenExpirationDate = $data['tokenExpirationDate'] ?? null;
+        $voter->ipAddress = $data['ipAddress'] ?? null;
         return $voter;
     }
 
@@ -169,4 +174,8 @@ class Voter
         return count($this->roundsOfComparison->getCarsLeftToVoteForChallenge($challengeName));
     }
 
+    public function getIpAddress(): ?string
+    {
+        return $this->ipAddress;
+    }
 }

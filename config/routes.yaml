@@ -64,7 +64,7 @@ addVoterToChallengeFormPage:
 
 addSelfRegisteredVoterToChallengeFormPage:
     path: /challenge/signup/{challengeName}
-    controller: App\Controller\ChallengeController::addSelfRegisteredVoterForChallenge
+    controller: App\Controller\ChallengeController::addSelfRegisteredVoterForChallengePage
 
 #addVoterToChallenge:
 #    path: /challenge/addVoter/{challengeName}
