@@ -10,6 +10,7 @@ use App\Form\AdminDeleteCarType;
 use App\Form\AdminDeleteVoterType;
 use App\Form\CarType;
 use App\Form\LoginType;
+use App\Form\SignUpType;
 use App\Form\VoterType;
 use App\Services\ChallengeService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -209,7 +210,32 @@ class ChallengeController extends AbstractController
         return new JsonResponse('unauthorized', 403);
     }
 
-    public function addSelfRegisteredVoterForChallenge($challengeName) {
-        return $this->challengeService->AddVoterToChallengeFromIp($challengeName);
+    public function addSelfRegisteredVoterForChallengePage(Request $request, $challengeName) {
+        $availableChallenges = json_decode($this->challengeService->listChallenges()->getContent(), true);
+        if (!in_array($challengeName, $availableChallenges)) {
+            return new JsonResponse('invalid challenge', 401);
+        }
+
+        $newVoter = new \stdClass();
+        $newVoter->username = '';
+        $newVoter->password = '';
+        $form = $this->createForm(SignUpType::class, $newVoter);
+
+        $form->handleRequest($request);
+        if ($form->isSubmitted() && $form->isValid()) {
+            $success = $this->challengeService->AddVoterToChallengeFromIp(
+                $challengeName,
+                $newVoter->username,
+                $newVoter->password
+            );
+            return $success ?
+                $this->redirectToRoute('loginMenu', ['challengeName' => $challengeName]) :
+                new JsonResponse('already signed up or self-registration not allowed', 401);
+        }
+
+        return $this->render('default/signup.html.twig', [
+            'form' => $form->createView(),
+            'challengeName' => $challengeName
+        ]);
     }
 }
