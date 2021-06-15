@@ -7,7 +7,7 @@
     <h3>Users in this challenge</h3>
     <table>
         {% block topRow %}
-        <td>NAME</td><td>#comparisons made</td><td>#cars left</td><td>ID</td><td style="background-color: #1c7430"></td>
+        <td>Name</td><td>#comparisons made</td><td>#cars left</td><td>ID</td><td>IP</td><td style="background-color: #1c7430"></td>
         {% endblock %}
         {% for voter in allUsersInTheChallenge %}
             <tr>
@@ -15,6 +15,7 @@
                 <td>{{ voter.countComparisonsMadeForChallenge(challengeName) }}</td>
                 <td>{{ voter.countCarsLeftToCompareForChallenge(challengeName) }}</td>
                 <td>{{ voter.id }}</td>
+                <td>{{ voter.ipAddress }}</td>
                 <td><button><a href = {{ path('resetVotesForVoterOnChallenge', {'challengeName': challengeName, 'voterId': voter.id, 'token': token}) }}>give more votes</a></button></td>
             </tr>
         {% endfor %}

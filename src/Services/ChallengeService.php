@@ -85,17 +85,31 @@ class ChallengeService
         }
     }
 
-    // OUTDATED
-    public function addVoterFromDataArray(string $challengeName, array $voterData): JsonResponse
+    public function AddVoterToChallengeFromIp($challengeName, $voterName, $password): bool
     {
-        try {
-            $voter = Voter::createForChallenge($voterData['username'], $voterData['pass'], $challengeName);
-        } catch (\Exception $exception) {
-            return new JsonResponse($exception->getMessage(), 400);
+        $challengeClient = $this->getCouchClient($challengeName);
+        $challengeDoc = $challengeClient->getDoc('info');
+        if (isset($challengeDoc->allowsSelfRegistration) && $challengeDoc->allowsSelfRegistration === false) {
+            return false;
         }
-        $this->addVoter($challengeName, $voter);
+        $ip = $_SERVER['REMOTE_ADDR'];
+        $voterClient = $this->getCouchClient('voters');
+        $selector = ['ipAddress' => ['$eq' => $ip]];
+        $voterDoc = $voterClient->find($selector);
 
-        return new JsonResponse('success', 201);
+        $existingVotersWithSameIpAndChallenge = array_filter(json_decode(json_encode($voterDoc), true), function ($item) use ($challengeName) {
+            return array_key_exists($challengeName, $item['challenges']);
+        });
+
+        if (count($existingVotersWithSameIpAndChallenge) === 0) {
+            $voter = Voter::createForChallenge($voterName, $password, $challengeName, $ip);
+            $this->addVoterToChallenge($challengeName, $voter);
+
+            // immediately allow this user to cast votes
+            $this->resetRoundOfVoteForUserOfChallenge($challengeName, $voter->getId());
+            return true;
+        }
+        return false;
     }
 
     public function addVoter(string $challengeName, Voter $voter, string $token): void
@@ -103,17 +117,7 @@ class ChallengeService
         if (!$this->isAdminTokenValid($token, $challengeName)) {
             return;
         }
-        $voterClient = $this->getCouchClient('voters');
-        $challengeClient = $this->getCouchClient($challengeName);
-
-        $voterClient->storeDoc($voter->toCouchDocument());
-
-        $data = json_decode(json_encode($challengeClient->getDoc('info')), true);
-        $challenge = Challenge::fromCouchDocument($data);
-
-        $challenge->addVoterToChallenge($voter);
-        $challenge->setRevisionNumber($data['_rev']);
-        $challengeClient->storeDoc($challenge->toCouchDocument());
+        $this->addVoterToChallenge($challengeName, $voter);
     }
 
     public function deleteVoterFromChallenge(string $challengeName, string $voterId): void
@@ -437,7 +441,6 @@ class ChallengeService
 
         return ($challenge->getAdminToken() !== null && $challenge->getAdminToken() === $tokenShown);
     }
-
     public function changePassForVoter(string $voterName, string $newPass): bool
     {
         $logger = new Logger("users");
@@ -468,9 +471,18 @@ class ChallengeService
         }
     }
 
-    public function AddVoterToChallengeFromIp($challengeName)
+    private function addVoterToChallenge(string $challengeName, Voter $voter)
     {
-        $ip = $_SERVER['REMOTE_ADDR'];
-        dump($ip); die;
+        $voterClient = $this->getCouchClient('voters');
+        $challengeClient = $this->getCouchClient($challengeName);
+
+        $voterClient->storeDoc($voter->toCouchDocument());
+
+        $data = json_decode(json_encode($challengeClient->getDoc('info')), true);
+        $challenge = Challenge::fromCouchDocument($data);
+
+        $challenge->addVoterToChallenge($voter);
+        $challenge->setRevisionNumber($data['_rev']);
+        $challengeClient->storeDoc($challenge->toCouchDocument());
     }
 }
