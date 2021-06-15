@@ -462,9 +462,15 @@ class ChallengeService
             $logger->notice("success");
             return true;
         } catch (\Exception $exception) {
-            dump($exception); die;
             $logger->alert($exception->getMessage());
+//            dump($exception); die;
             return false;
         }
+    }
+
+    public function AddVoterToChallengeFromIp($challengeName)
+    {
+        $ip = $_SERVER['REMOTE_ADDR'];
+        dump($ip); die;
     }
 }
