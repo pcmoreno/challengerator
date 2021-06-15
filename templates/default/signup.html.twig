@@ -1,0 +1,20 @@
+<h1>sign up for {{ challengeName }}</h1><br>
+
+{{ form_start(form) }}
+    {{ form_row(form.username) }}
+    {{ form_row(form.password) }}
+
+<div class="cap" style="alignment: center; width: 160px; margin-left: auto; margin-right: auto">
+    {{ form_widget(form.captcha) }}
+</div>
+{{ form_widget(form.register) }}
+{{ form_end(form) }}
+
+{% include 'default/generalStyle.html.twig' %}
+
+<style>
+    form {
+        margin: auto;
+        width: 50%;
+    }
+</style>
