@@ -46,7 +46,7 @@ addCarAndVoterToChallenge:
 #    controller: App\Controller\ChallengeController::createChallenge
 
 startChallenge:
-    path: /challenge/initialize/{challengeName}
+    path: /challenge/initialize/{challengeName}/{token}
     controller: App\Controller\ChallengeController::startChallenge
 
 #addCarToChallenge:
@@ -59,12 +59,18 @@ addCarToChallengeFormPage:
     controller: App\Controller\ChallengeController::carsDashboardPage
 
 addVoterToChallengeFormPage:
-    path: /challenge/addVoterForm/{challengeName}/{token}
+    path: /challenge/addVoterForm/{challengeName}/{token}/{selfRegistrationCode}
     controller: App\Controller\ChallengeController::votersDashboardPage
+    defaults:
+        selfRegistrationCode: nope
 
 addSelfRegisteredVoterToChallengeFormPage:
-    path: /challenge/signup/{challengeName}
+    path: /challenge/signup/{challengeName}/{selfRegistrationCode}
     controller: App\Controller\ChallengeController::addSelfRegisteredVoterForChallengePage
+
+toggleSelfRegistrationForChallenge:
+    path: /challenge/toggleSelfRegistration/{challengeName}/{token}
+    controller: App\Controller\ChallengeController::toggleSelfRegistrationForChallenge
 
 #addVoterToChallenge:
 #    path: /challenge/addVoter/{challengeName}
