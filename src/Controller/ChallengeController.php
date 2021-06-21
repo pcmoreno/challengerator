@@ -66,9 +66,17 @@ class ChallengeController extends AbstractController
         return $this->challengeService->getCarsForChallenge($challengeName);
     }
 
-    public function startChallenge($challengeName): JsonResponse
+    public function startChallenge(string $challengeName, string $token): Response
     {
-        return $this->challengeService->initializeChallenge($challengeName);
+        $response =  $this->challengeService->initializeChallenge($challengeName, $token);
+        if ($response->getStatusCode() === 200) {
+            return $this->redirectToRoute('addVoterToChallengeFormPage', [
+                'challengeName' => $challengeName,
+                'token' => $token
+            ]);
+        } else {
+            return $response;
+        }
     }
 
     public function carsDashboardPage(Request $request, $challengeName, $token): Response
@@ -146,7 +154,9 @@ class ChallengeController extends AbstractController
             'adminDeleteForm' => $adminDeleteVoterForm->createView(),
             'allUsersInTheChallenge' => $allUsersInTheChallenge,
             'challengeName' => $challengeName,
-            'token' => $token
+            'token' => $token,
+            'selfRegistration' => $this->challengeService->isChallengeOpenToSelfRegistration($challengeName),
+            'selfRegistrationCode' => $this->challengeService->getSelfRegistrationCodeForChallenge($challengeName)
         ]);
     }
 
@@ -210,11 +220,17 @@ class ChallengeController extends AbstractController
         return new JsonResponse('unauthorized', 403);
     }
 
-    public function addSelfRegisteredVoterForChallengePage(Request $request, $challengeName) {
+    public function addSelfRegisteredVoterForChallengePage(Request $request, $challengeName, $selfRegistrationCode) {
         $availableChallenges = json_decode($this->challengeService->listChallenges()->getContent(), true);
         if (!in_array($challengeName, $availableChallenges)) {
             return new JsonResponse('invalid challenge', 401);
         }
+
+        if (!$this->challengeService->isTheSelfRegistrationCodeCorrect($challengeName, $selfRegistrationCode)) {
+            return new JsonResponse('self-registration not allowed or URL is incorrect', 401);
+        }
+
+        // todo check for the registrationCode
 
         $newVoter = new \stdClass();
         $newVoter->username = '';
@@ -237,5 +253,30 @@ class ChallengeController extends AbstractController
             'form' => $form->createView(),
             'challengeName' => $challengeName
         ]);
+    }
+
+    public function toggleSelfRegistrationForChallenge($challengeName, $token): Response
+    {
+        $isAdminTokenValid = $this->challengeService->isAdminTokenValid(
+            $token,
+            $challengeName
+        );
+
+        if ($isAdminTokenValid) {
+            $success = $this->challengeService->toggleSelfRegistrationForChallenge(
+                $challengeName,
+            );
+            if ($success) {
+                return $this->redirectToRoute('addVoterToChallengeFormPage', [
+                    'challengeName' => $challengeName,
+                    'token' => $token,
+                    'selfRegistrationCode' => $success
+                ]);
+            } else {
+                return new JsonResponse('ERROR', 500);
+            }
+        } else {
+            return new JsonResponse('Unauthorized', 403);
+        }
     }
 }
