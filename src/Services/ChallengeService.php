@@ -10,6 +10,7 @@ use App\Entity\Challenge\Voter;
 use Monolog\Handler\StreamHandler;
 use PHPOnCouch\CouchClient;
 use PHPOnCouch\Exceptions\CouchNotFoundException;
+use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Monolog\Logger;
 
@@ -192,8 +193,12 @@ class ChallengeService
     }
 
     // TODO: should do it to only do to non active challenges.
-    public function initializeChallenge($challengeName): JsonResponse
+    public function initializeChallenge($challengeName, $adminToken): JsonResponse
     {
+        if (!$this->isAdminTokenValid($adminToken, $challengeName)) {
+            return new JsonResponse('token not valid', 403);
+        }
+
         $challengeClient = $this->getCouchClient($challengeName);
         $voterClient = $this->getCouchClient('voters');
 
@@ -484,5 +489,44 @@ class ChallengeService
         $challenge->addVoterToChallenge($voter);
         $challenge->setRevisionNumber($data['_rev']);
         $challengeClient->storeDoc($challenge->toCouchDocument());
+    }
+
+    public function isChallengeOpenToSelfRegistration($challengeName): string
+    {
+        $challengeInfo = $this->getCouchClient($challengeName)->getDoc('info');
+        $challenge = Challenge::fromCouchDocument(json_decode(json_encode($challengeInfo), true));
+
+        return $challenge->allowsSelfRegistration() ? 'active' : 'inactive';
+    }
+
+    public function toggleSelfRegistrationForChallenge($challengeName)
+    {
+        $client = $this->getCouchClient($challengeName);
+        $challengeInfo = $client->getDoc('info');
+        $challengeInfo->allowSelfRegistration = !$challengeInfo->allowSelfRegistration;
+        $code = Uuid::uuid4()->toString();
+        $challengeInfo->selfRegistrationCode = $code;
+        try {
+            $client->storeDoc($challengeInfo);
+            return $code;
+        } catch (\Exception $exception) {
+            return false;
+        }
+    }
+
+    public function getSelfRegistrationCodeForChallenge($challengeName): string
+    {
+        $client = $this->getCouchClient($challengeName);
+        $challengeInfo = $client->getDoc('info');
+
+        return $challengeInfo->selfRegistrationCode;
+    }
+
+    public function isTheSelfRegistrationCodeCorrect($challengeName, $selfRegistrationCode): bool
+    {
+        $client = $this->getCouchClient($challengeName);
+        $challengeInfo = $client->getDoc('info');
+
+        return $selfRegistrationCode === $challengeInfo->selfRegistrationCode;
     }
 }
