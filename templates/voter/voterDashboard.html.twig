@@ -1,30 +1,55 @@
 <h1>Voter Dashboard for {{ challengeName }}</h1>
 <b><a href="{{ path('addCarToChallengeFormPage', {'challengeName': challengeName, 'token': token }) }}">go to cars</a></b>
 <div class="formcontainer">
-{{ form(form) }}
+    {{ form(form) }}
 </div>
-    <br>
-    <h3>Users in this challenge</h3>
-    <table>
-        {% block topRow %}
-        <td>Name</td><td>#comparisons made</td><td>#cars left</td><td>ID</td><td>IP</td><td style="background-color: #1c7430"></td>
-        {% endblock %}
-        {% for voter in allUsersInTheChallenge %}
-            <tr>
-                <td>{{ voter.name }}</td>
-                <td>{{ voter.countComparisonsMadeForChallenge(challengeName) }}</td>
-                <td>{{ voter.countCarsLeftToCompareForChallenge(challengeName) }}</td>
-                <td>{{ voter.id }}</td>
-                <td>{{ voter.ipAddress }}</td>
-                <td><button><a href = {{ path('resetVotesForVoterOnChallenge', {'challengeName': challengeName, 'voterId': voter.id, 'token': token}) }}>give more votes</a></button></td>
-            </tr>
-        {% endfor %}
-    </table>
-    <br><br>
+<br>
+<h3>
+    Users in this challenge <span style="color: darkolivegreen; font-family: 'Arial Narrow',monospace">(self registration is currently <span style="color: purple">{{ selfRegistration }}</span>)</span>
+    <span><a href="{{ path('toggleSelfRegistrationForChallenge', {'challengeName': challengeName, 'token': token }) }}">>toggle on/off<</a></span>
+    {% if selfRegistrationCode is defined and selfRegistration == 'active' %}
+        <span>
+            <a style="color: red" href="{{ path('addSelfRegisteredVoterToChallengeFormPage', {'challengeName': challengeName, 'selfRegistrationCode': selfRegistrationCode}) }}"
+               target="_blank"
+               rel="noopener noreferrer"> >link for voter<
+            </a>
+        </span>
+    {% endif %}
+</h3>
+<table>
+    {% block topRow %}
+        <td>Name</td>
+        <td>#comparisons made</td>
+        <td>#cars left</td>
+        <td>ID</td>
+        <td>IP</td>
+        <td style="background-color: #1c7430"></td>
+    {% endblock %}
+    {% for voter in allUsersInTheChallenge %}
+        <tr>
+            <td>{{ voter.name }}</td>
+            <td>{{ voter.countComparisonsMadeForChallenge(challengeName) }}</td>
+            <td>{{ voter.countCarsLeftToCompareForChallenge(challengeName) }}</td>
+            <td>{{ voter.id }}</td>
+            <td>{{ voter.ipAddress }}</td>
+            <td>
+                <button>
+                    <a href= {{ path('resetVotesForVoterOnChallenge', {'challengeName': challengeName, 'voterId': voter.id, 'token': token}) }}>give more votes</a></button>
+            </td>
+        </tr>
+    {% endfor %}
+</table>
+<br><br>
 
 <div class="formcontainer">
-{{ form(adminDeleteForm) }}
+    {{ form(adminDeleteForm) }}
 </div>
+<div style="text-align: center;">
+    <div><a href="{{ path('startChallenge', {'challengeName' : challengeName, 'token' : token}) }}">
+            <button onclick="alert('everyone can vote again')" style="width: 33%">Open Challenge</button>
+        </a></div>
+</div>
+<p></p><br>
 
 {% include 'default/generalStyle.html.twig' %}
 
