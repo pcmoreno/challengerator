@@ -18,6 +18,7 @@ class Challenge
     private ?string $adminToken;
     private ?int $adminTokenExpirationDate;
     private bool $allowSelfRegistration;
+    private ?string $selfRegistrationCode;
 
     private function __construct(string $id, string $name, array $cars, array $voters, bool $isActive, string $owner)
     {
@@ -31,6 +32,7 @@ class Challenge
         $this->adminToken = null;
         $this->adminTokenExpirationDate = null;
         $this->allowSelfRegistration = false;
+        $this->selfRegistrationCode = null;
     }
 
     public static function create(string $name, string $owner): Challenge
@@ -99,6 +101,9 @@ class Challenge
             $stdclass->adminTokenExpirationDate = $this->adminTokenExpirationDate;
         }
         $stdclass->allowSelfRegistration = $this->allowSelfRegistration;
+         if (null !== $this->selfRegistrationCode) {
+             $stdclass->selfRegistrationCode =  $this->selfRegistrationCode;
+        };
         return $stdclass;
     }
 
@@ -116,6 +121,7 @@ class Challenge
         $challenge->adminTokenExpirationDate = $doc['adminTokenExpirationDate'] ?? null;
         $challenge->revision = $doc['_rev'] ?? null;
         $challenge->allowSelfRegistration = $doc['allowSelfRegistration'] ?? false;
+        $challenge->selfRegistrationCode = $doc['selfRegistrationCode'] ?? null;
 
         return $challenge;
     }
@@ -189,5 +195,10 @@ class Challenge
     private function getAdminTokenExpirationDate(): ?int
     {
         return $this->adminTokenExpirationDate;
+    }
+
+    public function getSelfRegistrationCode(): ?string
+    {
+        return $this->selfRegistrationCode;
     }
 }
