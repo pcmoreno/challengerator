@@ -514,7 +514,7 @@ class ChallengeService
         }
     }
 
-    public function getSelfRegistrationCodeForChallenge($challengeName): string
+    public function getSelfRegistrationCodeForChallenge($challengeName): ?string
     {
         $client = $this->getCouchClient($challengeName);
         $challengeInfo = $client->getDoc('info');
