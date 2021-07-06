@@ -230,8 +230,6 @@ class ChallengeController extends AbstractController
             return new JsonResponse('self-registration not allowed or URL is incorrect', 401);
         }
 
-        // todo check for the registrationCode
-
         $newVoter = new \stdClass();
         $newVoter->username = '';
         $newVoter->password = '';
