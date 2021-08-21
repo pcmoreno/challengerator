@@ -18,9 +18,11 @@ class ChallengeService
 {
     private const LOGIN_LOG_PATH = 'logs/logins.log';
     private const VOTING_LOG_PATH = 'logs/votes.log';
+    private const GENERAL_LOG_PATH = 'logs/general.log';
     private CouchDbService $service;
     private CouchClient $client;
     private string $dsn;
+    private array $loggers;
 
     public function __construct(
         CouchDbService $service,
@@ -28,6 +30,7 @@ class ChallengeService
     ) {
         $this->service = $service;
         $this->dsn = $dsn;
+        $this->initializeLoggers();
     }
 
     public function createNewChallenge(string $name, string $owner, string $code): JsonResponse
@@ -284,8 +287,7 @@ class ChallengeService
         if (!in_array($result, [0,1,0.5])) {
             return new JsonResponse('Wrong Result Chosen', 400);
         }
-        $logger = new Logger("votes");
-        $logger->pushHandler(new StreamHandler(self::VOTING_LOG_PATH, Logger::NOTICE));
+        $logger = $this->getLogger("votes");
 
         $carIds = explode('XXX', $cars);
 
@@ -344,8 +346,7 @@ class ChallengeService
 
     public function verifyLogin($login, $challengeName)
     {
-        $logger = new Logger("users");
-        $logger->pushHandler(new StreamHandler(self::LOGIN_LOG_PATH, Logger::NOTICE));
+        $logger = $this->getLogger("users");
         $logger->notice($login->user . " with pass " . $login->pass . " is trying to login to " . $challengeName);
         $token = null;
         if ($challengeName !== 'reset password') {
@@ -448,8 +449,7 @@ class ChallengeService
     }
     public function changePassForVoter(string $voterName, string $newPass): bool
     {
-        $logger = new Logger("users");
-        $logger->pushHandler(new StreamHandler(self::LOGIN_LOG_PATH, Logger::NOTICE));
+        $logger = $this->getLogger("users");
         try {
             $logger->notice($voterName . " is resetting password");
             $voterClient = $this->getCouchClient('voters');
@@ -528,5 +528,29 @@ class ChallengeService
         $challengeInfo = $client->getDoc('info');
 
         return $selfRegistrationCode === $challengeInfo->selfRegistrationCode;
+    }
+
+    private function getLogger(string $whichOne): Logger
+    {
+        if (isset($this->loggers[$whichOne])) {
+            return $this->loggers[$whichOne];
+        } else {
+            throwException(new \Exception('Logger Creation Exception'));
+        }
+    }
+
+    private function initializeLoggers(): void
+    {
+        $voteLoggers = new Logger('voters');
+        $voteLoggers->pushHandler(new StreamHandler(self::VOTING_LOG_PATH, Logger::NOTICE));
+        $this->loggers['voters'] = $voteLoggers;
+
+        $loginLogger = new Logger('users');
+        $loginLogger->pushHandler(new StreamHandler(self::LOGIN_LOG_PATH, Logger::NOTICE));
+        $this->loggers['users'] = $loginLogger;
+
+        $generalLogger = new Logger('general');
+        $generalLogger->pushHandler(new StreamHandler(self::GENERAL_LOG_PATH, Logger::NOTICE));
+        $this->loggers['general'] = $generalLogger;
     }
 }
