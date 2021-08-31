@@ -36,7 +36,7 @@ class CreateChallengeType extends AbstractType
             ->add('creationToken', PasswordType::class, [
                 'required' => true
             ])
-            ->add('login', SubmitType::class)
+            ->add('create', SubmitType::class)
             ->add('captcha', CaptchaType::class);
     }
 
