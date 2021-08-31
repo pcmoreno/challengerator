@@ -14,7 +14,7 @@
     {{ form_row(adminCreateChallengeForm.challengeName) }}
     {{ form_row(adminCreateChallengeForm.adminPass) }}
     {{ form_row(adminCreateChallengeForm.creationToken) }}
-    {{ form_row(adminCreateChallengeForm.login) }}
+    {{ form_row(adminCreateChallengeForm.create) }}
     <div class="cap" style="alignment: center; width: 160px; margin-left: auto; margin-right: auto">
         {{ form_widget(adminCreateChallengeForm.captcha) }}
     </div>
@@ -22,6 +22,7 @@
     {{ form_end(adminCreateChallengeForm) }}
 
 </div>
+<h4><div style="text-align: center;">Challenge name has to be lowercase and have no spaces</div></h4>
 <p></p>
 <div style="text-align: center;"><a href="{{ path('index') }}" >BACK</a></div>
 <p></p>
