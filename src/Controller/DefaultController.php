@@ -88,8 +88,8 @@ class DefaultController extends AbstractController
     public function createChallenge(Request $request): Response
     {
         $createChallenge = new \stdClass();
-        $createChallenge->challengeName = 'name_for_challenge';
-        $createChallenge->adminPass = 'password for the admin panel of challenge';
+        $createChallenge->challengeName = '';
+        $createChallenge->adminPass = '';
         $createChallenge->creationToken = '';
 
         $createChallengeForm = $this->createForm(CreateChallengeType::class, $createChallenge);
