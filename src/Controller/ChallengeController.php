@@ -163,8 +163,8 @@ class ChallengeController extends AbstractController
     public function loginFormPage(Request $request, $challengeName): Response
     {
         $login = new \stdClass();
-        $login->user = 'username';
-        $login->pass = 'pass';
+        $login->user = '';
+        $login->pass = '';
         $form = $this->createForm(LoginType::class, $login);
 
         $form->handleRequest($request);
