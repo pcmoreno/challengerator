@@ -519,7 +519,7 @@ class ChallengeService
         $client = $this->getCouchClient($challengeName);
         $challengeInfo = $client->getDoc('info');
 
-        return $challengeInfo->selfRegistrationCode;
+        return $challengeInfo->selfRegistrationCode ?? null;
     }
 
     public function isTheSelfRegistrationCodeCorrect($challengeName, $selfRegistrationCode): bool
