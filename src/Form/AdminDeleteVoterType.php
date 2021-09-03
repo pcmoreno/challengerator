@@ -15,8 +15,18 @@ class AdminDeleteVoterType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
-            ->add('voterToDelete', TextType::class)
-            ->add('adminPass', PasswordType::class)
+            ->add('voterToDelete', TextType::class, [
+                'required' => true,
+                'attr' => [
+                    'placeholder' => 'uuid of the voter you want to delete'
+                ]
+            ])
+            ->add('adminPass', PasswordType::class, [
+                'required' => true,
+                'attr' => [
+                    'placeholder' => 'enter your admin password here'
+                ]
+            ])
             ->add('delete', SubmitType::class);
     }
 

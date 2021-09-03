@@ -15,8 +15,18 @@ class AdminDeleteCarType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
-            ->add('carToDelete', TextType::class)
-            ->add('adminPass', PasswordType::class)
+            ->add('carToDelete', TextType::class, [
+                'required' => true,
+                'attr' => [
+                    'placeholder' => 'the uuid of the car you want to remove'
+                ]
+            ])
+            ->add('adminPass', PasswordType::class, [
+                'required' => true,
+                'attr' => [
+                    'placeholder' => 'your admin password'
+                ]
+            ])
             ->add('delete', SubmitType::class);
     }
 
