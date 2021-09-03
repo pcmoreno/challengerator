@@ -77,9 +77,9 @@ class Car
     public static function empty(): Car
     {
         return Car::create([
-                'name' => 'fill name of car here',
-                'imageUrlA' => 'imageA from google drive (e.g: 1uHXf1OkiQQWoCILAfAv7Rv5Yp6-uWL3i)',
-                'imageUrlB' => 'imageB from google drive (e.g: 1uHXf1OkiQQWoCILAfAv7Rv5Yp6-uWL3i)',
+                'name' => '',
+                'imageUrlA' => '',
+                'imageUrlB' => '',
                 'challengeId' => ''
             ]
         );

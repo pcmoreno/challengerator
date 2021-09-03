@@ -16,8 +16,18 @@ class VoterType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options)
     {
         $builder
-            ->add('name', TextType::class)
-            ->add('authKey', PasswordType::class)
+            ->add('name', TextType::class, [
+                'required' => true,
+                'attr' => [
+                    'placeholder' => 'this will be the username for this voter'
+                ]
+            ])
+            ->add('authKey', PasswordType::class, [
+                'required' => true,
+                'attr' => [
+                    'placeholder' => 'this will be the password with which this voter can login to vote'
+                ]
+            ])
             ->add('add_voter', SubmitType::class);
     }
 

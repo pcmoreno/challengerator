@@ -97,8 +97,8 @@ class ChallengeController extends AbstractController
         }
 
         $adminDeleteCar = new \stdClass();
-        $adminDeleteCar->carToDelete = 'car Id to delete';
-        $adminDeleteCar->adminPass = 'type admin password';
+        $adminDeleteCar->carToDelete = '';
+        $adminDeleteCar->adminPass = '';
 
         $adminDeleteCarForm = $this->createForm(AdminDeleteCarType::class, $adminDeleteCar);
         $adminDeleteCarForm->handleRequest($request);
@@ -127,7 +127,7 @@ class ChallengeController extends AbstractController
                     'request' => $request
                 ]);
         }
-        $voter = Voter::createForChallenge('Fill the user name here', 'give it a password', $challengeName);
+        $voter = Voter::createForChallenge('', '', $challengeName);
         $voterForm = $this->createForm(VoterType::class, $voter);
 
         $voterForm->handleRequest($request);
@@ -137,8 +137,8 @@ class ChallengeController extends AbstractController
             $this->challengeService->addVoter($challengeName, $voter, $token);
         }
         $adminDeleteVoter = new \stdClass();
-        $adminDeleteVoter->voterToDelete = 'id of voter';
-        $adminDeleteVoter->adminPass = 'type in admin password';
+        $adminDeleteVoter->voterToDelete = '';
+        $adminDeleteVoter->adminPass = '';
 
         $adminDeleteVoterForm = $this->createForm(AdminDeleteVoterType::class, $adminDeleteVoter);
         $adminDeleteVoterForm->handleRequest($request);
