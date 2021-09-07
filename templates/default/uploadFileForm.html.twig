@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+{% include 'default/generalStyle.html.twig' %}
+
+<html lang="en">
+<body style="width: 50%">
+<form action="{{ path('uploadFileToDrive') }}" method="post" enctype="multipart/form-data">
+    <h2>Select a file to upload:</h2>
+    <hr class="dotted">
+    <p><input type="file" name="fileToUpload" id="fileToUpload"></p>
+    <p><label for="folderId">Id for google drive folder: </label><input type="text" style="width: 50%" name="folderId" id="folderId" {% if folderId is defined %}value={{ folderId }} {% endif %}></p>
+    <hr class="dotted">
+    <p><input type="submit" value="Upload Image" name="submit"></p>
+    <hr class="dotted">
+</form>
+
+{% if message is defined and message != 'failed' %}
+    <p><i>The google drive id for the uploaded file is <b>{{ message }}</b><br>
+        Copy and paste this value into the add car form.</i></p>
+{% elseif message is defined and message == 'failed' %}
+    <h3>Upload failed</h3>
+{% endif %}
+</body>
+</html>
