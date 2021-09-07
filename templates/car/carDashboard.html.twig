@@ -1,5 +1,10 @@
 <h1>Car Dashboard for {{ challengeName }}</h1>
-<b><a href="{{ path('addVoterToChallengeFormPage', {'challengeName': challengeName, 'token': token }) }}">go to voters</a></b>
+<table>
+    <tr style="border: 0px; background-color: white">
+        <td><b><a href="{{ path('addVoterToChallengeFormPage', {'challengeName': challengeName, 'token': token }) }}">go to voters</a></b></td>
+        <td style="text-align: end"><b><a href="{{ path('uploadFile') }}" target="_blank">upload images</a></b></td>
+    </tr>
+</table>
 <div style="alignment: center; font-family: 'Arial Narrow',monospace; text-align: center; margin-left: auto; margin-right: auto">
     for now, only images from google-drive are accepted. Right click on the image, click 'get link' and then copy the part between the 'd/' and '/view'
 </div>

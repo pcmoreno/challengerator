@@ -118,3 +118,15 @@ createChallengeMenu:
 changePasswordMenu:
     path: /voter/changePass
     controller: App\Controller\DefaultController:changePasswordForVoter
+
+listFile:
+    path: /uploader/list/{folderId}
+    controller: App\Controller\DefaultController:listFilesFromGoogleDrive
+
+uploadFile:
+    path: /uploader/upload
+    controller: App\Controller\DefaultController:uploadFileToMyDriveForm
+
+uploadFileToDrive:
+    path: /uploader/uploaded
+    controller: App\Controller\DefaultController:uploadFileToDrive

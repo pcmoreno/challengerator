@@ -7,8 +7,10 @@ use App\Entity\Auth\Role;
 use App\Form\ChangePasswordType;
 use App\Form\CreateChallengeType;
 use App\Services\ChallengeService;
+use App\Services\GoogleDriveService;
 use Exception;
-use phpDocumentor\Reflection\Types\This;
+use Google\Service\Drive;
+use Google_Service_Drive_DriveFile;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,10 +19,12 @@ use Symfony\Component\HttpFoundation\Response;
 class DefaultController extends AbstractController
 {
     private ChallengeService $challengeService;
+    private GoogleDriveService $googleDriveService;
 
-    public function __construct(ChallengeService $challengeService)
+    public function __construct(ChallengeService $challengeService, GoogleDriveService $googleDriveService)
     {
         $this->challengeService = $challengeService;
+        $this->googleDriveService = $googleDriveService;
     }
 
     public function index(): Response
@@ -118,6 +122,7 @@ class DefaultController extends AbstractController
 
     public function changePasswordForVoter(Request $request): Response
     {
+        $message = '';
         $changePass = new \stdClass();
         $changePass->username = '';
         $changePass->currentPass = '';
@@ -141,12 +146,43 @@ class DefaultController extends AbstractController
                     return new JsonResponse('something went wrong', 500);
                 }
             } else {
-                return $this->redirectToRoute('changePasswordMenu');
+                $message = 'not a valid login';
             }
         }
         return $this->render('/voter/changePassword.html.twig',
             [
-                'changePasswordForm' => $changePassForm->createView()
+                'changePasswordForm' => $changePassForm->createView(),
+                'message' => $message
             ]);
+    }
+
+    public function listFilesFromGoogleDrive($folderId)
+    {
+        $returnArray = [];
+        foreach ($this->googleDriveService->listFilesInFolder($folderId) as $file) {
+            /** @var Drive\DriveFile $file */
+            $returnArray[$file->getName()] = $file->getId();
+        }
+        return new JsonResponse($returnArray);
+    }
+
+    public function uploadFileToMyDriveForm()
+    {
+        return $this->render('/default/uploadFileForm.html.twig');
+    }
+
+    public function uploadFileToDrive()
+    {
+        if (!empty($_FILES["fileToUpload"]["name"])) {
+            $fileToUpload = $_FILES["fileToUpload"];
+            $googleDriveFolderId = $_POST['folderId'];
+            $fileId = $this->googleDriveService->uploadFileToGoogleDrive($fileToUpload, $googleDriveFolderId);
+                return $this->render('/default/uploadFileForm.html.twig',
+                [
+                    'message' => $fileId,
+                    'folderId' => $googleDriveFolderId
+                ]);
+            }
+        return $this->render('/default/uploadFileForm.html.twig');
     }
 }
