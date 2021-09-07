@@ -17,5 +17,9 @@
 /phpunit.xml
 ###< symfony/phpunit-bridge ###
 
-./.env
-./.idea
+.idea
+
+### google drive
+./quickstart.php
+./credentials.json
+./token.json

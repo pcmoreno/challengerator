@@ -1,5 +1,9 @@
 <h1>Voter Dashboard for {{ challengeName }}</h1>
-<b><a href="{{ path('addCarToChallengeFormPage', {'challengeName': challengeName, 'token': token }) }}">go to cars</a></b>
+<table>
+    <tr style="border: 0px; background-color: white">
+        <td><b><a href="{{ path('addCarToChallengeFormPage', {'challengeName': challengeName, 'token': token }) }}">go to cars</a></b></td>
+    </tr>
+</table>
 <div class="formcontainer">
     {{ form(form) }}
 </div>
@@ -52,4 +56,3 @@
 <p></p><br>
 
 {% include 'default/generalStyle.html.twig' %}
-
