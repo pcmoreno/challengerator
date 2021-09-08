@@ -36,7 +36,7 @@ class DefaultController extends AbstractController
     {
         [$carsToVote, $carsNotVoted] = $this->challengeService->getTwoCarsToBeVotedByUser($challengeName, $userId);
         if ($carsToVote === []) {
-            return new JsonResponse('Voting Complete', 200);
+            return $this->render('default/votingComplete.html.twig', ['challengeName' => $challengeName]);
         }
         return $this->render(
             'default/votingCarsForUser.html.twig',
@@ -66,7 +66,7 @@ class DefaultController extends AbstractController
         }
 
         if ($carsToVote === []) {
-            return new JsonResponse('Voting Complete', 200);
+            return $this->render('default/votingComplete.html.twig', ['challengeName' => $challengeName]);
         }
         return $this->redirectToRoute('voteDashboardForUser', [
             'userId' => $userId,
