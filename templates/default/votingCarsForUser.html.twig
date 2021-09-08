@@ -6,6 +6,7 @@
 {% endblock %}
 
 {% block body %}
+    <p>Head to head, choose which one you think is better</p>
     <table>
         <tr>
             {% set isDev = app.request.server.get('APP_ENV')  %}
@@ -13,7 +14,9 @@
             {% if  (isDev == 'dev') %}
             <td>rating</td>
             {% endif %}
-            <td>Your vote</td>
+            <td>Your choice</td>
+            <td>right click and open in new tab for better view</td>
+            <td></td>
         </tr>
         {% set turn = 'left' %}
         {% for item in carsToVote %}
@@ -50,8 +53,12 @@
                         'token': token
                     }) }}>SAME QUALITY</a></button>
             </td>
+            <td></td>
+            <td></td>
         </tr>
     </table>
+    <p></p>
+
     <table class="listOfCarsLeft">
         <tr><td>cars left to be voted</td></tr>
         {% for item in carsNotVoted %}
