@@ -283,7 +283,7 @@ class ChallengeService
         return new JsonResponse(array_values($array));
     }
 
-    public function voteOnCars(string $cars, $result, string $challengeId, string $userId)
+    public function voteOnCars(string $cars, string $result, string $challengeId, string $userId)
     {
         if (!in_array($result, [0,1,0.5])) {
             return new JsonResponse('Wrong Result Chosen', 400);
@@ -318,10 +318,10 @@ class ChallengeService
         $carB = Car::fromCouchData($carsDocs[1]);
         $ratingA = $carA->getRating();
         $ratingB = $carB->getRating();
-        dump($carA->getRating());
+//        dump($carA->getRating());
         RatingService::compareAndAdjust($ratingA, $ratingB, $result);
-        dump($carA->getRating());
-        dump($ratingB);
+//        dump($carA->getRating());
+//        dump($ratingB);
         $updatedVoterDoc = $voter->toCouchDocument();
         $updatedVoterDoc->_rev = $voterDoc->_rev;
 
