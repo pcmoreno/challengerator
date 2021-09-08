@@ -347,7 +347,9 @@ class ChallengeService
     public function verifyLogin($login, $challengeName)
     {
         $logger = $this->getLogger("users");
-        $logger->notice($login->user . " with pass " . $login->pass . " is trying to login to " . $challengeName);
+        $logger->notice($login->user . " is trying to login to " . $challengeName);
+        // ONLY OUTCOMMENT ON DEV
+        //$logger->notice($login->user . " with pass " . $login->pass . " is trying to login to " . $challengeName);
         $token = null;
         if ($challengeName !== 'reset password') {
             $challengeClient = $this->getCouchClient($challengeName);
@@ -366,6 +368,7 @@ class ChallengeService
                 'name' => $login->user
             ]);
             if ($voterDoc !== [] && password_verify($login->pass, $voterDoc[0]->key)) {
+                // TODO needs to check same user on multiple challenges
                 $voter = Voter::fromCouchDocument($voterDoc[0]);
                 $token = $this->doLoginForUser($voter);
                 if ($challengeName !== 'reset password' && $challenge->hasVoter($voterDoc[0]->_id)) {
