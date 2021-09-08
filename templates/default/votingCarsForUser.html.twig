@@ -43,7 +43,9 @@
         {% endfor %}
         <tr>
             <td></td>
-            <td></td>
+            {% if  (isDev == 'dev') %}
+                <td></td>
+            {% endif %}
             <td>
                 <button style="white-space: normal"><a href= {{ path('voteCarForUser', {
                         'challengeName': challengeName,
