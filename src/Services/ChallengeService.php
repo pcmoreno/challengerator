@@ -7,6 +7,7 @@ use App\Entity\Auth\Role;
 use App\Entity\Challenge\Car;
 use App\Entity\Challenge\Challenge;
 use App\Entity\Challenge\Voter;
+use Exception;
 use Monolog\Handler\StreamHandler;
 use PHPOnCouch\CouchClient;
 use PHPOnCouch\Exceptions\CouchNotFoundException;
@@ -538,7 +539,7 @@ class ChallengeService
         if (isset($this->loggers[$whichOne])) {
             return $this->loggers[$whichOne];
         } else {
-            throwException(new \Exception('Logger Creation Exception'));
+            throw new Exception('Logger Creation Exception');
         }
     }
 
