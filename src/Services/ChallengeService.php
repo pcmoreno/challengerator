@@ -288,8 +288,7 @@ class ChallengeService
         if (!in_array($result, [0,1,0.5])) {
             return new JsonResponse('Wrong Result Chosen', 400);
         }
-        $logger = $this->getLogger("votes");
-
+        $logger = $this->getLogger("voters");
         $carIds = explode('XXX', $cars);
 
         $voterClient = $this->getCouchClient('voters');
@@ -536,11 +535,8 @@ class ChallengeService
 
     private function getLogger(string $whichOne): Logger
     {
-        if (isset($this->loggers[$whichOne])) {
-            return $this->loggers[$whichOne];
-        } else {
-            throw new Exception('Logger Creation Exception');
-        }
+        return $this->loggers[$whichOne];
+
     }
 
     private function initializeLoggers(): void
