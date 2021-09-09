@@ -7,7 +7,6 @@ use App\Entity\Auth\Role;
 use App\Entity\Challenge\Car;
 use App\Entity\Challenge\Challenge;
 use App\Entity\Challenge\Voter;
-use Exception;
 use Monolog\Handler\StreamHandler;
 use PHPOnCouch\CouchClient;
 use PHPOnCouch\Exceptions\CouchNotFoundException;
@@ -536,7 +535,6 @@ class ChallengeService
     private function getLogger(string $whichOne): Logger
     {
         return $this->loggers[$whichOne];
-
     }
 
     private function initializeLoggers(): void
