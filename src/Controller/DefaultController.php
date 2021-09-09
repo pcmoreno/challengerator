@@ -65,6 +65,7 @@ class DefaultController extends AbstractController
             return $this->votingDashBoardForUser($challengeName, $userId, $token);
         }
 
+        // possibly not needed todo: check this
         if ($carsToVote === []) {
             return $this->render('default/votingComplete.html.twig', ['challengeName' => $challengeName]);
         }
