@@ -17,7 +17,7 @@
 /phpunit.xml
 ###< symfony/phpunit-bridge ###
 
-.idea
+/.idea
 
 ### google drive
 ./quickstart.php

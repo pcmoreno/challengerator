@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Entity\Challenge;
 
+use App\Helpers\StringToHandle;
 use DateInterval;
 use Symfony\Component\Uid\Uuid;
 
@@ -10,6 +11,7 @@ class Challenge
 {
     private string $id;
     private string $name;
+    private string $displayName;
     private array $cars;
     private array $voters;
     private bool $isActive;
@@ -20,10 +22,18 @@ class Challenge
     private bool $allowSelfRegistration;
     private ?string $selfRegistrationCode;
 
-    private function __construct(string $id, string $name, array $cars, array $voters, bool $isActive, string $owner)
-    {
+    private function __construct(
+        string $id,
+        string $name,
+        array $cars,
+        array $voters,
+        bool $isActive,
+        string $owner,
+        string $displayName
+    ) {
         $this->id = $id;
         $this->name = $name;
+        $this->displayName = $displayName;
         $this->cars = $cars;
         $this->voters = $voters;
         $this->isActive = $isActive;
@@ -35,9 +45,17 @@ class Challenge
         $this->selfRegistrationCode = null;
     }
 
-    public static function create(string $name, string $owner): Challenge
+    public static function create(string $displayName, string $owner): Challenge
     {
-        return new Challenge('info', $name, [], [], false, $owner);
+        return new Challenge(
+            'info',
+            StringToHandle::stringToHandle($displayName),
+            [],
+            [],
+            false,
+            $owner,
+            $displayName
+        );
     }
 
     public function addParticipant(Car $car, Voter $voter): void
@@ -87,6 +105,11 @@ class Challenge
         $stdclass = new \stdClass();
         $stdclass->_id = $this->id;
         $stdclass->name = $this->name;
+        if ($this->displayName !== null) {
+            $stdclass->displayName = $this->displayName;
+        } else {
+            $stdclass->displayName = StringToHandle::stringToHandle($this->name);
+        }
         $stdclass->cars = $this->cars;
         $stdclass->voters = $this->voters;
         $stdclass->isActive = $this->isActive;
@@ -115,7 +138,8 @@ class Challenge
             $doc['cars'],
             $doc['voters'],
             $doc['isActive'],
-            $doc['owner']
+            $doc['owner'],
+            $doc['displayName'] ?? StringToHandle::stringToHandle($doc['name'])
         );
         $challenge->adminToken = $doc['adminToken'] ?? null;
         $challenge->adminTokenExpirationDate = $doc['adminTokenExpirationDate'] ?? null;

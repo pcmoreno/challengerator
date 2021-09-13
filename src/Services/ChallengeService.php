@@ -7,6 +7,7 @@ use App\Entity\Auth\Role;
 use App\Entity\Challenge\Car;
 use App\Entity\Challenge\Challenge;
 use App\Entity\Challenge\Voter;
+use App\Helpers\StringToHandle;
 use Monolog\Handler\StreamHandler;
 use PHPOnCouch\CouchClient;
 use PHPOnCouch\Exceptions\CouchNotFoundException;
@@ -41,7 +42,7 @@ class ChallengeService
             return new JsonResponse('Code not valid', JsonResponse::HTTP_FORBIDDEN);
         }
 
-        $this->client = $this->getCouchClient($name);
+        $this->client = $this->getCouchClient(StringToHandle::stringToHandle($name));
         try {
             $this->client->createDatabase();
         } catch (\Exception $exception) {

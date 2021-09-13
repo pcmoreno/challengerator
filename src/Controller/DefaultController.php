@@ -6,11 +6,11 @@ namespace App\Controller;
 use App\Entity\Auth\Role;
 use App\Form\ChangePasswordType;
 use App\Form\CreateChallengeType;
+use App\Helpers\StringToHandle;
 use App\Services\ChallengeService;
 use App\Services\GoogleDriveService;
 use Exception;
 use Google\Service\Drive;
-use Google_Service_Drive_DriveFile;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -101,13 +101,14 @@ class DefaultController extends AbstractController
         $createChallengeForm->handleRequest($request);
         if ($createChallengeForm->isSubmitted() && $createChallengeForm->isValid()) {
             try {
+                $challengeHandle = StringToHandle::stringToHandle($createChallenge->challengeName);
                 $response = $this->challengeService->createNewChallenge(
-                    $createChallenge->challengeName,
+                    $challengeHandle,
                     $createChallenge->adminPass,
                     $createChallenge->creationToken
                 );
 
-                return $response->getStatusCode() === 200 ? $this->redirectToRoute('loginMenu', ['challengeName' => $createChallenge->challengeName]) : new JsonResponse($response->getContent(), 400);
+                return $response->getStatusCode() === 200 ? $this->redirectToRoute('loginMenu', ['challengeName' => $challengeHandle]) : new JsonResponse($response->getContent(), 400);
             } catch (Exception $exception) {
                 return new JsonResponse($exception->getMessage(), 400);
             }

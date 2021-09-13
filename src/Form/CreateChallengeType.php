@@ -23,11 +23,10 @@ class CreateChallengeType extends AbstractType
                     'required' => true,
                     'constraints' => [
                         new Length(['min' => 5]),
-                        new Regex(['pattern' => "{^[a-z][a-z0-9_$()+/-]*$}", 'message' => "must be lowercase. Digits and _ $ ( ) + - / are allowed"])
                     ],
                     'attr' => [
-                        'placeholder' => 'must be lowercase and have no spaces. Digits and _ $ ( ) + - / are allowed'
-                        ]
+                        'placeholder' => 'min 5 characters'
+                    ]
                 ]
             )
             ->add('adminPass', PasswordType::class, [
