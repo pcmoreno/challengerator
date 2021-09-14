@@ -552,4 +552,9 @@ class ChallengeService
         $generalLogger->pushHandler(new StreamHandler(self::GENERAL_LOG_PATH, Logger::NOTICE));
         $this->loggers['general'] = $generalLogger;
     }
+
+    public function getChallengeInfoDoc($challengeName)
+    {
+        return ($this->getCouchClient($challengeName))->getDoc('info');
+    }
 }

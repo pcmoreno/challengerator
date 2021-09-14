@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\Auth\Role;
+use App\Entity\Challenge\Challenge;
 use App\Form\ChangePasswordType;
 use App\Form\CreateChallengeType;
 use App\Helpers\StringToHandle;
@@ -35,8 +36,10 @@ class DefaultController extends AbstractController
     public function votingDashBoardForUser($challengeName, $userId, ?string $token): Response
     {
         [$carsToVote, $carsNotVoted] = $this->challengeService->getTwoCarsToBeVotedByUser($challengeName, $userId);
+        $displayName = $this->challengeService->getChallengeInfoDoc($challengeName)->displayName;
+
         if ($carsToVote === []) {
-            return $this->render('default/votingComplete.html.twig', ['challengeName' => $challengeName]);
+            return $this->render('default/votingComplete.html.twig', ['challengeName' => $displayName]);
         }
         return $this->render(
             'default/votingCarsForUser.html.twig',
@@ -45,7 +48,8 @@ class DefaultController extends AbstractController
                 'carsNotVoted' => $carsNotVoted,
                 'user' => $userId,
                 'challengeName' => $challengeName,
-                'token' => $token
+                'token' => $token,
+                'challengeDisplayName' => $displayName
             ]
         );
     }
@@ -81,7 +85,13 @@ class DefaultController extends AbstractController
 
     public function listChallengesMenu(): Response
     {
-        $challenges = json_decode($this->challengeService->listChallenges()->getContent(), true);
+        $dbNames = json_decode($this->challengeService->listChallenges()->getContent(), true);
+        $challenges = [];
+        foreach ($dbNames as $dbName) {
+            $doc = $this->challengeService->getChallengeInfoDoc($dbName);
+            $challenge = Challenge::fromCouchDocument(json_decode(json_encode($doc), true));
+            $challenges[] = [$challenge->getName(), $challenge->getDisplayName()];
+        }
         return $this->render(
             'default/challengeMenu.html.twig',
             [

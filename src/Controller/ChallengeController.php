@@ -189,7 +189,8 @@ class ChallengeController extends AbstractController
         }
         return $this->render('default/login.html.twig', [
             'form' => $form->createView(),
-            'challengeName' => $challengeName
+            'challengeName' => $challengeName,
+            'challengeDisplayName' => $this->challengeService->getChallengeInfoDoc($challengeName)->displayName
     ]);
     }
 
