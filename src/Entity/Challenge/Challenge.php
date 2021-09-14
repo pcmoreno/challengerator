@@ -225,4 +225,9 @@ class Challenge
     {
         return $this->selfRegistrationCode;
     }
+
+    public function getDisplayName(): string
+    {
+        return $this->displayName;
+    }
 }
