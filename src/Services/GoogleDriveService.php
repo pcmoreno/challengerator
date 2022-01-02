@@ -7,16 +7,19 @@ use Exception;
 use Google_Client;
 use Google_Service_Drive;
 use Google_Service_Drive_DriveFile;
+use Monolog\Logger;
 
 class GoogleDriveService
 {
     private Google_Client $googleClient;
     private Google_Service_Drive $googleServiceDrive;
+    private Logger $googleDriveLogger;
 
     public function __construct()
     {
         $this->googleClient = $this->getClient();
         $this->googleServiceDrive = new Google_Service_Drive($this->googleClient);
+        $this->googleDriveLogger = new Logger('general');
     }
 
     public function listFilesInFolder(string $folderId)
@@ -47,6 +50,7 @@ class GoogleDriveService
                 ]
             );
         } catch (Exception $exception) {
+            $this->googleDriveLogger->error($exception->getMessage());
             return 'failed';
         }
         return $file->id;
