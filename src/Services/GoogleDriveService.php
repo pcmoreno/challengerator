@@ -52,7 +52,7 @@ class GoogleDriveService
                 ]
             );
         } catch (Exception $exception) {
-            $this->googleDriveLogger->error($exception->getMessage());
+            $this->googleDriveLogger->error("Error from google drive: " . $exception->getMessage());
             return 'failed';
         }
         return $file->id;
