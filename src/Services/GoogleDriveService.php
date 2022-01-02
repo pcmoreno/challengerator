@@ -7,6 +7,7 @@ use Exception;
 use Google_Client;
 use Google_Service_Drive;
 use Google_Service_Drive_DriveFile;
+use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 
 class GoogleDriveService
@@ -20,6 +21,7 @@ class GoogleDriveService
         $this->googleClient = $this->getClient();
         $this->googleServiceDrive = new Google_Service_Drive($this->googleClient);
         $this->googleDriveLogger = new Logger('general');
+        $this->googleDriveLogger->pushHandler(new StreamHandler('logs/general.log', Logger::NOTICE));
     }
 
     public function listFilesInFolder(string $folderId)
