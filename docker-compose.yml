@@ -1,0 +1,45 @@
+version: '3.9'
+
+services:
+  challengeator-app:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      MAIL_HOST: mailhog
+      MAIL_PORT: 1025
+    volumes:
+      - ./:/var/www
+      - ~/.composer/cache:/home/php/.composer/cache
+      - ~/.ssh:/home/php/.ssh
+    working_dir: /var/www
+    networks:
+      - challengeator
+
+  couch-db:
+    image: couchdb:2.3.1
+    container_name: challengeator-couch
+    ports:
+      - "5984:5984"
+    networks:
+      - challengeator
+    links:
+      - challengeator-app
+
+  nginx:
+    image: nginx:alpine
+    container_name: challengeator-nginx
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./:/var/www
+      - ./docker-compose/nginx:/etc/nginx/conf.d/
+    networks:
+      - challengeator
+
+networks:
+  challengeator:
+    driver: bridge
