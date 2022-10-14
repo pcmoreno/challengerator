@@ -13,6 +13,7 @@ use PHPOnCouch\Exceptions\CouchNotFoundException;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Monolog\Logger;
+use function PHPUnit\Framework\throwException;
 
 class ChallengeService
 {
@@ -285,7 +286,7 @@ class ChallengeService
     public function voteOnCars(string $cars, string $result, string $challengeId, string $userId)
     {
         if (!in_array($result, [0,1,0.5])) {
-            return new JsonResponse('Wrong Result Chosen', 400);
+            throw new \Exception('Wrong Result Chosen', 400);
         }
         $logger = $this->getLogger("voters");
         $carIds = explode('XXX', $cars);
