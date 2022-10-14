@@ -285,8 +285,8 @@ class ChallengeService
 
     public function voteOnCars(string $cars, string $result, string $challengeId, string $userId)
     {
-        if (!in_array($result, [0,1,0.5])) {
-            throw new \Exception('Wrong Result Chosen', 400);
+        if (!in_array($result, ['left','right','draw'])) {
+            throw new \Exception('Wrong Result Chosen: ' . $result, 400);
         }
         $logger = $this->getLogger("voters");
         $carIds = explode('XXX', $cars);
