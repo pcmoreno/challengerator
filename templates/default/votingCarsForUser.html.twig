@@ -6,7 +6,7 @@
 {% endblock %}
 
 {% block body %}
-    <p>Head to head, choose which one you think is better</p>
+    <p>Head to head, choose which the one you think looks better</p>
     <table>
         <tr>
             {% set isDev = app.request.server.get('APP_ENV')  %}
@@ -35,9 +35,9 @@
                         }) }}>THIS ONE</a></button>
                 </td>
                 <td><img class="article-img" src="https://drive.google.com/uc?id={{ item.imageUrlA }}"
-                         alt="{{ item.name }}" height="450" width="800"></td>
+                         alt="{{ item.name }}" height="450" width="720"></td>
                 <td><img class="article-img" src="https://drive.google.com/uc?id={{ item.imageUrlB }}"
-                         alt="{{ item.name }}" height="450" width="800"></td>
+                         alt="{{ item.name }}" height="450" width="720"></td>
             </tr>
             {% set turn = 'right' %}
         {% endfor %}
