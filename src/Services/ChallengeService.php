@@ -19,6 +19,7 @@ class ChallengeService
     private const LOGIN_LOG_PATH = 'logs/logins.log';
     private const VOTING_LOG_PATH = 'logs/votes.log';
     private const GENERAL_LOG_PATH = 'logs/general.log';
+    private const SERVER_DB = 'server';
     private string $dsn;
     private array $loggers;
 
@@ -258,7 +259,7 @@ class ChallengeService
 
     public function listChallenges(): JsonResponse
     {
-        $dbList = (array) $this->getCouchClient('')->listDatabases();
+        $dbList = (array) $this->getCouchClient(self::SERVER_DB)->listDatabases();
         $array = array_filter($dbList, function ($entry) {
             return !in_array($entry, ['cars', 'voters', '_users', '_replicator', '_global_changes', 'codes']);
         });
