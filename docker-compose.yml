@@ -4,30 +4,30 @@ services:
       context: ./
       dockerfile: Dockerfile
     environment:
-      DB_HOST: mysql
-      DB_PORT: 3306
-      MAIL_HOST: mailhog
-      MAIL_PORT: 1025
+      COUCHDB_URL: http://admin:admin@challengeator-couch:5984
     volumes:
       - ./:/var/www
-      - ~/.composer/cache:/home/php/.composer/cache
-      - ~/.ssh:/home/php/.ssh
+      - ~/.composer/cache:/root/.composer/cache
+      - ~/.ssh:/root/.ssh
     working_dir: /var/www
     networks:
       - challengeator
 
   couch-db:
-    image: couchdb:2
+    image: couchdb:3
     container_name: challengeator-couch
+    environment:
+      COUCHDB_USER: admin
+      COUCHDB_PASSWORD: admin
     ports:
       - "5984:5984"
+    volumes:
+      - couchdb_data:/opt/couchdb/data
     networks:
       - challengeator
-    links:
-      - challengeator-app
 
   nginx:
-    image: nginx:alpine
+    image: nginx:1.25-alpine
     container_name: challengeator-nginx
     restart: unless-stopped
     ports:
@@ -41,3 +41,6 @@ services:
 networks:
   challengeator:
     driver: bridge
+
+volumes:
+  couchdb_data:
