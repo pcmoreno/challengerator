@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace App\Form;
 
-use Gregwar\CaptchaBundle\Type\CaptchaType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
@@ -45,8 +44,7 @@ class CreateChallengeType extends AbstractType
                     'placeholder' => 'you got this from an Admin.'
                 ]
             ])
-            ->add('create', SubmitType::class)
-            ->add('captcha', CaptchaType::class);
+            ->add('create', SubmitType::class);
     }
 
     public function configureOptions(OptionsResolver $resolver): void

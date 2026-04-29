@@ -13,23 +13,17 @@ use PHPOnCouch\Exceptions\CouchNotFoundException;
 use Ramsey\Uuid\Uuid;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Monolog\Logger;
-use function PHPUnit\Framework\throwException;
 
 class ChallengeService
 {
     private const LOGIN_LOG_PATH = 'logs/logins.log';
     private const VOTING_LOG_PATH = 'logs/votes.log';
     private const GENERAL_LOG_PATH = 'logs/general.log';
-    private CouchDbService $service;
-    private CouchClient $client;
     private string $dsn;
     private array $loggers;
 
-    public function __construct(
-        CouchDbService $service,
-        string $dsn
-    ) {
-        $this->service = $service;
+    public function __construct(string $dsn)
+    {
         $this->dsn = $dsn;
         $this->initializeLoggers();
     }
@@ -60,18 +54,6 @@ class ChallengeService
                 ['error' => $exception->getMessage()]
             );
         }
-    }
-
-    public function addCarFromDataArray(string $challengeName, array $carData): JsonResponse
-    {
-        try {
-            $car = Car::create($carData);
-        } catch (\Exception $exception) {
-            return new JsonResponse($exception->getMessage(), 400);
-        }
-        $this->addCar($challengeName, $car);
-
-        return new JsonResponse('success', 201);
     }
 
     public function addCar(string $challengeName, Car $car, string $token): void
@@ -276,7 +258,7 @@ class ChallengeService
 
     public function listChallenges(): JsonResponse
     {
-        $dbList = $this->service->getDatabaseList();
+        $dbList = (array) $this->getCouchClient('')->listDatabases();
         $array = array_filter($dbList, function ($entry) {
             return !in_array($entry, ['cars', 'voters', '_users', '_replicator', '_global_changes', 'codes']);
         });
@@ -318,10 +300,7 @@ class ChallengeService
         $carB = Car::fromCouchData($carsDocs[1]);
         $ratingA = $carA->getRating();
         $ratingB = $carB->getRating();
-//        dump($carA->getRating());
         RatingService::compareAndAdjust($ratingA, $ratingB, $result);
-//        dump($carA->getRating());
-//        dump($ratingB);
         $updatedVoterDoc = $voter->toCouchDocument();
         $updatedVoterDoc->_rev = $voterDoc->_rev;
 
@@ -381,7 +360,6 @@ class ChallengeService
             }
         } catch (\Exception $exception) {
             $logger->alert($exception->getMessage());
-            dump($exception); die;
         }
         $logger->notice('failed');
         return [Role::NONE, null, $token];
@@ -409,11 +387,6 @@ class ChallengeService
     private function getCouchClient(string $dbName): CouchClient
     {
         return new CouchClient($this->dsn, $dbName);
-    }
-
-    public function test(): JsonResponse
-    {
-        return new JsonResponse($this->dsn, 200);
     }
 
     private function doLoginForUser(Voter $voter): string
@@ -474,7 +447,6 @@ class ChallengeService
             return true;
         } catch (\Exception $exception) {
             $logger->alert($exception->getMessage());
-//            dump($exception); die;
             return false;
         }
     }

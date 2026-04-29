@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace App\Form;
 
-use Gregwar\CaptchaBundle\Type\CaptchaType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\Extension\Core\Type\PasswordType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
@@ -28,7 +27,6 @@ class LoginType extends AbstractType
                     'placeholder' => 'your password'
                 ]
             ])
-            ->add('captcha', CaptchaType::class)
             ->add('login', SubmitType::class);
     }
 

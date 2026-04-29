@@ -27,31 +27,6 @@ class ChallengeController extends AbstractController
         $this->challengeService = $challengeService;
     }
 
-    public function challengeApiTest(): JsonResponse
-    {
-        return $this->challengeService->test();
-    }
-
-    public function listChallenges(): JsonResponse
-    {
-        return $this->challengeService->listChallenges();
-    }
-
-    // NOT UP TO DATE
-    public function addCarToChallenge(Request $request, $challengeName): JsonResponse
-    {
-        $carData = json_decode($request->get('carData'), true);
-//        dump($carData); die;
-        return $this->challengeService->addCarFromDataArray($challengeName, $carData);
-    }
-
-    public function AddVoterToChallenge(Request $request, $challengeName): JsonResponse
-    {
-        $voterData = json_decode($request->get('voterData'), true);
-//        dump($voterDate); die;
-        return $this->challengeService->addVoterFromDataArray($challengeName, $voterData);
-    }
-
     public function deleteVoterFromChallenge(Request $request, $challengeName, $voterId)
     {
         $this->challengeService->deleteVoterFromChallenge($challengeName, $voterId);
@@ -59,11 +34,6 @@ class ChallengeController extends AbstractController
         return $this->redirectToRoute('addVoterToChallengeFormPage', [
             'challengeName' => $challengeName
     ]);
-    }
-
-    public function getCarsForChallenge($challengeName): JsonResponse
-    {
-        return $this->challengeService->getCarsForChallenge($challengeName);
     }
 
     public function startChallenge(string $challengeName, string $token): Response
