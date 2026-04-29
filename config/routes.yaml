@@ -1,9 +1,31 @@
 index:
     path: /
-    controller: App\Controller\DefaultController::index
+    controller: App\Controller\ChallengeController::index
+
+# -----------------------------------------------
+# Auth routes:
+loginMenu:
+    path: /login/{challengeName}
+    controller: App\Controller\AuthController::loginFormPage
+
+addSelfRegisteredVoterToChallengeFormPage:
+    path: /challenge/signup/{challengeName}/{selfRegistrationCode}
+    controller: App\Controller\AuthController::addSelfRegisteredVoterForChallengePage
+
+changePasswordMenu:
+    path: /voter/changePass
+    controller: App\Controller\AuthController::changePasswordForVoter
 
 # -----------------------------------------------
 # Challenge routes:
+listChallengesMenu:
+    path: /challenges
+    controller: App\Controller\ChallengeController::listChallengesMenu
+
+createChallengeMenu:
+    path: /challenge/new
+    controller: App\Controller\ChallengeController::createChallenge
+
 startChallenge:
     path: /challenge/initialize/{challengeName}/{token}
     controller: App\Controller\ChallengeController::startChallenge
@@ -18,10 +40,6 @@ addVoterToChallengeFormPage:
     defaults:
         selfRegistrationCode: nope
 
-addSelfRegisteredVoterToChallengeFormPage:
-    path: /challenge/signup/{challengeName}/{selfRegistrationCode}
-    controller: App\Controller\ChallengeController::addSelfRegisteredVoterForChallengePage
-
 toggleSelfRegistrationForChallenge:
     path: /challenge/toggleSelfRegistration/{challengeName}/{token}
     controller: App\Controller\ChallengeController::toggleSelfRegistrationForChallenge
@@ -31,39 +49,26 @@ resetVotesForVoterOnChallenge:
     controller: App\Controller\ChallengeController::resetVotesForVoterOnChallenge
     methods: [ get ]
 
-# ----FE routes
+# -----------------------------------------------
+# Voting routes:
 voteDashboardForUser:
     path: /voteCarForUserDashboard/{challengeName}/{userId}/{token}
-    controller: App\Controller\DefaultController::votingDashBoardForUser
+    controller: App\Controller\VotingController::votingDashBoardForUser
 
 voteCarForUser:
     path: /voteCarForUser/{challengeName}/{userId}/{cars}/{result}/{token}
-    controller: App\Controller\DefaultController::voteForCarForUser
+    controller: App\Controller\VotingController::voteForCarForUser
 
-listChallengesMenu:
-    path: /challenges
-    controller: App\Controller\DefaultController::ListChallengesMenu
-
-loginMenu:
-    path: /login/{challengeName}
-    controller: App\Controller\ChallengeController::loginFormPage
-
-createChallengeMenu:
-    path: /challenge/new
-    controller: App\Controller\DefaultController:createChallenge
-
-changePasswordMenu:
-    path: /voter/changePass
-    controller: App\Controller\DefaultController:changePasswordForVoter
-
+# -----------------------------------------------
+# Upload routes:
 listFile:
     path: /uploader/list/{folderId}
-    controller: App\Controller\DefaultController:listFilesFromGoogleDrive
+    controller: App\Controller\UploadController::listFilesFromGoogleDrive
 
 uploadFile:
     path: /uploader/upload
-    controller: App\Controller\DefaultController:uploadFileToMyDriveForm
+    controller: App\Controller\UploadController::uploadFileToMyDriveForm
 
 uploadFileToDrive:
     path: /uploader/uploaded
-    controller: App\Controller\DefaultController:uploadFileToDrive
+    controller: App\Controller\UploadController::uploadFileToDrive
