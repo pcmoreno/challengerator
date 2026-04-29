@@ -19,12 +19,10 @@ use Symfony\Component\HttpFoundation\Response;
 class DefaultController extends AbstractController
 {
     private ChallengeService $challengeService;
-    private GoogleDriveService $googleDriveService;
 
-    public function __construct(ChallengeService $challengeService, GoogleDriveService $googleDriveService)
+    public function __construct(ChallengeService $challengeService)
     {
         $this->challengeService = $challengeService;
-        $this->googleDriveService = $googleDriveService;
     }
 
     public function index(): Response
@@ -157,10 +155,10 @@ class DefaultController extends AbstractController
             ]);
     }
 
-    public function listFilesFromGoogleDrive($folderId)
+    public function listFilesFromGoogleDrive(GoogleDriveService $googleDriveService, $folderId)
     {
         $returnArray = [];
-        foreach ($this->googleDriveService->listFilesInFolder($folderId) as $file) {
+        foreach ($googleDriveService->listFilesInFolder($folderId) as $file) {
             /** @var Drive\DriveFile $file */
             $returnArray[$file->getName()] = $file->getId();
         }
@@ -172,12 +170,12 @@ class DefaultController extends AbstractController
         return $this->render('/default/uploadFileForm.html.twig');
     }
 
-    public function uploadFileToDrive()
+    public function uploadFileToDrive(GoogleDriveService $googleDriveService)
     {
         if (!empty($_FILES["fileToUpload"]["name"])) {
             $fileToUpload = $_FILES["fileToUpload"];
             $googleDriveFolderId = $_POST['folderId'];
-            $fileId = $this->googleDriveService->uploadFileToGoogleDrive($fileToUpload, $googleDriveFolderId);
+            $fileId = $googleDriveService->uploadFileToGoogleDrive($fileToUpload, $googleDriveFolderId);
                 return $this->render('/default/uploadFileForm.html.twig',
                 [
                     'message' => $fileId,
