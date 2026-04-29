@@ -2,57 +2,11 @@ index:
     path: /
     controller: App\Controller\DefaultController::index
 
-apitest:
-    path: /apitest/
-    controller: App\Controller\ApiController::apitest
-
-challengeapitest:
-    path: /challengeapitest/
-    controller: App\Controller\ChallengeController::challengeApiTest
-
-createDB:
-    path: /couch/createdb/{dbName}/{code}
-    controller: App\Controller\ApiController::createDb
-    defaults:
-        dbName: null
-    methods: [get, put]
-
-deleteDB:
-    path: /couch/deletedb/{dbName}/{adminpass}
-    controller: App\Controller\ApiController::deleteDb
-
-listDBInfo:
-    path: /couch/info/{dbName}
-    controller: App\Controller\ApiController::databaseInfos
-    defaults:
-        dbName: null
-
-getDocumentFromCouch:
-    path: /couch/get/{dbName}/{id}
-    controller: App\Controller\ApiController::fetchDocumentWithId
-
-#updateDocumentFromCouch:
-#    path: /couch/update/{dbName}/{id}
-#    controller: App\Controller\ApiController::updateDocumentWithId
-
 # -----------------------------------------------
 # Challenge routes:
-addCarAndVoterToChallenge:
-    path: /couch/addCar/{challengeName}
-    controller: App\Controller\ApiController::addCarAndVoterToChallenge
-
-#createChallenge:
-#    path: /challenge/create/{challengeName}/{owner}
-#    controller: App\Controller\ChallengeController::createChallenge
-
 startChallenge:
     path: /challenge/initialize/{challengeName}/{token}
     controller: App\Controller\ChallengeController::startChallenge
-
-#addCarToChallenge:
-#    path: /challenge/addCar/{challengeName}
-#    controller: App\Controller\ChallengeController::addCarToChallenge
-#    methods: [ post ]
 
 addCarToChallengeFormPage:
     path: /challenge/addCarForm/{challengeName}/{token}
@@ -72,29 +26,12 @@ toggleSelfRegistrationForChallenge:
     path: /challenge/toggleSelfRegistration/{challengeName}/{token}
     controller: App\Controller\ChallengeController::toggleSelfRegistrationForChallenge
 
-#addVoterToChallenge:
-#    path: /challenge/addVoter/{challengeName}
-#    controller: App\Controller\ChallengeController::addVoterToChallenge
-#    methods: [ post ]
-
-#deleteUser:
-#    path: /challenge/deleteVoter/{challengeName}/{voterId}
-#    controller: App\Controller\ChallengeController::deleteVoterFromChallenge
-
 resetVotesForVoterOnChallenge:
     path: /challenge/resetVoter/
     controller: App\Controller\ChallengeController::resetVotesForVoterOnChallenge
     methods: [ get ]
 
-getCarsForChallenge:
-    path: /challenge/cars/{challengeName}
-    controller: App\Controller\ChallengeController::getCarsForChallenge
-
-listChallenges:
-    path: /challenge/listAll
-    controller: App\Controller\ChallengeController::listChallenges
-
-#----FE routes
+# ----FE routes
 voteDashboardForUser:
     path: /voteCarForUserDashboard/{challengeName}/{userId}/{token}
     controller: App\Controller\DefaultController::votingDashBoardForUser
