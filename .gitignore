@@ -16,7 +16,7 @@
 /phpunit.xml
 ###< symfony/phpunit-bridge ###
 
-.idea
+/.idea
 
 /node_modules/
 /public/build/
