@@ -178,4 +178,9 @@ class Voter
     {
         return $this->ipAddress;
     }
+
+    public function isRegisteredForChallenge(string $challengeName): bool
+    {
+        return $this->roundsOfComparison->has($challengeName);
+    }
 }

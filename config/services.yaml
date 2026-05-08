@@ -30,6 +30,22 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
-    App\Services\ChallengeService:
+    App\Repository\ChallengeRepositoryInterface:
+        class: App\Repository\Couch\CouchChallengeRepository
+        arguments:
+            $dsn: '%couchDsn%'
+
+    App\Repository\CarRepositoryInterface:
+        class: App\Repository\Couch\CouchCarRepository
+        arguments:
+            $dsn: '%couchDsn%'
+
+    App\Repository\VoterRepositoryInterface:
+        class: App\Repository\Couch\CouchVoterRepository
+        arguments:
+            $dsn: '%couchDsn%'
+
+    App\Repository\InviteCodeRepositoryInterface:
+        class: App\Repository\Couch\CouchInviteCodeRepository
         arguments:
             $dsn: '%couchDsn%'
