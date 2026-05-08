@@ -16,6 +16,11 @@ class InMemoryVoterRepository implements VoterRepositoryInterface
         return $this->voters[$id] ?? null;
     }
 
+    public function findMany(array $ids): array
+    {
+        return array_values(array_filter(array_map(fn($id) => $this->voters[$id] ?? null, $ids)));
+    }
+
     public function findByName(string $name): ?Voter
     {
         foreach ($this->voters as $voter) {

@@ -27,6 +27,21 @@ class CouchVoterRepository implements VoterRepositoryInterface
         }
     }
 
+    public function findMany(array $ids): array
+    {
+        if (empty($ids)) {
+            return [];
+        }
+        $response = $this->client->keys($ids)->include_docs(true)->getAllDocs();
+        $byId = [];
+        foreach ($response->rows as $row) {
+            if (isset($row->doc)) {
+                $byId[$row->id] = Voter::fromCouchDocument(json_decode(json_encode($row->doc), true));
+            }
+        }
+        return array_values(array_filter(array_map(fn($id) => $byId[$id] ?? null, $ids)));
+    }
+
     public function findByName(string $name): ?Voter
     {
         $results = $this->client->find(['name' => $name]);
