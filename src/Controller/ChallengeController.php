@@ -95,7 +95,7 @@ class ChallengeController extends AbstractController
         return $this->render('car/carDashboard.html.twig', [
             'form' => $form->createView(),
             'adminDeleteCarForm' => $adminDeleteCarForm->createView(),
-            'allCarsInChallenge' => $this->challengeService->getCarsForChallenge($challengeName, false),
+            'allCarsInChallenge' => $this->challengeService->getCarsForChallenge($challengeName),
             'challengeName' => $challengeName,
             'token' => $token
         ]);
