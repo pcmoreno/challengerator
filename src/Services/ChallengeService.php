@@ -57,13 +57,12 @@ class ChallengeService
         $this->challengeRepository->save($challenge);
     }
 
-    public function AddVoterToChallengeFromIp(string $challengeName, string $voterName, string $password): bool
+    public function AddVoterToChallengeFromIp(string $challengeName, string $voterName, string $password, string $ip): bool
     {
         $challenge = $this->challengeRepository->find($challengeName);
         if (!$challenge->allowsSelfRegistration()) {
             return false;
         }
-        $ip = $_SERVER['REMOTE_ADDR'];
         if ($this->voterRepository->hasVoterFromIpForChallenge($ip, $challengeName)) {
             return false;
         }
@@ -106,10 +105,7 @@ class ChallengeService
     public function getAllVotersForTheChallenge(string $challengeName): array
     {
         $challenge = $this->challengeRepository->find($challengeName);
-        return array_map(
-            fn($id) => $this->voterRepository->find($id),
-            $challenge->getVoters()
-        );
+        return $this->voterRepository->findMany($challenge->getVoters());
     }
 
     public function initializeChallenge(string $challengeName, string $adminToken): JsonResponse
@@ -120,12 +116,9 @@ class ChallengeService
         $challenge = $this->challengeRepository->find($challengeName);
         $carIds = $challenge->getCars();
 
-        foreach ($challenge->getVoters() as $voterId) {
-            $voter = $this->voterRepository->find($voterId);
-            if ($voter !== null) {
-                $voter->addCarsToSelf($carIds, $challengeName, true);
-                $this->voterRepository->save($voter);
-            }
+        foreach ($this->voterRepository->findMany($challenge->getVoters()) as $voter) {
+            $voter->addCarsToSelf($carIds, $challengeName, true);
+            $this->voterRepository->save($voter);
         }
 
         $challenge->activate();
@@ -163,7 +156,7 @@ class ChallengeService
             array_splice($carsToVote, $random, 1);
         }
 
-        $selectedCars = array_map(fn($id) => $this->carRepository->find($id), $selectedCarIds);
+        $selectedCars = $this->carRepository->findMany($selectedCarIds);
 
         return [$selectedCars, $carsToVote];
     }
@@ -182,10 +175,10 @@ class ChallengeService
         $carIds = explode('XXX', $cars);
 
         $voter = $this->voterRepository->find($userId);
-        $voterArray = json_decode(json_encode($voter->toCouchDocument()), true);
+        $unvotedCars = $voter->getUnvotedCarsForChallenge($challengeId);
 
         foreach ($carIds as $carId) {
-            if (!in_array($carId, $voterArray['challenges'][$challengeId]['carsToVote'])) {
+            if (!in_array($carId, $unvotedCars)) {
                 throw new \Exception('Car already voted', JsonResponse::HTTP_CONFLICT);
             }
         }

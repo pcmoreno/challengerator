@@ -77,7 +77,8 @@ class AuthController extends AbstractController
             $success = $this->challengeService->AddVoterToChallengeFromIp(
                 $challengeName,
                 $newVoter->username,
-                $newVoter->password
+                $newVoter->password,
+                $request->getClientIp() ?? ''
             );
             return $success ?
                 $this->redirectToRoute('loginMenu', ['challengeName' => $challengeName]) :

@@ -25,7 +25,17 @@ class CouchCarRepository implements CarRepositoryInterface
 
     public function findMany(array $ids): array
     {
-        return array_map(fn($id) => $this->find($id), $ids);
+        if (empty($ids)) {
+            return [];
+        }
+        $response = $this->client->keys($ids)->include_docs(true)->getAllDocs();
+        $byId = [];
+        foreach ($response->rows as $row) {
+            if (isset($row->doc)) {
+                $byId[$row->id] = Car::fromCouchData(json_decode(json_encode($row->doc), true));
+            }
+        }
+        return array_values(array_filter(array_map(fn($id) => $byId[$id] ?? null, $ids)));
     }
 
     public function save(Car $car): void

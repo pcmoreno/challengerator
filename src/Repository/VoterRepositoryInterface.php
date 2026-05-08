@@ -8,6 +8,7 @@ use App\Entity\Challenge\Voter;
 interface VoterRepositoryInterface
 {
     public function find(string $id): ?Voter;
+    public function findMany(array $ids): array;
     public function findByName(string $name): ?Voter;
     public function hasVoterFromIpForChallenge(string $ip, string $challengeName): bool;
     public function save(Voter $voter): void;
