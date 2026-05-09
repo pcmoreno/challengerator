@@ -74,6 +74,7 @@ class ChallengeController extends AbstractController
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
             $this->challengeService->addCar($challengeName, $car);
+            return $this->redirectToRoute('addCarToChallengeFormPage', ['challengeName' => $challengeName]);
         }
 
         $adminDeleteCar = new \stdClass();
@@ -106,7 +107,12 @@ class ChallengeController extends AbstractController
         $voterForm->handleRequest($request);
         if ($voterForm->isSubmitted() && $voterForm->isValid()) {
             $voter = Voter::createForChallenge($voter->getName(), $voter->getAuthKey(), $challengeName);
-            $this->challengeService->addVoter($challengeName, $voter);
+            try {
+                $this->challengeService->addVoter($challengeName, $voter);
+            } catch (\DomainException $e) {
+                $this->addFlash('error', $e->getMessage());
+            }
+            return $this->redirectToRoute('addVoterToChallengeFormPage', ['challengeName' => $challengeName]);
         }
 
         $adminDeleteVoter = new \stdClass();
