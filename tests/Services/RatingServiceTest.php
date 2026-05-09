@@ -41,12 +41,12 @@ class RatingServiceTest extends TestCase
         $ratingB = Rating::createNew();
 
         // should stay the same for a draw and equal rating
-        RatingService::compareAndAdjust($ratingA, $ratingB, Outcome::DRAW);
+        RatingService::compareAndAdjust($ratingA, $ratingB, Outcome::Draw);
         $this->assertEquals($ratingA->getRating(), $ratingB->getRating());
 
         // in case of different Ratings and a draw, the lower should increase and the higher decrease
         $ratingA->setRating(1400);
-        RatingService::compareAndAdjust($ratingA, $ratingB, Outcome::DRAW);
+        RatingService::compareAndAdjust($ratingA, $ratingB, Outcome::Draw);
         $this->assertTrue($ratingA->getRating() > 1400);
         $this->assertTrue($ratingB->getRating() < $originalRatingB->getRating());
     }
@@ -58,7 +58,7 @@ class RatingServiceTest extends TestCase
         $ratingB = Rating::createNew();
 
         // LEFT SIDE WINS
-        RatingService::compareAndAdjust($ratingA, $ratingB, Outcome::LEFT_WINS);
+        RatingService::compareAndAdjust($ratingA, $ratingB, Outcome::LeftWins);
         // it changes the ratings
         $this->assertNotEquals($ratingA->getRating(), $ratingB->getRating());
         // the winner's rating is higher than the loser
@@ -67,7 +67,7 @@ class RatingServiceTest extends TestCase
         $this->assertEquals($originalRating->getRating() - $ratingA->getRating(), $ratingB->getRating() - $originalRating->getRating());
 
         // RIGHT SIDE WINS
-        RatingService::compareAndAdjust($ratingA, $ratingB, Outcome::RIGHT_WINS);
+        RatingService::compareAndAdjust($ratingA, $ratingB, Outcome::RightWins);
         // it changes the ratings
         $this->assertNotEquals($ratingA->getRating(), $ratingB->getRating());
         // the winner's rating is higher than the loser

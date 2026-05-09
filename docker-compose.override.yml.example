@@ -1,0 +1,3 @@
+services:
+  challengeator-app:
+    user: "1000:1000"  # replace with your UID:GID (run: id -u && id -g)

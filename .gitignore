@@ -1,5 +1,6 @@
 
 ###> symfony/framework-bundle ###
+/.env
 /.env.local
 /.env.local.php
 /.env.*.local
@@ -8,7 +9,6 @@
 /public/logs/
 /var/
 /vendor/
-.env
 ###< symfony/framework-bundle ###
 
 ###> symfony/phpunit-bridge ###
@@ -17,9 +17,19 @@
 /phpunit.xml
 ###< symfony/phpunit-bridge ###
 
-.idea
+/.idea
+/docker-compose.override.yml
 
-### google drive
-./quickstart.php
-./credentials.json
-./token.json
+/node_modules/
+/public/build/
+
+### google drive / OAuth
+/quickstart.php
+/credentials.json
+/token.json
+logs/
+
+###> symfony/asset-mapper ###
+/public/assets/
+/assets/vendor/
+###< symfony/asset-mapper ###

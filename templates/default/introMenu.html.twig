@@ -1,19 +1,23 @@
-<body>
-<div class="content">
+{% extends 'base.html.twig' %}
 
-<h1>Challengeator</h1>
+{% block title %}Challengerator{% endblock %}
 
-<p></p>
-<table style="width: 50%; margin-left: auto; margin-right: auto;">
-        <tr><td><h3><div style="text-align: center;">a voting platform for car design competitions</div></h3></td></tr>
-        <tr><td></td></tr>
-        <tr><td><button><a href= {{ path('createChallengeMenu') }}>I have a token and want to create a new challenge</a></button></td></tr>
-        <tr><td><button><a href= {{ path('listChallengesMenu') }}>I want to login as a voter or as an admin for a challenge</a></button></td></tr>
-        <tr><td></td></tr>
-</table>
-</div>
-<footer class="footer">
-        <h3>(c)pcmoreno - September 2021</h3>
-</footer>
-</body>
-{% include 'default/generalStyle.html.twig' %}
+{% block body %}
+    <div class="max-w-lg mx-auto mt-12 text-center">
+        <div class="bg-white rounded-lg shadow p-8">
+            <h2 class="text-xl font-semibold text-gray-700 mb-6">
+                A voting platform for car design competitions
+            </h2>
+            <div class="space-y-4">
+                <a href="{{ path('createChallengeMenu') }}"
+                   class="block bg-lime-600 hover:bg-lime-700 text-white font-bold py-3 px-4 rounded transition-colors">
+                    I have a token and want to create a new challenge
+                </a>
+                <a href="{{ path('listChallengesMenu') }}"
+                   class="block bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded transition-colors">
+                    I want to login as a voter or admin for a challenge
+                </a>
+            </div>
+        </div>
+    </div>
+{% endblock %}

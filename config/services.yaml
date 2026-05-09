@@ -5,7 +5,6 @@
 # https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
 parameters:
     couchDsn: '%env(resolve:COUCHDB_URL)%'
-    couchDB: 'couch_test_database'
 
 services:
     # default configuration for services in *this* file
@@ -29,17 +28,36 @@ services:
         resource: '../src/Controller/'
         tags: ['controller.service_arguments']
 
-    App\Controller\ApiController:
-        arguments:
-            $dsn: '%couchDsn%'
-
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
-    App\Services\CouchDbService:
-        arguments:
-            $couchDsn: '%couchDsn%'
-            $couchDB: '%couchDB%'
+    # App\Repository\ChallengeRepositoryInterface:
+    #     class: App\Repository\Couch\CouchChallengeRepository
+    #     arguments:
+    #         $dsn: '%couchDsn%'
 
-    App\Services\ChallengeService:
-        arguments:
-            $dsn: '%couchDsn%'
+    # App\Repository\CarRepositoryInterface:
+    #     class: App\Repository\Couch\CouchCarRepository
+    #     arguments:
+    #         $dsn: '%couchDsn%'
+
+    # App\Repository\VoterRepositoryInterface:
+    #     class: App\Repository\Couch\CouchVoterRepository
+    #     arguments:
+    #         $dsn: '%couchDsn%'
+
+    # App\Repository\InviteCodeRepositoryInterface:
+    #     class: App\Repository\Couch\CouchInviteCodeRepository
+    #     arguments:
+    #         $dsn: '%couchDsn%'
+
+    App\Repository\ChallengeRepositoryInterface:
+        class: App\Repository\Doctrine\DoctrineChallengeRepository
+
+    App\Repository\CarRepositoryInterface:
+        class: App\Repository\Doctrine\DoctrineCarRepository
+
+    App\Repository\VoterRepositoryInterface:
+        class: App\Repository\Doctrine\DoctrineVoterRepository
+
+    App\Repository\InviteCodeRepositoryInterface:
+        class: App\Repository\Doctrine\DoctrineInviteCodeRepository
