@@ -23,3 +23,7 @@ generate-invite-codes:
 
 create-super-user:
 	$(APP) php bin/console app:create-super-user $(username) $(password)
+
+test-db:
+	$(APP) php bin/console doctrine:database:create --env=test --if-not-exists --no-interaction
+	$(APP) php bin/console doctrine:migrations:migrate --env=test --no-interaction
