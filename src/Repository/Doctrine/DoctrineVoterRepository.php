@@ -31,7 +31,9 @@ class DoctrineVoterRepository implements VoterRepositoryInterface
         $users = $this->em->getRepository(User::class)
             ->createQueryBuilder('u')
             ->where('u.id IN (:ids)')
+            ->andWhere("u.roles NOT LIKE :superAdmin")
             ->setParameter('ids', array_map('intval', $ids))
+            ->setParameter('superAdmin', '%ROLE_SUPER_ADMIN%')
             ->getQuery()
             ->getResult();
 
