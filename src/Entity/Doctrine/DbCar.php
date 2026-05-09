@@ -5,52 +5,34 @@ namespace App\Entity\Doctrine;
 
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity
- * @ORM\Table(name="car")
- */
+#[ORM\Entity]
+#[ORM\Table(name: 'car')]
 class DbCar
 {
-    /**
-     * @ORM\Id
-     * @ORM\Column(type="string", length=36)
-     */
+    #[ORM\Id]
+    #[ORM\Column(type: 'string', length: 36)]
     private string $id;
 
-    /**
-     * @ORM\ManyToOne(targetEntity=DbChallenge::class, inversedBy="cars")
-     * @ORM\JoinColumn(nullable=false)
-     */
+    #[ORM\ManyToOne(targetEntity: DbChallenge::class, inversedBy: 'cars')]
+    #[ORM\JoinColumn(nullable: false)]
     private DbChallenge $challenge;
 
-    /**
-     * @ORM\Column(type="string", length=100)
-     */
+    #[ORM\Column(type: 'string', length: 100)]
     private string $name;
 
-    /**
-     * @ORM\Column(type="string")
-     */
+    #[ORM\Column(type: 'string')]
     private string $imageUrlA;
 
-    /**
-     * @ORM\Column(type="string")
-     */
+    #[ORM\Column(type: 'string')]
     private string $imageUrlB;
 
-    /**
-     * @ORM\Column(type="integer", options={"default": 1500})
-     */
+    #[ORM\Column(type: 'integer', options: ['default' => 1500])]
     private int $rating = 1500;
 
-    /**
-     * @ORM\Column(type="datetime_immutable")
-     */
+    #[ORM\Column(type: 'datetime_immutable')]
     private \DateTimeImmutable $addedOn;
 
-    /**
-     * @ORM\Column(type="datetime_immutable", nullable=true)
-     */
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
     private ?\DateTimeImmutable $updatedOn = null;
 
     public function __construct(string $id, DbChallenge $challenge, string $name, string $imageUrlA, string $imageUrlB)

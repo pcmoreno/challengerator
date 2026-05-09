@@ -5,27 +5,19 @@ namespace App\Entity\Doctrine;
 
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity
- * @ORM\Table(name="invite_code")
- */
+#[ORM\Entity]
+#[ORM\Table(name: 'invite_code')]
 class DbInviteCode
 {
-    /**
-     * @ORM\Id
-     * @ORM\GeneratedValue
-     * @ORM\Column(type="integer")
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private int $id;
 
-    /**
-     * @ORM\Column(type="string", length=64, unique=true)
-     */
+    #[ORM\Column(type: 'string', length: 64, unique: true)]
     private string $code;
 
-    /**
-     * @ORM\Column(type="datetime_immutable", nullable=true)
-     */
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
     private ?\DateTimeImmutable $usedAt = null;
 
     public function __construct(string $code)

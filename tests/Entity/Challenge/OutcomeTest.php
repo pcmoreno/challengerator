@@ -8,27 +8,31 @@ use PHPUnit\Framework\TestCase;
 
 class OutcomeTest extends TestCase
 {
-    public function test_create_throws_on_invalid_outcome(): void
+    public function test_from_throws_on_invalid_value(): void
     {
-        $this->expectException(\Exception::class);
-        Outcome::create('invalid');
+        $this->expectException(\ValueError::class);
+        Outcome::from('invalid');
     }
 
-    public function test_create_accepts_left(): void
+    public function test_left_wins_has_correct_value(): void
     {
-        $outcome = Outcome::create(Outcome::LEFT_WINS);
-        $this->assertSame(Outcome::LEFT_WINS, $outcome->getOutcome());
+        $this->assertSame('left', Outcome::LeftWins->value);
     }
 
-    public function test_create_accepts_right(): void
+    public function test_right_wins_has_correct_value(): void
     {
-        $outcome = Outcome::create(Outcome::RIGHT_WINS);
-        $this->assertSame(Outcome::RIGHT_WINS, $outcome->getOutcome());
+        $this->assertSame('right', Outcome::RightWins->value);
     }
 
-    public function test_create_accepts_draw(): void
+    public function test_draw_has_correct_value(): void
     {
-        $outcome = Outcome::create(Outcome::DRAW);
-        $this->assertSame(Outcome::DRAW, $outcome->getOutcome());
+        $this->assertSame('draw', Outcome::Draw->value);
+    }
+
+    public function test_from_resolves_known_values(): void
+    {
+        $this->assertSame(Outcome::LeftWins, Outcome::from('left'));
+        $this->assertSame(Outcome::RightWins, Outcome::from('right'));
+        $this->assertSame(Outcome::Draw, Outcome::from('draw'));
     }
 }
