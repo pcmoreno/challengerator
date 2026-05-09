@@ -4,28 +4,28 @@
 
 {% block body %}
     <div class="max-w-2xl mx-auto">
-        <h2 class="text-2xl font-bold text-green-800 mb-6">Ongoing Challenges</h2>
+        <h2 class="text-2xl font-bold text-heading mb-6">Ongoing Challenges</h2>
 
         {% if challenges is empty %}
-            <div class="text-center py-12 bg-white rounded-lg shadow">
-                <p class="text-gray-500 text-lg">No challenges available at the moment.</p>
+            <div class="text-center py-12 bg-surface rounded-lg shadow">
+                <p class="text-muted text-lg">No challenges available at the moment.</p>
             </div>
         {% else %}
-            <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="bg-surface rounded-lg shadow overflow-hidden">
                 <table class="w-full">
                     <thead>
-                        <tr class="bg-blue-400 text-white text-xs uppercase tracking-wider">
+                        <tr class="bg-panel text-white text-xs uppercase tracking-wider">
                             <th class="px-4 py-3 text-left">Challenge</th>
                             <th class="px-4 py-3"></th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for item in challenges %}
-                            <tr class="border-t {{ loop.index is even ? 'bg-blue-50' : 'bg-cyan-50' }} hover:bg-blue-100 transition-colors">
+                            <tr class="border-t {{ loop.index is even ? 'bg-row-even' : 'bg-row-odd' }}">
                                 <td class="px-4 py-3">{{ item }}</td>
                                 <td class="px-4 py-3 text-right">
                                     <a href="{{ path('loginMenu', {'challengeName': item}) }}"
-                                       class="bg-lime-600 hover:bg-lime-700 text-white font-bold py-1 px-4 rounded text-sm transition-colors">
+                                       class="btn-primary font-bold py-1 px-4 rounded text-sm">
                                         GO TO
                                     </a>
                                 </td>
@@ -37,7 +37,7 @@
         {% endif %}
 
         <div class="text-center mt-6">
-            <a href="{{ path('index') }}" class="text-blue-700 hover:underline text-sm">← Back</a>
+            <a href="{{ path('index') }}" class="text-link hover:underline text-sm">← Back</a>
         </div>
     </div>
 {% endblock %}

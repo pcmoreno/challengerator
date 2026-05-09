@@ -4,8 +4,8 @@
 
 {% block body %}
     <div class="max-w-md mx-auto mt-8">
-        <h2 class="text-2xl font-bold text-center text-green-800 mb-6">Create New Challenge</h2>
-        <div class="bg-blue-400 rounded-lg shadow p-6">
+        <h2 class="text-2xl font-bold text-center text-heading mb-6">Create New Challenge</h2>
+        <div class="bg-panel rounded-lg shadow p-6">
             {{ form_start(adminCreateChallengeForm, {'attr': {'class': 'space-y-4'}}) }}
                 {{ form_row(adminCreateChallengeForm.challengeName) }}
                 {{ form_row(adminCreateChallengeForm.adminPass) }}
@@ -13,11 +13,11 @@
                 {{ form_row(adminCreateChallengeForm.create) }}
             {{ form_end(adminCreateChallengeForm) }}
         </div>
-        <p class="text-center text-gray-600 text-sm mt-4">
+        <p class="text-center text-muted text-sm mt-4">
             Challenge name must be lowercase with no spaces.
         </p>
         <div class="text-center mt-4">
-            <a href="{{ path('index') }}" class="text-blue-700 hover:underline text-sm">← Back</a>
+            <a href="{{ path('index') }}" class="text-link hover:underline text-sm">← Back</a>
         </div>
     </div>
 {% endblock %}

@@ -4,20 +4,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Challengerator{% endblock %}</title>
+    <script>if (localStorage.getItem('theme') === 'auto') document.documentElement.dataset.theme = 'auto';</script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('styles/app.css') }}">
 </head>
-<body class="min-h-screen font-sans text-gray-800">
-    <header class="bg-green-800 text-white px-6 py-3 shadow-md">
-        <a href="{{ path('index') }}" class="text-xl font-bold hover:text-green-200 transition-colors no-underline">
+<body class="min-h-screen font-sans">
+    <header class="bg-header text-white px-6 py-3 shadow-md flex justify-between items-center">
+        <a href="{{ path('index') }}" class="text-xl font-bold hover:opacity-80 transition-opacity no-underline text-white">
             Challengerator
         </a>
+        <div data-controller="theme" class="relative text-sm">
+            <button data-action="click->theme#toggleMenu"
+                    class="border border-white/30 text-white/70 hover:text-white px-3 py-1 rounded cursor-pointer bg-transparent transition-colors flex items-center gap-1">
+                Theme <span class="opacity-60 text-xs">▾</span>
+            </button>
+            <div data-theme-target="menu"
+                 class="hidden absolute right-0 top-full mt-1 rounded shadow-xl min-w-36 z-50 overflow-hidden bg-surface border border-subtle text-body">
+                <button data-action="click->theme#select" data-theme-option="default"
+                        class="w-full text-left px-4 py-2 text-sm hover:bg-panel flex justify-between items-center gap-4 cursor-pointer bg-transparent border-0">
+                    Default <span data-theme-target="defaultMark" class="text-link">✓</span>
+                </button>
+                <button data-action="click->theme#select" data-theme-option="auto"
+                        class="w-full text-left px-4 py-2 text-sm hover:bg-panel flex justify-between items-center gap-4 cursor-pointer bg-transparent border-0">
+                    Automation <span data-theme-target="autoMark" class="text-link invisible">✓</span>
+                </button>
+            </div>
+        </div>
     </header>
 
     <main class="max-w-5xl mx-auto px-4 py-6">
         {% block body %}{% endblock %}
     </main>
 
-    <footer class="bg-green-800 text-white text-center text-sm py-3 mt-8">
+    <footer class="bg-header text-white text-center text-sm py-3 mt-8">
         &copy; pcmoreno — 2026
     </footer>
 
