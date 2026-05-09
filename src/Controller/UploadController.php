@@ -29,9 +29,9 @@ class UploadController extends AbstractController
 
     public function uploadFileToDrive(GoogleDriveService $googleDriveService, Request $request): Response
     {
-        if (!empty($_FILES["fileToUpload"]["name"])) {
-            $fileToUpload = $_FILES["fileToUpload"];
-            $googleDriveFolderId = $_POST['folderId'];
+        $fileToUpload = $request->files->get('fileToUpload');
+        $googleDriveFolderId = $request->request->get('folderId');
+        if ($fileToUpload !== null) {
             $fileId = $googleDriveService->uploadFileToGoogleDrive($fileToUpload, $googleDriveFolderId);
             return $this->render('/default/uploadFileForm.html.twig', [
                 'message' => $fileId,

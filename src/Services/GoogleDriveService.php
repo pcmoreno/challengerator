@@ -9,6 +9,7 @@ use Google_Service_Drive;
 use Google_Service_Drive_DriveFile;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class GoogleDriveService
 {
@@ -36,12 +37,12 @@ class GoogleDriveService
         return ($results->getFiles());
     }
 
-    public function uploadFileToGoogleDrive($driveFile, $folderId): string
+    public function uploadFileToGoogleDrive(UploadedFile $driveFile, string $folderId): string
     {
-        $fileMetadata = new Google_Service_Drive_DriveFile(['name' => $driveFile['name']]);
+        $fileMetadata = new Google_Service_Drive_DriveFile(['name' => $driveFile->getClientOriginalName()]);
         $fileMetadata->setParents([$folderId]);
-        $content = file_get_contents($driveFile['tmp_name']);
-        $mimeType = mime_content_type($driveFile['tmp_name']);
+        $content = file_get_contents($driveFile->getPathname());
+        $mimeType = $driveFile->getMimeType();
 
         try {
             $file = $this->googleServiceDrive->files->create(

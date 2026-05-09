@@ -11,7 +11,6 @@ use App\Form\CarType;
 use App\Form\CreateChallengeType;
 use App\Form\VoterType;
 use App\Services\ChallengeService;
-use Exception;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -28,7 +27,7 @@ class ChallengeController extends AbstractController
 
     public function listChallengesMenu(): Response
     {
-        $challenges = json_decode($this->challengeService->listChallenges()->getContent(), true);
+        $challenges = $this->challengeService->listChallenges();
         return $this->render('default/challengeMenu.html.twig', [
             'challenges' => $challenges,
         ]);
@@ -45,16 +44,14 @@ class ChallengeController extends AbstractController
         $createChallengeForm->handleRequest($request);
         if ($createChallengeForm->isSubmitted() && $createChallengeForm->isValid()) {
             try {
-                $response = $this->challengeService->createNewChallenge(
+                $this->challengeService->createNewChallenge(
                     $createChallenge->challengeName,
                     $createChallenge->adminPass,
                     $createChallenge->creationToken
                 );
-                return $response->getStatusCode() === 200
-                    ? $this->redirectToRoute('loginMenu', ['challengeName' => $createChallenge->challengeName])
-                    : new JsonResponse($response->getContent(), 400);
-            } catch (Exception $exception) {
-                return new JsonResponse($exception->getMessage(), 400);
+                return $this->redirectToRoute('loginMenu', ['challengeName' => $createChallenge->challengeName]);
+            } catch (\Exception $exception) {
+                return new JsonResponse($exception->getMessage(), Response::HTTP_BAD_REQUEST);
             }
         }
 
@@ -144,11 +141,8 @@ class ChallengeController extends AbstractController
             return $this->redirectToRoute('loginMenu', ['challengeName' => $challengeName]);
         }
 
-        $response = $this->challengeService->initializeChallenge($challengeName);
-        if ($response->getStatusCode() === 200) {
-            return $this->redirectToRoute('addVoterToChallengeFormPage', ['challengeName' => $challengeName]);
-        }
-        return $response;
+        $this->challengeService->initializeChallenge($challengeName);
+        return $this->redirectToRoute('addVoterToChallengeFormPage', ['challengeName' => $challengeName]);
     }
 
     public function toggleSelfRegistrationForChallenge(Request $request, string $challengeName): Response
@@ -172,25 +166,13 @@ class ChallengeController extends AbstractController
             return new JsonResponse('unauthorized', Response::HTTP_FORBIDDEN);
         }
 
-        $response = $this->challengeService->resetRoundOfVoteForUserOfChallenge(
+        $this->challengeService->resetRoundOfVoteForUserOfChallenge(
             $challengeName,
             $request->get('voterId')
         );
-        if ($response->getStatusCode() === 200) {
-            return $this->redirectToRoute('addVoterToChallengeFormPage', ['challengeName' => $challengeName]);
-        }
-        return $response;
-    }
-
-    public function deleteVoterFromChallenge(Request $request, string $challengeName, string $voterId): Response
-    {
-        if (!$this->isAdminForChallenge($request, $challengeName)) {
-            return new JsonResponse('unauthorized', Response::HTTP_FORBIDDEN);
-        }
-
-        $this->challengeService->deleteVoterFromChallenge($challengeName, $voterId);
         return $this->redirectToRoute('addVoterToChallengeFormPage', ['challengeName' => $challengeName]);
     }
+
 
     private function isAdminForChallenge(Request $request, string $challengeName): bool
     {

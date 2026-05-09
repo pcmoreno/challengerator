@@ -125,7 +125,15 @@ class DoctrineVoterRepository implements VoterRepositoryInterface
         }
 
         // registered challenges with no queue entries still need to be present
-        foreach ($user->getChallenges() as $dbChallenge) {
+        $registeredChallenges = $this->em->createQueryBuilder()
+            ->select('c')
+            ->from(DbChallenge::class, 'c')
+            ->join('c.voters', 'u')
+            ->where('u.id = :userId')
+            ->setParameter('userId', $user->getId())
+            ->getQuery()
+            ->getResult();
+        foreach ($registeredChallenges as $dbChallenge) {
             if (!$rounds->has($dbChallenge->getName())) {
                 $rounds->setCarsToBeVotedForChallenge([], $dbChallenge->getName());
                 $rounds->setCarsAlreadyComparedForChallenge([], $dbChallenge->getName());
@@ -143,35 +151,56 @@ class DoctrineVoterRepository implements VoterRepositoryInterface
 
     private function syncQueue(User $user, Voter $voter): void
     {
-        // Delete existing queue rows and re-insert from domain state
         $existing = $this->em->getRepository(DbVoterCarQueue::class)->findBy(['user' => $user->getId()]);
         foreach ($existing as $row) {
             $this->em->remove($row);
         }
         $this->em->flush();
 
-        foreach ($voter->getChallengeRounds() as $challengeName => $queues) {
-            $dbChallenge = $this->em->getRepository(DbChallenge::class)->findOneBy(['name' => $challengeName]);
+        $rounds = $voter->getChallengeRounds();
+
+        // Collect all car IDs and challenge names up-front for batch fetching
+        $allCarIds = [];
+        $challengeNames = array_keys($rounds);
+        foreach ($rounds as $queues) {
+            $allCarIds = array_merge($allCarIds, $queues['carsToVote'] ?? [], $queues['carsCompared'] ?? []);
+        }
+        $allCarIds = array_unique($allCarIds);
+
+        if (empty($challengeNames) || empty($allCarIds)) {
+            return;
+        }
+
+        $carMap = [];
+        foreach ($this->em->getRepository(DbCar::class)->findBy(['id' => $allCarIds]) as $dbCar) {
+            $carMap[$dbCar->getId()] = $dbCar;
+        }
+
+        $challengeMap = [];
+        foreach ($this->em->getRepository(DbChallenge::class)->findBy(['name' => $challengeNames]) as $dbChallenge) {
+            $challengeMap[$dbChallenge->getName()] = $dbChallenge;
+        }
+
+        foreach ($rounds as $challengeName => $queues) {
+            $dbChallenge = $challengeMap[$challengeName] ?? null;
             if ($dbChallenge === null) {
                 continue;
             }
 
             foreach ($queues['carsToVote'] ?? [] as $carId) {
-                $dbCar = $this->em->find(DbCar::class, $carId);
-                if ($dbCar === null) {
-                    continue;
+                $dbCar = $carMap[$carId] ?? null;
+                if ($dbCar !== null) {
+                    $this->em->persist(new DbVoterCarQueue($user, $dbChallenge, $dbCar));
                 }
-                $this->em->persist(new DbVoterCarQueue($user, $dbChallenge, $dbCar));
             }
 
             foreach ($queues['carsCompared'] ?? [] as $carId) {
-                $dbCar = $this->em->find(DbCar::class, $carId);
-                if ($dbCar === null) {
-                    continue;
+                $dbCar = $carMap[$carId] ?? null;
+                if ($dbCar !== null) {
+                    $row = new DbVoterCarQueue($user, $dbChallenge, $dbCar);
+                    $row->markVoted();
+                    $this->em->persist($row);
                 }
-                $row = new DbVoterCarQueue($user, $dbChallenge, $dbCar);
-                $row->markVoted();
-                $this->em->persist($row);
             }
         }
     }

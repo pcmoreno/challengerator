@@ -22,9 +22,13 @@ security:
                 password_parameter: login[pass]
                 enable_csrf: true
                 default_target_path: listChallengesMenu
+            login_throttling:
+                max_attempts: 5
+                interval: '1 hour'
             logout:
                 path: voter_logout
                 target: listChallengesMenu
 
     access_control:
+        - { path: ^/challenge/new$, roles: ROLE_SUPER_ADMIN }
         - { path: ^/vote/, roles: ROLE_VOTER }

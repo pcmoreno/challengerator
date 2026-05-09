@@ -89,21 +89,14 @@ class Voter
         return $voter;
     }
 
-    public function addCarsToSelf(array $cars, string $challengeId, bool $clean = false): void
+    public function addCarsToSelf(array $cars, string $challengeId): void
     {
-        if ($this->roundsOfComparison->has($challengeId)) {
-            /** @var RoundOfComparisons $roundOfComparisons */
-            $roundOfComparisons = $this->roundsOfComparison;
-            if ($clean) {
-                $roundOfComparisons->setCarsToBeVotedForChallenge($cars, $challengeId);
-                $roundOfComparisons->setCarsAlreadyComparedForChallenge([], $challengeId);
-            } else { //TODO
-                $carsLeftToVote = $roundOfComparisons->getCarsLeftToVote();
-                $roundOfComparisons->setCarsLeftToVote(array_merge($cars, $carsLeftToVote));
-            }
-        } else {
+        if (!$this->roundsOfComparison->has($challengeId)) {
             throw new \Exception('Voter not registered with challenge', 400);
         }
+        $roundOfComparisons = $this->roundsOfComparison;
+        $roundOfComparisons->setCarsToBeVotedForChallenge($cars, $challengeId);
+        $roundOfComparisons->setCarsAlreadyComparedForChallenge([], $challengeId);
         $this->roundsOfComparison = $roundOfComparisons;
     }
 
