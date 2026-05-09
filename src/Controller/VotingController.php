@@ -15,6 +15,10 @@ class VotingController extends AbstractController
 
     public function votingDashBoardForUser(string $challengeName): Response
     {
+        if ($this->isGranted('ROLE_SUPER_ADMIN')) {
+            return $this->redirectToRoute('index');
+        }
+
         $userId = (string)$this->getUser()->getId();
         [$carsToVote, $carsNotVoted] = $this->challengeService->getTwoCarsToBeVotedByUser($challengeName, $userId);
         if ($carsToVote === []) {
@@ -29,6 +33,10 @@ class VotingController extends AbstractController
 
     public function voteForCarForUser(Request $request, string $challengeName): Response
     {
+        if ($this->isGranted('ROLE_SUPER_ADMIN')) {
+            return $this->redirectToRoute('index');
+        }
+
         $userId = (string)$this->getUser()->getId();
         $cars   = $request->request->getString('cars');
         $result = $request->request->getString('result');

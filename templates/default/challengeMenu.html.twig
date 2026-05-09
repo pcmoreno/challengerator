@@ -21,7 +21,7 @@
                     </thead>
                     <tbody>
                         {% for item in challenges %}
-                            <tr class="border-t {{ loop.even ? 'bg-blue-50' : 'bg-cyan-50' }} hover:bg-blue-100 transition-colors">
+                            <tr class="border-t {{ loop.index is even ? 'bg-blue-50' : 'bg-cyan-50' }} hover:bg-blue-100 transition-colors">
                                 <td class="px-4 py-3">{{ item }}</td>
                                 <td class="px-4 py-3 text-right">
                                     <a href="{{ path('loginMenu', {'challengeName': item}) }}"
