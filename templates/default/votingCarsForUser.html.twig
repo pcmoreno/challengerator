@@ -1,79 +1,10 @@
 {% extends 'base.html.twig' %}
 
-{% block head %}
-    <meta charset="UTF-8"/>
-    <title>{% block title %}Challenge Car Index{% endblock %}</title>
-{% endblock %}
+{% block title %}Vote | {{ challengeName }}{% endblock %}
 
 {% block body %}
-    <p>Head to head, choose which the one you think looks better</p>
-    <table>
-        <tr>
-            {% set isDev = app.request.server.get('APP_ENV')  %}
-            <td>Car name</td>
-            {% if  (isDev == 'dev') %}
-            <td>rating</td>
-            {% endif %}
-            <td>Your choice</td>
-            <td>right click and open in new tab for better view</td>
-            <td></td>
-        </tr>
-        {% set turn = 'left' %}
-        {% for item in carsToVote %}
-            <tr>
-                <td>{{ item.name }}</td>
-                {% if  (isDev == 'dev') %}
-                <td>{{ item.rating }}</td>
-                {% endif %}
-                <td>
-                    <button><a href= {{ path('voteCarForUser', {
-                            'challengeName': challengeName,
-                            'userId': user,
-                            'cars': "#{carsToVote[0]['_id']}XXX#{carsToVote[1]['_id']}",
-                            'result': turn,
-                            'token': token
-                        }) }}>THIS ONE</a></button>
-                </td>
-                <td><img class="article-img" src="https://drive.google.com/uc?id={{ item.imageUrlA }}"
-                         alt="{{ item.name }}" height="450" width="720"></td>
-                <td><img class="article-img" src="https://drive.google.com/uc?id={{ item.imageUrlB }}"
-                         alt="{{ item.name }}" height="450" width="720"></td>
-            </tr>
-            {% set turn = 'right' %}
-        {% endfor %}
-        <tr>
-            <td></td>
-            {% if  (isDev == 'dev') %}
-                <td></td>
-            {% endif %}
-            <td>
-                <button style="white-space: normal"><a href= {{ path('voteCarForUser', {
-                        'challengeName': challengeName,
-                        'userId': user,
-                        'cars': "#{carsToVote[0]['_id']}XXX#{carsToVote[1]['_id']}",
-                        'result': 'draw',
-                        'token': token
-                    }) }}>SAME QUALITY</a></button>
-            </td>
-            <td></td>
-            <td></td>
-        </tr>
-    </table>
-    <p></p>
-
-    <table class="listOfCarsLeft">
-        <tr><td>cars left to be voted</td></tr>
-        {% for item in carsNotVoted %}
-            <tr>
-                <td>{{ item }}</td>
-            </tr>
-        {% endfor %}
-    </table>
-    {% include 'default/generalStyle.html.twig' %}
-
-    <style>
-        table.listOfCarsLeft {
-            width: 50%;
-        }
-    </style>
+    <h2 class="text-2xl font-bold text-center mb-2 text-green-800">{{ challengeName }}</h2>
+    <p class="text-center text-gray-500 mb-6">Head to head — choose which one looks better</p>
+    {% include 'voting/_car_pair.html.twig' %}
+    {% include 'voting/_remaining.html.twig' %}
 {% endblock %}

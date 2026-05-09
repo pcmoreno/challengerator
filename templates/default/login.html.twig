@@ -1,20 +1,44 @@
-<h1>{{ challengeName }}</h1><br>
+{% extends 'base.html.twig' %}
 
-{{ form_start(form) }}
-    {{ form_row(form.user) }}
-    {{ form_row(form.pass) }}
-    {{ form_widget(form.login) }}
-<div class="cap" style="alignment: center; width: 120px; margin-left: auto; margin-right: auto;">
-    {{ form_widget(form.captcha) }}
-</div>
+{% block title %}Login | {{ challengeName }}{% endblock %}
 
-{{ form_end(form) }}
+{% block body %}
+    <div class="max-w-md mx-auto mt-8 space-y-6">
+        <h2 class="text-2xl font-bold text-center text-green-800">{{ challengeName }}</h2>
 
-{% include 'default/generalStyle.html.twig' %}
+        <div class="bg-blue-400 rounded-lg shadow p-6">
+            <h3 class="text-white font-bold text-lg mb-4">Voter Login</h3>
+            <form method="POST" action="{{ path('voter_login') }}" class="space-y-3">
+                <input type="hidden" name="_target_path"
+                       value="{{ path('voteDashboardForUser', {challengeName: challengeName}) }}">
+                <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+                <input type="text" name="login[user]" placeholder="your username" required
+                       class="w-full px-3 py-2 border border-gray-300 rounded text-gray-800">
+                <input type="password" name="login[pass]" placeholder="your password" required
+                       class="w-full px-3 py-2 border border-gray-300 rounded text-gray-800">
+                <button type="submit"
+                        class="w-full bg-lime-600 hover:bg-lime-700 text-white font-bold py-2 rounded transition-colors">
+                    Login as Voter
+                </button>
+            </form>
+        </div>
 
-<style>
-    form {
-        margin: auto;
-        width: 50%;
-    }
-</style>
+        <div class="bg-blue-400 rounded-lg shadow p-6">
+            <h3 class="text-white font-bold text-lg mb-4">Admin Login</h3>
+            <form method="POST" action="{{ path('admin_login', {challengeName: challengeName}) }}" class="space-y-3">
+                <input type="hidden" name="_csrf_token"
+                       value="{{ csrf_token('admin_login_' ~ challengeName) }}">
+                <input type="password" name="admin_pass" placeholder="admin password" required
+                       class="w-full px-3 py-2 border border-gray-300 rounded text-gray-800">
+                <button type="submit"
+                        class="w-full bg-lime-600 hover:bg-lime-700 text-white font-bold py-2 rounded transition-colors">
+                    Login as Admin
+                </button>
+            </form>
+        </div>
+
+        <div class="text-center">
+            <a href="{{ path('listChallengesMenu') }}" class="text-blue-700 hover:underline text-sm">← Back</a>
+        </div>
+    </div>
+{% endblock %}

@@ -11,26 +11,25 @@ class RatingService
     protected const K = 100;
     protected const D = 400;
 
-    public static function compareAndAdjust(Rating $ratingA, Rating $ratingB, string $outcome): void
+    public static function compareAndAdjust(Rating $ratingA, Rating $ratingB, Outcome $outcome): void
     {
         $oldRatingValueA = $ratingA->getRating();
         $oldRatingValueB = $ratingB->getRating();
 
-        $validatedOutcome = Outcome::create($outcome);
-        switch ($validatedOutcome->getOutcome()) {
-            case Outcome::DRAW:
-                $ratingA->setRating(self::getNewRating($oldRatingValueA, $oldRatingValueB, 0.5));
-                $ratingB->setRating(self::getNewRating($oldRatingValueB, $oldRatingValueA, 0.5));
-                break;
-            case Outcome::RIGHT_WINS:
-                $ratingA->setRating(self::getNewRating($oldRatingValueA, $oldRatingValueB, 0));
-                $ratingB->setRating(self::getNewRating($oldRatingValueB, $oldRatingValueA, 1));
-                break;
-            case Outcome::LEFT_WINS:
-                $ratingA->setRating(self::getNewRating($oldRatingValueA, $oldRatingValueB, 1));
-                $ratingB->setRating(self::getNewRating($oldRatingValueB, $oldRatingValueA, 0));
-                break;
-        }
+        match ($outcome) {
+            Outcome::Draw => [
+                $ratingA->setRating(self::getNewRating($oldRatingValueA, $oldRatingValueB, 0.5)),
+                $ratingB->setRating(self::getNewRating($oldRatingValueB, $oldRatingValueA, 0.5)),
+            ],
+            Outcome::RightWins => [
+                $ratingA->setRating(self::getNewRating($oldRatingValueA, $oldRatingValueB, 0)),
+                $ratingB->setRating(self::getNewRating($oldRatingValueB, $oldRatingValueA, 1)),
+            ],
+            Outcome::LeftWins => [
+                $ratingA->setRating(self::getNewRating($oldRatingValueA, $oldRatingValueB, 1)),
+                $ratingB->setRating(self::getNewRating($oldRatingValueB, $oldRatingValueA, 0)),
+            ],
+        };
     }
 
     public static function getExpectedWinsForPlayer($yourRating, $opponentRating): float

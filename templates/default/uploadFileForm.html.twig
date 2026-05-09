@@ -1,23 +1,43 @@
-<!DOCTYPE html>
-{% include 'default/generalStyle.html.twig' %}
+{% extends 'base.html.twig' %}
 
-<html lang="en">
-<body style="width: 50%">
-<form action="{{ path('uploadFileToDrive') }}" method="post" enctype="multipart/form-data">
-    <h2>Select a file to upload:</h2>
-    <hr class="dotted">
-    <p><input type="file" name="fileToUpload" id="fileToUpload"></p>
-    <p><label for="folderId">Id for google drive folder: </label><input type="text" style="width: 50%" name="folderId" id="folderId" {% if folderId is defined %}value={{ folderId }} {% endif %}></p>
-    <hr class="dotted">
-    <p><input type="submit" value="Upload Image" name="submit"></p>
-    <hr class="dotted">
-</form>
+{% block title %}Upload Image{% endblock %}
 
-{% if message is defined and message != 'failed' %}
-    <p><i>The google drive id for the uploaded file is <b>{{ message }}</b><br>
-        Copy and paste this value into the add car form.</i></p>
-{% elseif message is defined and message == 'failed' %}
-    <h3>Upload failed</h3>
-{% endif %}
-</body>
-</html>
+{% block body %}
+    <div class="max-w-lg mx-auto mt-8">
+        <h2 class="text-2xl font-bold text-green-800 mb-6">Upload Image to Google Drive</h2>
+        <div class="bg-white rounded-lg shadow p-6">
+            <form action="{{ path('uploadFileToDrive') }}" method="post" enctype="multipart/form-data" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">Select a file to upload:</label>
+                    <input type="file" name="fileToUpload" id="fileToUpload"
+                           class="block w-full text-sm text-gray-600">
+                </div>
+                <hr class="border-dashed border-gray-300">
+                <div>
+                    <label for="folderId" class="block text-sm font-semibold text-gray-700 mb-1">
+                        Google Drive folder ID:
+                    </label>
+                    <input type="text" name="folderId" id="folderId"
+                           {% if folderId is defined %}value="{{ folderId }}"{% endif %}
+                           class="w-full px-3 py-2 border border-gray-300 rounded text-gray-800">
+                </div>
+                <hr class="border-dashed border-gray-300">
+                <button type="submit" name="submit"
+                        class="w-full bg-lime-600 hover:bg-lime-700 text-white font-bold py-2 rounded transition-colors">
+                    Upload Image
+                </button>
+            </form>
+        </div>
+
+        {% if message is defined and message != 'failed' %}
+            <div class="mt-4 bg-green-50 border border-green-300 rounded p-4 text-sm text-gray-700">
+                The Google Drive ID for the uploaded file is <strong class="font-mono">{{ message }}</strong>.
+                Copy and paste this into the add car form.
+            </div>
+        {% elseif message is defined and message == 'failed' %}
+            <div class="mt-4 bg-red-50 border border-red-300 rounded p-4 text-sm text-red-700">
+                Upload failed.
+            </div>
+        {% endif %}
+    </div>
+{% endblock %}

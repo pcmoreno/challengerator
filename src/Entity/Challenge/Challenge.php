@@ -201,4 +201,12 @@ class Challenge
     {
         return $this->selfRegistrationCode;
     }
+
+    public function toggleSelfRegistration(): string
+    {
+        $this->allowSelfRegistration = !$this->allowSelfRegistration;
+        $code = Uuid::v4()->jsonSerialize();
+        $this->selfRegistrationCode = $code;
+        return $code;
+    }
 }
