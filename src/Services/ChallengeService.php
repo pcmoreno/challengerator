@@ -38,7 +38,11 @@ class ChallengeService
         }
         try {
             $this->challengeRepository->create($name);
-            $challenge = Challenge::create($name, $owner);
+            $hashed = password_hash($owner, PASSWORD_BCRYPT);
+            if ($hashed === false) {
+                return new JsonResponse('Failed to hash admin password', JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
+            }
+            $challenge = Challenge::create($name, $hashed);
             $this->challengeRepository->save($challenge);
             return new JsonResponse('added: ' . $name);
         } catch (\Exception $exception) {
@@ -227,7 +231,7 @@ class ChallengeService
     public function verifyAdmin(string $challengeName, string $adminpass): bool
     {
         $challenge = $this->challengeRepository->find($challengeName);
-        return $adminpass === $challenge->getOwner();
+        return password_verify($adminpass, $challenge->getOwner());
     }
 
     public function isVoterTokenValid(string $tokenShown, string $voterId): bool
