@@ -6,6 +6,7 @@ namespace App\Services;
 use App\Entity\Auth\Role;
 use App\Entity\Challenge\Car;
 use App\Entity\Challenge\Challenge;
+use App\Entity\Challenge\Outcome;
 use App\Entity\Challenge\Voter;
 use App\Repository\CarRepositoryInterface;
 use App\Repository\ChallengeRepositoryInterface;
@@ -163,9 +164,7 @@ class ChallengeService
 
     public function voteOnCars(string $cars, string $result, string $challengeId, string $userId): array
     {
-        if (!in_array($result, ['left', 'right', 'draw'])) {
-            throw new \Exception('Wrong Result Chosen: ' . $result, 400);
-        }
+        $outcome = Outcome::tryFrom($result) ?? throw new \ValueError('Wrong Result Chosen: ' . $result);
         $logger = $this->getLogger('voters');
         $carIds = explode('XXX', $cars);
 
@@ -183,7 +182,7 @@ class ChallengeService
         [$carA, $carB] = $this->carRepository->findMany($carIds);
         $ratingA = $carA->getRating();
         $ratingB = $carB->getRating();
-        RatingService::compareAndAdjust($ratingA, $ratingB, $result);
+        RatingService::compareAndAdjust($ratingA, $ratingB, $outcome);
 
         $this->carRepository->save($carA);
         $this->carRepository->save($carB);

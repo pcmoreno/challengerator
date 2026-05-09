@@ -5,43 +5,29 @@ namespace App\Entity\Auth;
 
 use Doctrine\ORM\Mapping as ORM;
 
-/**
- * @ORM\Entity
- * @ORM\Table(name="discord_profile")
- */
+#[ORM\Entity]
+#[ORM\Table(name: 'discord_profile')]
 class DiscordProfile
 {
-    /**
-     * @ORM\Id
-     * @ORM\GeneratedValue
-     * @ORM\Column(type="integer")
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private int $id;
 
-    /**
-     * @ORM\OneToOne(targetEntity=User::class, inversedBy="discordProfile")
-     * @ORM\JoinColumn(nullable=false)
-     */
+    #[ORM\OneToOne(targetEntity: User::class, inversedBy: 'discordProfile')]
+    #[ORM\JoinColumn(nullable: false)]
     private User $user;
 
-    /**
-     * @ORM\Column(type="string", unique=true)
-     */
+    #[ORM\Column(type: 'string', unique: true)]
     private string $discordId;
 
-    /**
-     * @ORM\Column(type="string")
-     */
+    #[ORM\Column(type: 'string')]
     private string $discordUsername;
 
-    /**
-     * @ORM\Column(type="string", length=254, nullable=true)
-     */
+    #[ORM\Column(type: 'string', length: 254, nullable: true)]
     private ?string $email = null;
 
-    /**
-     * @ORM\Column(type="string", nullable=true)
-     */
+    #[ORM\Column(type: 'string', nullable: true)]
     private ?string $avatarUrl = null;
 
     public function __construct(User $user, string $discordId, string $discordUsername)

@@ -3,67 +3,47 @@ declare(strict_types=1);
 
 namespace App\Entity\Auth;
 
+use App\Entity\Doctrine\DbChallenge;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
 
-/**
- * @ORM\Entity
- * @ORM\Table(name="`user`")
- */
+#[ORM\Entity]
+#[ORM\Table(name: '`user`')]
 class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
-    /**
-     * @ORM\Id
-     * @ORM\GeneratedValue
-     * @ORM\Column(type="integer")
-     */
+    #[ORM\Id]
+    #[ORM\GeneratedValue]
+    #[ORM\Column(type: 'integer')]
     private int $id;
 
-    /**
-     * @ORM\Column(type="string", length=180, unique=true)
-     */
+    #[ORM\Column(type: 'string', length: 180, unique: true)]
     private string $username;
 
-    /**
-     * @ORM\Column(type="string", nullable=true)
-     */
+    #[ORM\Column(type: 'string', nullable: true)]
     private ?string $password = null;
 
-    /**
-     * @ORM\Column(type="string", length=254, nullable=true)
-     */
+    #[ORM\Column(type: 'string', length: 254, nullable: true)]
     private ?string $email = null;
 
-    /**
-     * @ORM\Column(type="string", length=45, nullable=true)
-     */
+    #[ORM\Column(type: 'string', length: 45, nullable: true)]
     private ?string $ipAddress = null;
 
-    /**
-     * @ORM\Column(type="datetime_immutable", nullable=true)
-     */
+    #[ORM\Column(type: 'datetime_immutable', nullable: true)]
     private ?\DateTimeImmutable $verifiedAt = null;
 
-    /**
-     * @ORM\Column(type="json")
-     */
+    #[ORM\Column(type: 'json')]
     private array $roles = [];
 
-    /**
-     * @ORM\OneToOne(targetEntity=DiscordProfile::class, mappedBy="user", cascade={"persist", "remove"})
-     */
+    #[ORM\OneToOne(targetEntity: DiscordProfile::class, mappedBy: 'user', cascade: ['persist', 'remove'])]
     private ?DiscordProfile $discordProfile = null;
 
-    /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\Doctrine\DbChallenge", inversedBy="voters")
-     * @ORM\JoinTable(name="challenge_user",
-     *     joinColumns={@ORM\JoinColumn(name="user_id", referencedColumnName="id")},
-     *     inverseJoinColumns={@ORM\JoinColumn(name="challenge_id", referencedColumnName="id")}
-     * )
-     */
+    #[ORM\ManyToMany(targetEntity: DbChallenge::class, inversedBy: 'voters')]
+    #[ORM\JoinTable(name: 'challenge_user')]
+    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id')]
+    #[ORM\InverseJoinColumn(name: 'challenge_id', referencedColumnName: 'id')]
     private Collection $challenges;
 
     public function __construct(string $username)
@@ -159,7 +139,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this->challenges;
     }
 
-    public function addChallenge(\App\Entity\Doctrine\DbChallenge $challenge): void
+    public function addChallenge(DbChallenge $challenge): void
     {
         if (!$this->challenges->contains($challenge)) {
             $this->challenges->add($challenge);
