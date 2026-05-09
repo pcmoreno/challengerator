@@ -11,7 +11,7 @@ loginMenu:
 voter_login:
     path: /voter-login
     controller: App\Controller\AuthController::voterLogin
-    methods: [GET]
+    methods: [GET, POST]
 
 voter_logout:
     path: /voter-logout

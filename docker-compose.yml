@@ -44,6 +44,14 @@ services:
     networks:
       - challengeator
 
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: challengeator-mailpit
+    ports:
+      - "8025:8025"
+    networks:
+      - challengeator
+
   nginx:
     image: nginx:1.25-alpine
     container_name: challengeator-nginx
