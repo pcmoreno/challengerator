@@ -186,6 +186,9 @@ class ChallengeController extends AbstractController
 
     private function isAdminForChallenge(Request $request, string $challengeName): bool
     {
+        if ($this->isGranted('ROLE_SUPER_ADMIN')) {
+            return true;
+        }
         return in_array($challengeName, $request->getSession()->get('admin_challenges', []), true);
     }
 }

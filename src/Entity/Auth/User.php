@@ -48,6 +48,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private ?\DateTimeImmutable $verifiedAt = null;
 
     /**
+     * @ORM\Column(type="json")
+     */
+    private array $roles = [];
+
+    /**
      * @ORM\OneToOne(targetEntity=DiscordProfile::class, mappedBy="user", cascade={"persist", "remove"})
      */
     private ?DiscordProfile $discordProfile = null;
@@ -84,7 +89,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     public function getRoles(): array
     {
-        return ['ROLE_USER', 'ROLE_VOTER'];
+        return array_unique(array_merge($this->roles, ['ROLE_USER', 'ROLE_VOTER']));
+    }
+
+    public function addRole(string $role): void
+    {
+        if (!in_array($role, $this->roles, true)) {
+            $this->roles[] = $role;
+        }
     }
 
     public function getPassword(): ?string
