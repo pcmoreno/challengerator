@@ -27,4 +27,4 @@ security:
                 target: listChallengesMenu
 
     access_control:
-        - { path: ^/vote, roles: ROLE_VOTER }
+        - { path: ^/vote/, roles: ROLE_VOTER }

@@ -156,7 +156,7 @@ class DoctrineVoterRepository implements VoterRepositoryInterface
                 continue;
             }
 
-            foreach ($queues['pending'] ?? [] as $carId) {
+            foreach ($queues['carsToVote'] ?? [] as $carId) {
                 $dbCar = $this->em->find(DbCar::class, $carId);
                 if ($dbCar === null) {
                     continue;
@@ -164,7 +164,7 @@ class DoctrineVoterRepository implements VoterRepositoryInterface
                 $this->em->persist(new DbVoterCarQueue($user, $dbChallenge, $dbCar));
             }
 
-            foreach ($queues['voted'] ?? [] as $carId) {
+            foreach ($queues['carsCompared'] ?? [] as $carId) {
                 $dbCar = $this->em->find(DbCar::class, $carId);
                 if ($dbCar === null) {
                     continue;

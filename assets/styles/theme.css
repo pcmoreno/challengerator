@@ -1,0 +1,131 @@
+/* ── Default theme ─────────────────────────────── */
+:root {
+    --bg-body:          #e0f2fe;
+    --bg-surface:       #ffffff;
+    --bg-header:        #166534;
+    --bg-panel:         #60a5fa;
+    --bg-row-even:      #eff6ff;
+    --bg-row-odd:       #ecfeff;
+    --text-body:        #1f2937;
+    --text-heading:     #166534;
+    --text-muted:       #6b7280;
+    --text-link:        #1d4ed8;
+    --btn-primary-bg:   #16a34a;
+    --btn-primary-h:    #15803d;
+    --btn-secondary-bg: #3b82f6;
+    --btn-secondary-h:  #2563eb;
+    --font-heading:     inherit;
+    --ls-heading:       normal;
+    --border-subtle:    #e5e7eb;
+}
+
+/* ── Automation Game theme ─────────────────────── */
+html[data-theme="auto"] {
+    --bg-body:          #171717;
+    --bg-surface:       #1d1b1b;
+    --bg-header:        #1f1f1f;
+    --bg-panel:         #272727;
+    --bg-row-even:      #222222;
+    --bg-row-odd:       #1d1b1b;
+    --text-body:        #dadada;
+    --text-heading:     #ffffff;
+    --text-muted:       #999999;
+    --text-link:        #ff8b38;
+    --btn-primary-bg:   #ff8b38;
+    --btn-primary-h:    #e6792f;
+    --btn-secondary-bg: #2a2a2a;
+    --btn-secondary-h:  #3a3a3a;
+    --font-heading:     'Raleway', sans-serif;
+    --ls-heading:       0.08em;
+    --border-subtle:    #333333;
+}
+
+body {
+    background-color: var(--bg-body);
+    color: var(--text-body);
+}
+
+/* ── Semantic utilities ────────────────────────── */
+@utility bg-header   { background-color: var(--bg-header); }
+@utility bg-surface  { background-color: var(--bg-surface); }
+@utility bg-panel    { background-color: var(--bg-panel); }
+@utility bg-row-even { background-color: var(--bg-row-even); }
+@utility bg-row-odd  { background-color: var(--bg-row-odd); }
+
+@utility text-heading {
+    color: var(--text-heading);
+    font-family: var(--font-heading);
+    letter-spacing: var(--ls-heading);
+}
+
+@utility text-body    { color: var(--text-body); }
+@utility text-muted   { color: var(--text-muted); }
+@utility text-link    { color: var(--text-link); }
+@utility border-subtle { border-color: var(--border-subtle); }
+
+/* ── Button semantic classes ───────────────────── */
+.btn-primary {
+    background-color: var(--btn-primary-bg);
+    color: #ffffff;
+    text-decoration: none;
+    transition: background-color 150ms;
+}
+.btn-primary:hover { background-color: var(--btn-primary-h); }
+
+.btn-secondary {
+    background-color: var(--btn-secondary-bg);
+    color: #ffffff;
+    text-decoration: none;
+    transition: background-color 150ms;
+}
+.btn-secondary:hover { background-color: var(--btn-secondary-h); }
+
+/* ── Alert classes ─────────────────────────────── */
+.alert-success {
+    background-color: #f0fdf4;
+    border: 1px solid #86efac;
+    color: #166534;
+    padding: 0.75rem 1rem;
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+}
+html[data-theme="auto"] .alert-success {
+    background-color: #14291e;
+    border-color: #166534;
+    color: #86efac;
+}
+
+.alert-error {
+    background-color: #fef2f2;
+    border: 1px solid #f87171;
+    color: #b91c1c;
+    padding: 0.75rem 1rem;
+    border-radius: 0.375rem;
+}
+html[data-theme="auto"] .alert-error {
+    background-color: #3f1010;
+    border-color: #7f1d1d;
+    color: #fca5a5;
+}
+
+/* ── Auto theme overrides ──────────────────────── */
+html[data-theme="auto"] code,
+html[data-theme="auto"] kbd {
+    background-color: #333;
+    color: #dadada;
+}
+
+html[data-theme="auto"] input:not([type="hidden"]):not([type="submit"]):not([type="checkbox"]):not([type="radio"]),
+html[data-theme="auto"] textarea,
+html[data-theme="auto"] select {
+    background-color: #2a2a2a;
+    border-color: #555;
+    color: #dadada;
+}
+
+html[data-theme="auto"] input[type="file"] {
+    color: #dadada;
+}
+
+tbody tr:hover { filter: brightness(0.95); }
+html[data-theme="auto"] tbody tr:hover { filter: brightness(1.15); }
