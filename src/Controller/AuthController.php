@@ -10,10 +10,14 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\RateLimiter\RateLimiterFactory;
 
 class AuthController extends AbstractController
 {
-    public function __construct(private ChallengeService $challengeService) {}
+    public function __construct(
+        private ChallengeService $challengeService,
+        private RateLimiterFactory $selfRegistrationLimiter,
+    ) {}
 
     public function loginFormPage(Request $request, string $challengeName): Response
     {
@@ -48,6 +52,11 @@ class AuthController extends AbstractController
 
     public function addSelfRegisteredVoterForChallengePage(Request $request, string $challengeName, string $selfRegistrationCode): Response
     {
+        $limiter = $this->selfRegistrationLimiter->create($request->getClientIp());
+        if (!$limiter->consume()->isAccepted()) {
+            return new JsonResponse('Too many registration attempts. Please try again later.', Response::HTTP_TOO_MANY_REQUESTS);
+        }
+
         $availableChallenges = json_decode($this->challengeService->listChallenges()->getContent(), true);
         if (!in_array($challengeName, $availableChallenges, true)) {
             return new JsonResponse('invalid challenge', Response::HTTP_UNAUTHORIZED);
