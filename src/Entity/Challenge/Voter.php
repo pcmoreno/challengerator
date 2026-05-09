@@ -183,4 +183,22 @@ class Voter
     {
         return $this->roundsOfComparison->has($challengeName);
     }
+
+    public static function fromDoctrineData(array $data): self
+    {
+        $voter = new Voter();
+        $voter->id = $data['id'];
+        $voter->name = $data['name'];
+        $voter->authKey = $data['authKey'];
+        $voter->ipAddress = $data['ipAddress'];
+        $voter->token = null;
+        $voter->tokenExpirationDate = null;
+        $voter->roundsOfComparison = $data['rounds'];
+        return $voter;
+    }
+
+    public function getChallengeRounds(): array
+    {
+        return $this->roundsOfComparison->toArray();
+    }
 }

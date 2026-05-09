@@ -150,25 +150,14 @@ class ChallengeServiceTest extends TestCase
 
     public function test_addCar_adds_car_to_challenge(): void
     {
-        $challenge = $this->makeChallenge();
-        $token = $this->adminToken($challenge);
+        $this->makeChallenge();
         $car = Car::create(['name' => 'Mustang', 'imageUrlA' => 'a', 'imageUrlB' => 'b', 'challengeId' => 'rally']);
 
-        $this->service->addCar('rally', $car, $token);
+        $this->service->addCar('rally', $car);
 
         $cars = $this->service->getCarsForChallenge('rally');
         $this->assertCount(1, $cars);
         $this->assertSame('Mustang', $cars[0]->getName());
-    }
-
-    public function test_addCar_with_invalid_token_does_not_add(): void
-    {
-        $this->makeChallenge();
-        $car = Car::create(['name' => 'Mustang', 'imageUrlA' => 'a', 'imageUrlB' => 'b', 'challengeId' => 'rally']);
-
-        $this->service->addCar('rally', $car, 'bad-token');
-
-        $this->assertCount(0, $this->service->getCarsForChallenge('rally'));
     }
 
     // --- getTwoCarsToBeVotedByUser ---
@@ -303,17 +292,9 @@ class ChallengeServiceTest extends TestCase
 
     // --- initializeChallenge ---
 
-    public function test_initializeChallenge_with_invalid_token_returns_403(): void
-    {
-        $this->makeChallenge();
-        $response = $this->service->initializeChallenge('rally', 'bad-token');
-        $this->assertSame(403, $response->getStatusCode());
-    }
-
     public function test_initializeChallenge_distributes_all_cars_to_voters_and_activates(): void
     {
-        $challenge = $this->makeChallenge();
-        $token = $this->adminToken($challenge);
+        $this->makeChallenge();
 
         $car1 = $this->makeCar();
         $car2 = $this->makeCar();
@@ -325,7 +306,7 @@ class ChallengeServiceTest extends TestCase
         $challenge->addVoterToChallenge($voter);
         $this->challenges->save($challenge);
 
-        $response = $this->service->initializeChallenge('rally', $token);
+        $response = $this->service->initializeChallenge('rally');
 
         $this->assertSame(200, $response->getStatusCode());
         $this->assertTrue($this->challenges->find('rally')->isActive());

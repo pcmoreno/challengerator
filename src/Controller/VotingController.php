@@ -5,20 +5,15 @@ namespace App\Controller;
 
 use App\Services\ChallengeService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
-use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class VotingController extends AbstractController
 {
-    private ChallengeService $challengeService;
+    public function __construct(private ChallengeService $challengeService) {}
 
-    public function __construct(ChallengeService $challengeService)
+    public function votingDashBoardForUser(string $challengeName): Response
     {
-        $this->challengeService = $challengeService;
-    }
-
-    public function votingDashBoardForUser($challengeName, $userId, ?string $token): Response
-    {
+        $userId = (string)$this->getUser()->getId();
         [$carsToVote, $carsNotVoted] = $this->challengeService->getTwoCarsToBeVotedByUser($challengeName, $userId);
         if ($carsToVote === []) {
             return $this->render('default/votingComplete.html.twig', ['challengeName' => $challengeName]);
@@ -26,30 +21,22 @@ class VotingController extends AbstractController
         return $this->render('default/votingCarsForUser.html.twig', [
             'carsToVote' => $carsToVote,
             'carsNotVoted' => $carsNotVoted,
-            'user' => $userId,
             'challengeName' => $challengeName,
-            'token' => $token
         ]);
     }
 
-    public function voteForCarForUser(Request $request, $challengeName, $userId, $cars, $result, $token): Response
+    public function voteForCarForUser(string $challengeName, string $cars, string $result): Response
     {
-        if (!$this->challengeService->isVoterTokenValid($token, $userId)) {
-            return $this->redirectToRoute('loginMenu', ['challengeName' => $challengeName]);
-        }
+        $userId = (string)$this->getUser()->getId();
         try {
-            [$carsToVote, $carsNotVoted] = $this->challengeService->voteOnCars($cars, $result, $challengeName, $userId);
-        } catch (\Exception $exception) {
-            return $this->votingDashBoardForUser($challengeName, $userId, $token);
+            [$carsToVote,] = $this->challengeService->voteOnCars($cars, $result, $challengeName, $userId);
+        } catch (\Exception) {
+            return $this->votingDashBoardForUser($challengeName);
         }
 
         if ($carsToVote === []) {
             return $this->render('default/votingComplete.html.twig', ['challengeName' => $challengeName]);
         }
-        return $this->redirectToRoute('voteDashboardForUser', [
-            'userId' => $userId,
-            'challengeName' => $challengeName,
-            'token' => $token
-        ]);
+        return $this->redirectToRoute('voteDashboardForUser', ['challengeName' => $challengeName]);
     }
 }
