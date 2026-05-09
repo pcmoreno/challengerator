@@ -1,12 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <title>{% block title %}Welcome!{% endblock %}</title>
-        {% block stylesheets %}{% endblock %}
-    </head>
-    <body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Challengerator{% endblock %}</title>
+    <link rel="stylesheet" href="{{ asset('styles/app.css') }}">
+</head>
+<body class="min-h-screen font-sans text-gray-800">
+    <header class="bg-green-800 text-white px-6 py-3 shadow-md">
+        <a href="{{ path('index') }}" class="text-xl font-bold hover:text-green-200 transition-colors no-underline">
+            Challengerator
+        </a>
+    </header>
+
+    <main class="max-w-5xl mx-auto px-4 py-6">
         {% block body %}{% endblock %}
-        {% block javascripts %}{% endblock %}
-    </body>
+    </main>
+
+    <footer class="bg-green-800 text-white text-center text-sm py-3 mt-8">
+        &copy; pcmoreno — 2021
+    </footer>
+
+    {% block importmap %}{{ importmap('app') }}{% endblock %}
+</body>
 </html>

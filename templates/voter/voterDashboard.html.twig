@@ -1,58 +1,81 @@
-<h1>Voter Dashboard for {{ challengeName }}</h1>
-<table>
-    <tr style="border: 0px; background-color: white">
-        <td><b><a href="{{ path('addCarToChallengeFormPage', {'challengeName': challengeName}) }}">go to cars</a></b></td>
-    </tr>
-</table>
-<div class="formcontainer">
-    {{ form(form) }}
-</div>
-<br>
-<h3>
-    Users in this challenge <span style="color: darkolivegreen; font-family: 'Arial Narrow',monospace">(self registration is currently <span style="color: purple">{{ selfRegistration }}</span>)</span>
-    <span><a href="{{ path('toggleSelfRegistrationForChallenge', {'challengeName': challengeName}) }}">>toggle on/off<</a></span>
-    {% if selfRegistrationCode is defined and selfRegistration == 'active' %}
-        <span>
-            <a style="color: red" href="{{ path('addSelfRegisteredVoterToChallengeFormPage', {'challengeName': challengeName, 'selfRegistrationCode': selfRegistrationCode}) }}"
-               target="_blank"
-               rel="noopener noreferrer"> >link for voter<
-            </a>
-        </span>
-    {% endif %}
-</h3>
-<table>
-    {% block topRow %}
-        <td>Name</td>
-        <td>#comparisons made</td>
-        <td>#cars left</td>
-        <td>ID</td>
-        <td>IP</td>
-        <td style="background-color: #1c7430"></td>
-    {% endblock %}
-    {% for voter in allUsersInTheChallenge %}
-        <tr>
-            <td>{{ voter.name }}</td>
-            <td>{{ voter.countComparisonsMadeForChallenge(challengeName) }}</td>
-            <td>{{ voter.countCarsLeftToCompareForChallenge(challengeName) }}</td>
-            <td>{{ voter.id }}</td>
-            <td>{{ voter.ipAddress }}</td>
-            <td>
-                <button>
-                    <a href= {{ path('resetVotesForVoterOnChallenge') }}?challengeName={{ challengeName }}&voterId={{ voter.id }}>give more votes</a></button>
-            </td>
-        </tr>
-    {% endfor %}
-</table>
-<br><br>
+{% extends 'base.html.twig' %}
 
-<div class="formcontainer">
-    {{ form(adminDeleteForm) }}
-</div>
-<div style="text-align: center;">
-    <div><a href="{{ path('startChallenge', {'challengeName' : challengeName}) }}">
-            <button onclick="alert('everyone can vote again')" style="width: 33%">Open Challenge</button>
-        </a></div>
-</div>
-<p></p><br>
+{% block title %}Voter Dashboard | {{ challengeName }}{% endblock %}
 
-{% include 'default/generalStyle.html.twig' %}
+{% block body %}
+    <div class="mb-6 flex justify-between items-center">
+        <h2 class="text-2xl font-bold text-green-800">Voter Dashboard — {{ challengeName }}</h2>
+        <a href="{{ path('addCarToChallengeFormPage', {'challengeName': challengeName}) }}"
+           class="text-blue-700 hover:underline font-semibold text-sm">→ Cars</a>
+    </div>
+
+    <div class="bg-blue-400 rounded-lg shadow p-6 mb-6">
+        {{ form(form) }}
+    </div>
+
+    <div class="mb-4 flex flex-wrap items-center gap-3">
+        <h3 class="font-semibold text-gray-700">
+            Users in this challenge
+            <span class="text-green-700 font-normal ml-1">
+                (self registration is <span class="text-purple-700 font-semibold">{{ selfRegistration }}</span>)
+            </span>
+        </h3>
+        <form method="post" action="{{ path('toggleSelfRegistrationForChallenge', {'challengeName': challengeName}) }}" class="inline">
+            <button type="submit" class="text-blue-700 hover:underline text-sm bg-transparent border-0 p-0 cursor-pointer">[toggle on/off]</button>
+        </form>
+        {% if selfRegistrationCode is defined and selfRegistration == 'active' %}
+            <a href="{{ path('addSelfRegisteredVoterToChallengeFormPage', {'challengeName': challengeName, 'selfRegistrationCode': selfRegistrationCode}) }}"
+               target="_blank" rel="noopener noreferrer"
+               class="text-red-600 hover:underline text-sm font-semibold">[link for voter]</a>
+        {% endif %}
+    </div>
+
+    <div class="bg-white rounded-lg shadow overflow-hidden mb-6">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="bg-blue-400 text-white text-xs uppercase tracking-wider">
+                    <th class="px-3 py-2 text-left">Name</th>
+                    <th class="px-3 py-2 text-left">Comparisons</th>
+                    <th class="px-3 py-2 text-left">Cars Left</th>
+                    <th class="px-3 py-2 text-left">ID</th>
+                    <th class="px-3 py-2 text-left">IP</th>
+                    <th class="px-3 py-2"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for voter in allUsersInTheChallenge %}
+                    <tr class="border-t {{ loop.even ? 'bg-blue-50' : 'bg-cyan-50' }}">
+                        <td class="px-3 py-2">{{ voter.name }}</td>
+                        <td class="px-3 py-2">{{ voter.countComparisonsMadeForChallenge(challengeName) }}</td>
+                        <td class="px-3 py-2">{{ voter.countCarsLeftToCompareForChallenge(challengeName) }}</td>
+                        <td class="px-3 py-2 font-mono text-xs">{{ voter.id }}</td>
+                        <td class="px-3 py-2 text-xs text-gray-500">{{ voter.ipAddress }}</td>
+                        <td class="px-3 py-2">
+                            <form method="post" action="{{ path('resetVotesForVoterOnChallenge') }}">
+                                <input type="hidden" name="challengeName" value="{{ challengeName }}">
+                                <input type="hidden" name="voterId" value="{{ voter.id }}">
+                                <button type="submit" class="text-blue-700 hover:underline text-xs bg-transparent border-0 p-0 cursor-pointer">
+                                    give more votes
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="bg-blue-400 rounded-lg shadow p-6 mb-6">
+        {{ form(adminDeleteForm) }}
+    </div>
+
+    <div class="text-center">
+        <form method="post" action="{{ path('startChallenge', {'challengeName': challengeName}) }}"
+              data-turbo-confirm="Everyone will be able to vote again. Continue?">
+            <button type="submit"
+                    class="bg-lime-600 hover:bg-lime-700 text-white font-bold py-2 px-8 rounded transition-colors">
+                Open Challenge
+            </button>
+        </form>
+    </div>
+{% endblock %}

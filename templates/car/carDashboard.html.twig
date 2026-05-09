@@ -1,26 +1,53 @@
-<h1>Car Dashboard for {{ challengeName }}</h1>
-<table>
-    <tr style="border: 0px; background-color: white">
-        <td><b><a href="{{ path('addVoterToChallengeFormPage', {'challengeName': challengeName}) }}">go to voters</a></b></td>
-        <td style="text-align: end"><b><a href="{{ path('uploadFile') }}" target="_blank">upload images</a></b></td>
-    </tr>
-</table>
-<div style="alignment: center; font-family: 'Arial Narrow',monospace; text-align: center; margin-left: auto; margin-right: auto">
-    for now, only images from google-drive are accepted. Right click on the image, click 'get link' and then copy the part between the 'd/' and '/view'
-</div>
-<div class="formcontainer">
-    {{ form(form) }}
-</div>
-<br>
-<table>
-    <tr><td>NAME</td><td>rating</td><td>ImageUrlA</td><td>ImageUrlB</td><td>Id</td></tr>
-    {% for item in allCarsInChallenge | sort((a,b) => b.rating.rating() <=> a.rating.rating())%}
-        <tr><td>{{ item.name }}</td><td>{{ item.rating.rating() }}</td><td>{{ item.imageUrlA }}</td><td>{{ item.imageUrlB }}</td><td>{{ item.id }}</td></tr>
-    {% endfor %}
-</table>
+{% extends 'base.html.twig' %}
 
-<div class="formcontainer">
-{{ form(adminDeleteCarForm) }}
-</div>
+{% block title %}Car Dashboard | {{ challengeName }}{% endblock %}
 
-{% include 'default/generalStyle.html.twig' %}
+{% block body %}
+    <div class="mb-6 flex justify-between items-center">
+        <h2 class="text-2xl font-bold text-green-800">Car Dashboard — {{ challengeName }}</h2>
+        <div class="flex gap-4 text-sm">
+            <a href="{{ path('addVoterToChallengeFormPage', {'challengeName': challengeName}) }}"
+               class="text-blue-700 hover:underline font-semibold">→ Voters</a>
+            <a href="{{ path('uploadFile') }}" target="_blank"
+               class="text-blue-700 hover:underline font-semibold">→ Upload Images</a>
+        </div>
+    </div>
+
+    <p class="text-sm text-gray-500 mb-4">
+        Only Google Drive images are supported. Right-click image → Get Link → copy the ID between
+        <code class="bg-gray-100 px-1 rounded">d/</code> and <code class="bg-gray-100 px-1 rounded">/view</code>.
+    </p>
+
+    <div class="bg-blue-400 rounded-lg shadow p-6 mb-6">
+        {{ form(form) }}
+    </div>
+
+    <div class="bg-white rounded-lg shadow overflow-hidden mb-6">
+        <table class="w-full text-sm">
+            <thead>
+                <tr class="bg-blue-400 text-white text-xs uppercase tracking-wider">
+                    <th class="px-3 py-2 text-left">Name</th>
+                    <th class="px-3 py-2 text-left">Rating</th>
+                    <th class="px-3 py-2 text-left">Image A</th>
+                    <th class="px-3 py-2 text-left">Image B</th>
+                    <th class="px-3 py-2 text-left">ID</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in allCarsInChallenge | sort((a,b) => b.rating.rating() <=> a.rating.rating()) %}
+                    <tr class="border-t {{ loop.even ? 'bg-blue-50' : 'bg-cyan-50' }}">
+                        <td class="px-3 py-2">{{ item.name }}</td>
+                        <td class="px-3 py-2">{{ item.rating.rating() }}</td>
+                        <td class="px-3 py-2 font-mono text-xs truncate max-w-xs">{{ item.imageUrlA }}</td>
+                        <td class="px-3 py-2 font-mono text-xs truncate max-w-xs">{{ item.imageUrlB }}</td>
+                        <td class="px-3 py-2 font-mono text-xs">{{ item.id }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="bg-blue-400 rounded-lg shadow p-6">
+        {{ form(adminDeleteCarForm) }}
+    </div>
+{% endblock %}
