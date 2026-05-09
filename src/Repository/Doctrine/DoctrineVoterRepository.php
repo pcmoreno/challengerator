@@ -67,8 +67,8 @@ class DoctrineVoterRepository implements VoterRepositoryInterface
 
     public function save(Voter $voter): void
     {
-        $userId = (int)$voter->getId();
-        $user   = $this->em->find(User::class, $userId);
+        $rawId = $voter->getId();
+        $user  = ctype_digit($rawId) ? $this->em->find(User::class, (int)$rawId) : null;
 
         if ($user === null) {
             $user = new User($voter->getName());
