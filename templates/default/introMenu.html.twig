@@ -4,17 +4,17 @@
 
 {% block body %}
     <div class="max-w-lg mx-auto mt-12 text-center">
-        <div class="bg-white rounded-lg shadow p-8">
-            <h2 class="text-xl font-semibold text-gray-700 mb-6">
+        <div class="bg-surface rounded-lg shadow p-8">
+            <h2 class="text-xl font-semibold text-muted mb-6">
                 A voting platform for car design competitions
             </h2>
             <div class="space-y-4">
                 <a href="{{ path('createChallengeMenu') }}"
-                   class="block bg-lime-600 hover:bg-lime-700 text-white font-bold py-3 px-4 rounded transition-colors">
+                   class="btn-primary block font-bold py-3 px-4 rounded">
                     I have a token and want to create a new challenge
                 </a>
                 <a href="{{ path('listChallengesMenu') }}"
-                   class="block bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded transition-colors">
+                   class="btn-secondary block font-bold py-3 px-4 rounded">
                     I want to login as a voter or admin for a challenge
                 </a>
             </div>

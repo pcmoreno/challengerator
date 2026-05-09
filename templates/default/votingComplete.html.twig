@@ -4,14 +4,14 @@
 
 {% block body %}
     <div class="max-w-lg mx-auto mt-12">
-        <div class="bg-white rounded-lg shadow p-8 text-center">
-            <h2 class="text-2xl font-bold text-green-800 mb-4">Thank you for voting!</h2>
-            <p class="text-gray-600 mb-2">There are no more cars left to compare.</p>
-            <p class="text-gray-500 mb-6">
+        <div class="bg-surface rounded-lg shadow p-8 text-center">
+            <h2 class="text-2xl font-bold text-heading mb-4">Thank you for voting!</h2>
+            <p class="text-muted mb-2">There are no more cars left to compare.</p>
+            <p class="text-muted mb-6">
                 You can ask your admin at <strong>{{ challengeName }}</strong> to give you another round of comparisons.
             </p>
             <a href="{{ path('index') }}"
-               class="inline-block bg-green-700 hover:bg-green-800 text-white font-bold py-2 px-6 rounded transition-colors">
+               class="btn-primary inline-block font-bold py-2 px-6 rounded">
                 Home
             </a>
         </div>
