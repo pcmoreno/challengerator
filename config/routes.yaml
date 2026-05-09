@@ -8,6 +8,19 @@ loginMenu:
     path: /login/{challengeName}
     controller: App\Controller\AuthController::loginFormPage
 
+voter_login:
+    path: /voter-login
+    controller: App\Controller\AuthController::voterLogin
+    methods: [GET]
+
+voter_logout:
+    path: /voter-logout
+
+admin_login:
+    path: /admin-login/{challengeName}
+    controller: App\Controller\AuthController::adminLogin
+    methods: [POST]
+
 addSelfRegisteredVoterToChallengeFormPage:
     path: /challenge/signup/{challengeName}/{selfRegistrationCode}
     controller: App\Controller\AuthController::addSelfRegisteredVoterForChallengePage
@@ -27,36 +40,38 @@ createChallengeMenu:
     controller: App\Controller\ChallengeController::createChallenge
 
 startChallenge:
-    path: /challenge/initialize/{challengeName}/{token}
+    path: /challenge/initialize/{challengeName}
     controller: App\Controller\ChallengeController::startChallenge
 
 addCarToChallengeFormPage:
-    path: /challenge/addCarForm/{challengeName}/{token}
+    path: /challenge/addCarForm/{challengeName}
     controller: App\Controller\ChallengeController::carsDashboardPage
 
 addVoterToChallengeFormPage:
-    path: /challenge/addVoterForm/{challengeName}/{token}/{selfRegistrationCode}
+    path: /challenge/addVoterForm/{challengeName}
     controller: App\Controller\ChallengeController::votersDashboardPage
-    defaults:
-        selfRegistrationCode: nope
 
 toggleSelfRegistrationForChallenge:
-    path: /challenge/toggleSelfRegistration/{challengeName}/{token}
+    path: /challenge/toggleSelfRegistration/{challengeName}
     controller: App\Controller\ChallengeController::toggleSelfRegistrationForChallenge
 
 resetVotesForVoterOnChallenge:
     path: /challenge/resetVoter/
     controller: App\Controller\ChallengeController::resetVotesForVoterOnChallenge
-    methods: [ get ]
+    methods: [GET]
+
+deleteVoterFromChallenge:
+    path: /challenge/deleteVoter/{challengeName}/{voterId}
+    controller: App\Controller\ChallengeController::deleteVoterFromChallenge
 
 # -----------------------------------------------
 # Voting routes:
 voteDashboardForUser:
-    path: /voteCarForUserDashboard/{challengeName}/{userId}/{token}
+    path: /vote/{challengeName}
     controller: App\Controller\VotingController::votingDashBoardForUser
 
 voteCarForUser:
-    path: /voteCarForUser/{challengeName}/{userId}/{cars}/{result}/{token}
+    path: /vote/{challengeName}/{cars}/{result}
     controller: App\Controller\VotingController::voteForCarForUser
 
 # -----------------------------------------------

@@ -1,7 +1,7 @@
 <h1>Car Dashboard for {{ challengeName }}</h1>
 <table>
     <tr style="border: 0px; background-color: white">
-        <td><b><a href="{{ path('addVoterToChallengeFormPage', {'challengeName': challengeName, 'token': token }) }}">go to voters</a></b></td>
+        <td><b><a href="{{ path('addVoterToChallengeFormPage', {'challengeName': challengeName}) }}">go to voters</a></b></td>
         <td style="text-align: end"><b><a href="{{ path('uploadFile') }}" target="_blank">upload images</a></b></td>
     </tr>
 </table>

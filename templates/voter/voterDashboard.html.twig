@@ -1,7 +1,7 @@
 <h1>Voter Dashboard for {{ challengeName }}</h1>
 <table>
     <tr style="border: 0px; background-color: white">
-        <td><b><a href="{{ path('addCarToChallengeFormPage', {'challengeName': challengeName, 'token': token }) }}">go to cars</a></b></td>
+        <td><b><a href="{{ path('addCarToChallengeFormPage', {'challengeName': challengeName}) }}">go to cars</a></b></td>
     </tr>
 </table>
 <div class="formcontainer">
@@ -10,7 +10,7 @@
 <br>
 <h3>
     Users in this challenge <span style="color: darkolivegreen; font-family: 'Arial Narrow',monospace">(self registration is currently <span style="color: purple">{{ selfRegistration }}</span>)</span>
-    <span><a href="{{ path('toggleSelfRegistrationForChallenge', {'challengeName': challengeName, 'token': token }) }}">>toggle on/off<</a></span>
+    <span><a href="{{ path('toggleSelfRegistrationForChallenge', {'challengeName': challengeName}) }}">>toggle on/off<</a></span>
     {% if selfRegistrationCode is defined and selfRegistration == 'active' %}
         <span>
             <a style="color: red" href="{{ path('addSelfRegisteredVoterToChallengeFormPage', {'challengeName': challengeName, 'selfRegistrationCode': selfRegistrationCode}) }}"
@@ -38,7 +38,7 @@
             <td>{{ voter.ipAddress }}</td>
             <td>
                 <button>
-                    <a href= {{ path('resetVotesForVoterOnChallenge', {'challengeName': challengeName, 'voterId': voter.id, 'token': token}) }}>give more votes</a></button>
+                    <a href= {{ path('resetVotesForVoterOnChallenge') }}?challengeName={{ challengeName }}&voterId={{ voter.id }}>give more votes</a></button>
             </td>
         </tr>
     {% endfor %}
@@ -49,7 +49,7 @@
     {{ form(adminDeleteForm) }}
 </div>
 <div style="text-align: center;">
-    <div><a href="{{ path('startChallenge', {'challengeName' : challengeName, 'token' : token}) }}">
+    <div><a href="{{ path('startChallenge', {'challengeName' : challengeName}) }}">
             <button onclick="alert('everyone can vote again')" style="width: 33%">Open Challenge</button>
         </a></div>
 </div>

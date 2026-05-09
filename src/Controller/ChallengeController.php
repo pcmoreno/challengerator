@@ -19,12 +19,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ChallengeController extends AbstractController
 {
-    private ChallengeService $challengeService;
-
-    public function __construct(ChallengeService $challengeService)
-    {
-        $this->challengeService = $challengeService;
-    }
+    public function __construct(private ChallengeService $challengeService) {}
 
     public function index(): Response
     {
@@ -64,13 +59,13 @@ class ChallengeController extends AbstractController
         }
 
         return $this->render('default/adminCreateChallenge.html.twig', [
-            'adminCreateChallengeForm' => $createChallengeForm->createView()
+            'adminCreateChallengeForm' => $createChallengeForm->createView(),
         ]);
     }
 
-    public function carsDashboardPage(Request $request, $challengeName, $token): Response
+    public function carsDashboardPage(Request $request, string $challengeName): Response
     {
-        if (!$this->challengeService->isAdminTokenValid($token, $challengeName)) {
+        if (!$this->isAdminForChallenge($request, $challengeName)) {
             return $this->redirectToRoute('loginMenu', ['challengeName' => $challengeName]);
         }
 
@@ -78,7 +73,7 @@ class ChallengeController extends AbstractController
         $form = $this->createForm(CarType::class, $car);
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->challengeService->addCar($challengeName, $car, $token);
+            $this->challengeService->addCar($challengeName, $car);
         }
 
         $adminDeleteCar = new \stdClass();
@@ -97,13 +92,12 @@ class ChallengeController extends AbstractController
             'adminDeleteCarForm' => $adminDeleteCarForm->createView(),
             'allCarsInChallenge' => $this->challengeService->getCarsForChallenge($challengeName),
             'challengeName' => $challengeName,
-            'token' => $token
         ]);
     }
 
-    public function votersDashboardPage(Request $request, $challengeName, $token): Response
+    public function votersDashboardPage(Request $request, string $challengeName): Response
     {
-        if (!$this->challengeService->isAdminTokenValid($token, $challengeName)) {
+        if (!$this->isAdminForChallenge($request, $challengeName)) {
             return $this->redirectToRoute('loginMenu', ['challengeName' => $challengeName]);
         }
 
@@ -112,7 +106,7 @@ class ChallengeController extends AbstractController
         $voterForm->handleRequest($request);
         if ($voterForm->isSubmitted() && $voterForm->isValid()) {
             $voter = Voter::createForChallenge($voter->getName(), $voter->getAuthKey(), $challengeName);
-            $this->challengeService->addVoter($challengeName, $voter, $token);
+            $this->challengeService->addVoter($challengeName, $voter);
         }
 
         $adminDeleteVoter = new \stdClass();
@@ -131,48 +125,43 @@ class ChallengeController extends AbstractController
             'adminDeleteForm' => $adminDeleteVoterForm->createView(),
             'allUsersInTheChallenge' => $this->challengeService->getAllVotersForTheChallenge($challengeName),
             'challengeName' => $challengeName,
-            'token' => $token,
             'selfRegistration' => $this->challengeService->isChallengeOpenToSelfRegistration($challengeName),
-            'selfRegistrationCode' => $this->challengeService->getSelfRegistrationCodeForChallenge($challengeName)
+            'selfRegistrationCode' => $this->challengeService->getSelfRegistrationCodeForChallenge($challengeName),
         ]);
     }
 
-    public function startChallenge(string $challengeName, string $token): Response
+    public function startChallenge(Request $request, string $challengeName): Response
     {
-        $response = $this->challengeService->initializeChallenge($challengeName, $token);
+        if (!$this->isAdminForChallenge($request, $challengeName)) {
+            return $this->redirectToRoute('loginMenu', ['challengeName' => $challengeName]);
+        }
+
+        $response = $this->challengeService->initializeChallenge($challengeName);
         if ($response->getStatusCode() === 200) {
-            return $this->redirectToRoute('addVoterToChallengeFormPage', [
-                'challengeName' => $challengeName,
-                'token' => $token
-            ]);
+            return $this->redirectToRoute('addVoterToChallengeFormPage', ['challengeName' => $challengeName]);
         }
         return $response;
     }
 
-    public function toggleSelfRegistrationForChallenge($challengeName, $token): Response
+    public function toggleSelfRegistrationForChallenge(Request $request, string $challengeName): Response
     {
-        if (!$this->challengeService->isAdminTokenValid($token, $challengeName)) {
-            return new JsonResponse('Unauthorized', 403);
+        if (!$this->isAdminForChallenge($request, $challengeName)) {
+            return new JsonResponse('Unauthorized', Response::HTTP_FORBIDDEN);
         }
 
         $code = $this->challengeService->toggleSelfRegistrationForChallenge($challengeName);
         if ($code) {
-            return $this->redirectToRoute('addVoterToChallengeFormPage', [
-                'challengeName' => $challengeName,
-                'token' => $token,
-                'selfRegistrationCode' => $code
-            ]);
+            return $this->redirectToRoute('addVoterToChallengeFormPage', ['challengeName' => $challengeName]);
         }
-        return new JsonResponse('ERROR', 500);
+        return new JsonResponse('ERROR', Response::HTTP_INTERNAL_SERVER_ERROR);
     }
 
     public function resetVotesForVoterOnChallenge(Request $request): Response
     {
         $challengeName = $request->get('challengeName');
-        $token = $request->get('token');
 
-        if (!$this->challengeService->isAdminTokenValid($token, $challengeName)) {
-            return new JsonResponse('unauthorized', 403);
+        if (!$this->isAdminForChallenge($request, $challengeName)) {
+            return new JsonResponse('unauthorized', Response::HTTP_FORBIDDEN);
         }
 
         $response = $this->challengeService->resetRoundOfVoteForUserOfChallenge(
@@ -180,17 +169,23 @@ class ChallengeController extends AbstractController
             $request->get('voterId')
         );
         if ($response->getStatusCode() === 200) {
-            return $this->redirectToRoute('addVoterToChallengeFormPage', [
-                'challengeName' => $challengeName,
-                'token' => $token
-            ]);
+            return $this->redirectToRoute('addVoterToChallengeFormPage', ['challengeName' => $challengeName]);
         }
         return $response;
     }
 
-    public function deleteVoterFromChallenge(Request $request, $challengeName, $voterId): Response
+    public function deleteVoterFromChallenge(Request $request, string $challengeName, string $voterId): Response
     {
+        if (!$this->isAdminForChallenge($request, $challengeName)) {
+            return new JsonResponse('unauthorized', Response::HTTP_FORBIDDEN);
+        }
+
         $this->challengeService->deleteVoterFromChallenge($challengeName, $voterId);
         return $this->redirectToRoute('addVoterToChallengeFormPage', ['challengeName' => $challengeName]);
+    }
+
+    private function isAdminForChallenge(Request $request, string $challengeName): bool
+    {
+        return in_array($challengeName, $request->getSession()->get('admin_challenges', []), true);
     }
 }

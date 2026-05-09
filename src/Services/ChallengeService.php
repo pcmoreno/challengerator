@@ -46,11 +46,8 @@ class ChallengeService
         }
     }
 
-    public function addCar(string $challengeName, Car $car, string $token): void
+    public function addCar(string $challengeName, Car $car): void
     {
-        if (!$this->isAdminTokenValid($token, $challengeName)) {
-            return;
-        }
         $this->carRepository->save($car);
         $challenge = $this->challengeRepository->find($challengeName);
         $challenge->addCarToChallenge($car);
@@ -72,11 +69,8 @@ class ChallengeService
         return true;
     }
 
-    public function addVoter(string $challengeName, Voter $voter, string $token): void
+    public function addVoter(string $challengeName, Voter $voter): void
     {
-        if (!$this->isAdminTokenValid($token, $challengeName)) {
-            return;
-        }
         $this->addVoterToChallenge($challengeName, $voter);
     }
 
@@ -108,11 +102,8 @@ class ChallengeService
         return $this->voterRepository->findMany($challenge->getVoters());
     }
 
-    public function initializeChallenge(string $challengeName, string $adminToken): JsonResponse
+    public function initializeChallenge(string $challengeName): JsonResponse
     {
-        if (!$this->isAdminTokenValid($adminToken, $challengeName)) {
-            return new JsonResponse('token not valid', 403);
-        }
         $challenge = $this->challengeRepository->find($challengeName);
         $carIds = $challenge->getCars();
 
@@ -249,6 +240,12 @@ class ChallengeService
     {
         $challenge = $this->challengeRepository->find($challengeName);
         return $challenge->getAdminToken() !== null && $challenge->getAdminToken() === $tokenShown;
+    }
+
+    public function verifyVoterCredentials(string $username, string $password): bool
+    {
+        $voter = $this->voterRepository->findByName($username);
+        return $voter !== null && password_verify($password, $voter->getAuthKey());
     }
 
     public function changePassForVoter(string $voterName, string $newPass): bool

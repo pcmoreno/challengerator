@@ -1,10 +1,20 @@
-<h1>{{ challengeName }}</h1><br>
+<h1>{{ challengeName }}</h1>
 
-{{ form_start(form) }}
-    {{ form_row(form.user) }}
-    {{ form_row(form.pass) }}
-    {{ form_widget(form.login) }}
-{{ form_end(form) }}
+<h2>Voter Login</h2>
+<form method="POST" action="{{ path('voter_login') }}">
+    <input type="hidden" name="_target_path" value="{{ path('voteDashboardForUser', {challengeName: challengeName}) }}">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+    <input type="text" name="login[user]" placeholder="your username" required>
+    <input type="password" name="login[pass]" placeholder="your password" required>
+    <button type="submit">Login as Voter</button>
+</form>
+
+<h2>Admin Login</h2>
+<form method="POST" action="{{ path('admin_login', {challengeName: challengeName}) }}">
+    <input type="hidden" name="_csrf_token" value="{{ csrf_token('admin_login_' ~ challengeName) }}">
+    <input type="password" name="admin_pass" placeholder="admin password" required>
+    <button type="submit">Login as Admin</button>
+</form>
 
 {% include 'default/generalStyle.html.twig' %}
 
