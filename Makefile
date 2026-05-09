@@ -11,3 +11,15 @@ coverage:
 
 cache-clear:
 	$(APP) php bin/console cache:clear
+
+migrate:
+	$(APP) php bin/console doctrine:migrations:migrate --no-interaction
+
+fixtures:
+	$(APP) php bin/console doctrine:fixtures:load --no-interaction
+
+generate-invite-codes:
+	$(APP) php bin/console app:generate-invite-codes $(count)
+
+create-super-user:
+	$(APP) php bin/console app:create-super-user $(username) $(password)
