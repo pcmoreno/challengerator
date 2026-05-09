@@ -33,3 +33,6 @@ logs/
 /public/assets/
 /assets/vendor/
 ###< symfony/asset-mapper ###
+
+### dev fixtures
+/src/DataFixtures/

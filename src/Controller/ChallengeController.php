@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\Challenge\Car;
-use App\Entity\Challenge\Voter;
+use App\Service\InviteService;
 use App\Form\AdminDeleteCarType;
 use App\Form\AdminDeleteVoterType;
 use App\Form\CarType;
@@ -86,6 +86,7 @@ class ChallengeController extends AbstractController
             if ($this->challengeService->verifyAdmin($challengeName, $adminDeleteCar->adminPass)) {
                 $this->challengeService->deleteCarFromChallenge($challengeName, $adminDeleteCar->carToDelete);
             }
+            return $this->redirectToRoute('addCarToChallengeFormPage', ['challengeName' => $challengeName]);
         }
 
         return $this->render('car/carDashboard.html.twig', [
@@ -96,21 +97,21 @@ class ChallengeController extends AbstractController
         ]);
     }
 
-    public function votersDashboardPage(Request $request, string $challengeName): Response
+    public function votersDashboardPage(Request $request, string $challengeName, InviteService $inviteService): Response
     {
         if (!$this->isAdminForChallenge($request, $challengeName)) {
             return $this->redirectToRoute('loginMenu', ['challengeName' => $challengeName]);
         }
 
-        $voter = Voter::createForChallenge('', '', $challengeName);
-        $voterForm = $this->createForm(VoterType::class, $voter);
+        $voterForm = $this->createForm(VoterType::class);
         $voterForm->handleRequest($request);
         if ($voterForm->isSubmitted() && $voterForm->isValid()) {
-            $voter = Voter::createForChallenge($voter->getName(), $voter->getAuthKey(), $challengeName);
+            $email = $voterForm->get('email')->getData();
             try {
-                $this->challengeService->addVoter($challengeName, $voter);
-            } catch (\DomainException $e) {
-                $this->addFlash('error', $e->getMessage());
+                $inviteService->invite($email, $challengeName);
+                $this->addFlash('success', "Invitation sent to $email.");
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Could not send invitation: ' . $e->getMessage());
             }
             return $this->redirectToRoute('addVoterToChallengeFormPage', ['challengeName' => $challengeName]);
         }
@@ -124,6 +125,7 @@ class ChallengeController extends AbstractController
             if ($this->challengeService->verifyAdmin($challengeName, $adminDeleteVoter->adminPass)) {
                 $this->challengeService->deleteVoterFromChallenge($challengeName, $adminDeleteVoter->voterToDelete);
             }
+            return $this->redirectToRoute('addVoterToChallengeFormPage', ['challengeName' => $challengeName]);
         }
 
         return $this->render('/voter/voterDashboard.html.twig', [

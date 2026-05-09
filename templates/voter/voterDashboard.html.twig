@@ -12,6 +12,9 @@
     {% for message in app.flashes('error') %}
         <div class="mb-4 alert-error">{{ message }}</div>
     {% endfor %}
+    {% for message in app.flashes('success') %}
+        <div class="mb-4 alert-success">{{ message }}</div>
+    {% endfor %}
 
     <div class="bg-panel rounded-lg shadow p-6 mb-6">
         {{ form(form) }}
