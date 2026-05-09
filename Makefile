@@ -27,3 +27,9 @@ create-super-user:
 test-db:
 	$(APP) php bin/console doctrine:database:create --env=test --if-not-exists --no-interaction
 	$(APP) php bin/console doctrine:migrations:migrate --env=test --no-interaction
+
+assets-build:
+	$(APP) php bin/console tailwind:build
+
+assets-watch:
+	$(APP) php bin/console tailwind:build --watch

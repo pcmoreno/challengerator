@@ -42,6 +42,7 @@ createChallengeMenu:
 startChallenge:
     path: /challenge/initialize/{challengeName}
     controller: App\Controller\ChallengeController::startChallenge
+    methods: [POST]
 
 addCarToChallengeFormPage:
     path: /challenge/addCarForm/{challengeName}
@@ -54,11 +55,12 @@ addVoterToChallengeFormPage:
 toggleSelfRegistrationForChallenge:
     path: /challenge/toggleSelfRegistration/{challengeName}
     controller: App\Controller\ChallengeController::toggleSelfRegistrationForChallenge
+    methods: [POST]
 
 resetVotesForVoterOnChallenge:
     path: /challenge/resetVoter/
     controller: App\Controller\ChallengeController::resetVotesForVoterOnChallenge
-    methods: [GET]
+    methods: [POST]
 
 deleteVoterFromChallenge:
     path: /challenge/deleteVoter/{challengeName}/{voterId}
@@ -69,10 +71,12 @@ deleteVoterFromChallenge:
 voteDashboardForUser:
     path: /vote/{challengeName}
     controller: App\Controller\VotingController::votingDashBoardForUser
+    methods: [GET]
 
 voteCarForUser:
-    path: /vote/{challengeName}/{cars}/{result}
+    path: /vote/{challengeName}
     controller: App\Controller\VotingController::voteForCarForUser
+    methods: [POST]
 
 # -----------------------------------------------
 # Upload routes:

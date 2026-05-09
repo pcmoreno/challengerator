@@ -17,6 +17,7 @@
         "php-on-couch/php-on-couch": "^3.0",
         "symfony/apache-pack": "^1.0",
         "symfony/asset": "6.4.*",
+        "symfony/asset-mapper": "6.4.*",
         "symfony/console": "6.4.*",
         "symfony/dotenv": "6.4.*",
         "symfony/expression-language": "6.4.*",
@@ -38,13 +39,17 @@
         "symfony/security-bundle": "6.4.*",
         "symfony/security-csrf": "6.4.*",
         "symfony/serializer": "6.4.*",
+        "symfony/stimulus-bundle": "^2.35",
         "symfony/string": "6.4.*",
         "symfony/translation": "6.4.*",
         "symfony/twig-bundle": "^6.4",
         "symfony/uid": "6.4.*",
+        "symfony/ux-turbo": "^2.35",
+        "symfony/ux-twig-component": "^2.35",
         "symfony/validator": "6.4.*",
         "symfony/web-link": "6.4.*",
         "symfony/yaml": "6.4.*",
+        "symfonycasts/tailwind-bundle": "^0.12.0",
         "twig/extra-bundle": "^3.0",
         "twig/twig": "^3.0"
     },
@@ -90,7 +95,8 @@
     "scripts": {
         "auto-scripts": {
             "cache:clear": "symfony-cmd",
-            "assets:install %PUBLIC_DIR%": "symfony-cmd"
+            "assets:install %PUBLIC_DIR%": "symfony-cmd",
+            "importmap:install": "symfony-cmd"
         },
         "post-install-cmd": [
             "@auto-scripts"
