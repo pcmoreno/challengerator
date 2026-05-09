@@ -25,6 +25,11 @@ addSelfRegisteredVoterToChallengeFormPage:
     path: /challenge/signup/{challengeName}/{selfRegistrationCode}
     controller: App\Controller\AuthController::addSelfRegisteredVoterForChallengePage
 
+voter_accept_invite:
+    path: /invitation/{token}
+    controller: App\Controller\AuthController::acceptInvite
+    methods: [GET, POST]
+
 changePasswordMenu:
     path: /voter/changePass
     controller: App\Controller\AuthController::changePasswordForVoter

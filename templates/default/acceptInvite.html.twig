@@ -1,0 +1,36 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Join {{ challengeName }}{% endblock %}
+
+{% block body %}
+    <div class="max-w-md mx-auto mt-8">
+
+    {% if invalid %}
+        <div class="bg-surface rounded-lg shadow p-8 text-center">
+            <h2 class="text-2xl font-bold text-heading mb-4">Invalid or expired link</h2>
+            <p class="text-muted">This invitation link is no longer valid. Ask the challenge admin to send a new invite.</p>
+        </div>
+    {% else %}
+        <h2 class="text-2xl font-bold text-center text-heading mb-2">You've been invited!</h2>
+        <p class="text-center text-muted mb-6">Set up your account to join <strong>{{ challengeName }}</strong>.</p>
+
+        {% for message in app.flashes('error') %}
+            <div class="mb-4 alert-error">{{ message }}</div>
+        {% endfor %}
+
+        <div class="bg-panel rounded-lg shadow p-6">
+            {{ form_start(form, {'attr': {'class': 'space-y-4'}}) }}
+                {{ form_row(form.username) }}
+                {{ form_row(form.password.first) }}
+                {{ form_row(form.password.second) }}
+                {{ form_widget(form.join) }}
+            {{ form_end(form) }}
+        </div>
+
+        <p class="text-center text-muted text-sm mt-4">
+            You won't be able to reset or recover your password — make sure you remember it.
+        </p>
+    {% endif %}
+
+    </div>
+{% endblock %}

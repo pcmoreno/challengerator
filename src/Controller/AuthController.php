@@ -3,8 +3,10 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Form\AcceptInviteType;
 use App\Form\ChangePasswordType;
 use App\Form\SignUpType;
+use App\Service\InviteService;
 use App\Services\ChallengeService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -88,6 +90,41 @@ class AuthController extends AbstractController
             'form' => $form->createView(),
             'challengeName' => $challengeName,
         ]);
+    }
+
+    public function acceptInvite(Request $request, string $token, InviteService $inviteService): Response
+    {
+        $verification = $inviteService->findValidVerification($token);
+        if ($verification === null) {
+            return $this->render('default/acceptInvite.html.twig', [
+                'invalid' => true,
+                'challengeName' => '',
+                'form' => null,
+            ]);
+        }
+
+        $form = $this->createForm(AcceptInviteType::class);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            try {
+                $inviteService->acceptInvite(
+                    $verification,
+                    $form->get('username')->getData(),
+                    $form->get('password')->getData(),
+                );
+                return $this->redirectToRoute('loginMenu', ['challengeName' => $verification->getChallengeId()]);
+            } catch (\DomainException $e) {
+                $this->addFlash('error', $e->getMessage());
+                return $this->redirectToRoute('voter_accept_invite', ['token' => $token]);
+            }
+        }
+
+        return $this->render('default/acceptInvite.html.twig', [
+            'form' => $form->createView(),
+            'challengeName' => $verification->getChallengeId(),
+            'invalid' => false,
+        ], new Response(status: $form->isSubmitted() ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK));
     }
 
     public function changePasswordForVoter(Request $request): Response
