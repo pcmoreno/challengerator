@@ -12,43 +12,31 @@ use App\Repository\CarRepositoryInterface;
 use App\Repository\ChallengeRepositoryInterface;
 use App\Repository\InviteCodeRepositoryInterface;
 use App\Repository\VoterRepositoryInterface;
-use Monolog\Handler\StreamHandler;
-use Monolog\Logger;
-use Symfony\Component\HttpFoundation\JsonResponse;
-
+use Psr\Log\LoggerInterface;
 class ChallengeService
 {
-    private const LOGIN_LOG_PATH = 'logs/logins.log';
-    private const VOTING_LOG_PATH = 'logs/votes.log';
-    private const GENERAL_LOG_PATH = 'logs/general.log';
-    private array $loggers;
-
     public function __construct(
         private readonly ChallengeRepositoryInterface $challengeRepository,
         private readonly CarRepositoryInterface $carRepository,
         private readonly VoterRepositoryInterface $voterRepository,
         private readonly InviteCodeRepositoryInterface $inviteCodeRepository,
-    ) {
-        $this->initializeLoggers();
-    }
+        private readonly LoggerInterface $votesLogger,
+        private readonly LoggerInterface $loginsLogger,
+        private readonly LoggerInterface $generalAppLogger,
+    ) {}
 
-    public function createNewChallenge(string $name, string $owner, string $code): JsonResponse
+    public function createNewChallenge(string $name, string $owner, string $code): void
     {
         if (!$this->inviteCodeRepository->validateAndConsume($code)) {
-            return new JsonResponse('Code not valid', JsonResponse::HTTP_FORBIDDEN);
+            throw new \DomainException('Code not valid');
         }
-        try {
-            $this->challengeRepository->create($name);
-            $hashed = password_hash($owner, PASSWORD_BCRYPT);
-            if ($hashed === false) {
-                return new JsonResponse('Failed to hash admin password', JsonResponse::HTTP_INTERNAL_SERVER_ERROR);
-            }
-            $challenge = Challenge::create($name, $hashed);
-            $this->challengeRepository->save($challenge);
-            return new JsonResponse('added: ' . $name);
-        } catch (\Exception $exception) {
-            return new JsonResponse($exception->getMessage(), 400);
+        $hashed = password_hash($owner, PASSWORD_BCRYPT);
+        if ($hashed === false) {
+            throw new \RuntimeException('Failed to hash admin password');
         }
+        $this->challengeRepository->create($name);
+        $challenge = Challenge::create($name, $hashed);
+        $this->challengeRepository->save($challenge);
     }
 
     public function addCar(string $challengeName, Car $car): void
@@ -70,7 +58,8 @@ class ChallengeService
         }
         $voter = Voter::createForChallenge($voterName, $password, $challengeName, $ip);
         $this->addVoterToChallenge($challengeName, $voter);
-        $this->resetRoundOfVoteForUserOfChallenge($challengeName, $voter->getId());
+        $saved = $this->voterRepository->findByName($voterName);
+        $this->resetRoundOfVoteForUserOfChallenge($challengeName, $saved->getId());
         return true;
     }
 
@@ -107,33 +96,29 @@ class ChallengeService
         return $this->voterRepository->findMany($challenge->getVoters());
     }
 
-    public function initializeChallenge(string $challengeName): JsonResponse
+    public function initializeChallenge(string $challengeName): void
     {
         $challenge = $this->challengeRepository->find($challengeName);
         $carIds = $challenge->getCars();
 
         foreach ($this->voterRepository->findMany($challenge->getVoters()) as $voter) {
-            $voter->addCarsToSelf($carIds, $challengeName, true);
+            $voter->addCarsToSelf($carIds, $challengeName);
             $this->voterRepository->save($voter);
         }
 
         $challenge->activate();
         $this->challengeRepository->save($challenge);
-
-        return new JsonResponse('initialization done', 200);
     }
 
-    public function resetRoundOfVoteForUserOfChallenge(string $challengeName, string $voterId): JsonResponse
+    public function resetRoundOfVoteForUserOfChallenge(string $challengeName, string $voterId): void
     {
         $challenge = $this->challengeRepository->find($challengeName);
         if (!$challenge->hasVoter($voterId)) {
-            return new JsonResponse('this voter is not part of this challenge', 400);
+            throw new \DomainException('This voter is not part of this challenge');
         }
         $voter = $this->voterRepository->find($voterId);
-        $voter->addCarsToSelf($challenge->getCars(), $challengeName, true);
+        $voter->addCarsToSelf($challenge->getCars(), $challengeName);
         $this->voterRepository->save($voter);
-
-        return new JsonResponse('success', 200);
     }
 
     public function getTwoCarsToBeVotedByUser(string $challengeName, string $userId): array
@@ -157,15 +142,14 @@ class ChallengeService
         return [$selectedCars, $carsToVote];
     }
 
-    public function listChallenges(): JsonResponse
+    public function listChallenges(): array
     {
-        return new JsonResponse($this->challengeRepository->listNames());
+        return $this->challengeRepository->listNames();
     }
 
     public function voteOnCars(string $cars, string $result, string $challengeId, string $userId): array
     {
-        $outcome = Outcome::tryFrom($result) ?? throw new \ValueError('Wrong Result Chosen: ' . $result);
-        $logger = $this->getLogger('voters');
+        $outcome = Outcome::tryFrom($result) ?? throw new \InvalidArgumentException('Wrong Result Chosen: ' . $result);
         $carIds = explode('XXX', $cars);
 
         $voter = $this->voterRepository->find($userId);
@@ -173,13 +157,18 @@ class ChallengeService
 
         foreach ($carIds as $carId) {
             if (!in_array($carId, $unvotedCars)) {
-                throw new \Exception('Car already voted', JsonResponse::HTTP_CONFLICT);
+                throw new \DomainException('Car already voted');
             }
         }
 
         $voter->setCarsToVotedForChallenge($carIds, $challengeId);
 
         [$carA, $carB] = $this->carRepository->findMany($carIds);
+
+        if ($carA->getChallengeId() !== $challengeId || $carB->getChallengeId() !== $challengeId) {
+            throw new \InvalidArgumentException('Car does not belong to this challenge');
+        }
+
         $ratingA = $carA->getRating();
         $ratingB = $carB->getRating();
         RatingService::compareAndAdjust($ratingA, $ratingB, $outcome);
@@ -197,8 +186,7 @@ class ChallengeService
 
     public function verifyLogin(\stdClass $login, string $challengeName): array
     {
-        $logger = $this->getLogger('users');
-        $logger->notice($login->user . " is trying to login to " . $challengeName);
+        $this->loginsLogger->notice($login->user . " is trying to login to " . $challengeName);
 
         $token = null;
         $challenge = null;
@@ -253,9 +241,8 @@ class ChallengeService
 
     public function changePassForVoter(string $voterName, string $newPass): bool
     {
-        $logger = $this->getLogger('users');
         try {
-            $logger->notice($voterName . " is resetting password");
+            $this->loginsLogger->notice($voterName . " is resetting password");
             $voter = $this->voterRepository->findByName($voterName);
             if ($voter === null) {
                 throw new \Exception('Voter not found');
@@ -324,23 +311,4 @@ class ChallengeService
         return $challenge->getAdminToken();
     }
 
-    private function getLogger(string $whichOne): Logger
-    {
-        return $this->loggers[$whichOne];
-    }
-
-    private function initializeLoggers(): void
-    {
-        $voteLogger = new Logger('voters');
-        $voteLogger->pushHandler(new StreamHandler(self::VOTING_LOG_PATH, Logger::NOTICE));
-        $this->loggers['voters'] = $voteLogger;
-
-        $loginLogger = new Logger('users');
-        $loginLogger->pushHandler(new StreamHandler(self::LOGIN_LOG_PATH, Logger::NOTICE));
-        $this->loggers['users'] = $loginLogger;
-
-        $generalLogger = new Logger('general');
-        $generalLogger->pushHandler(new StreamHandler(self::GENERAL_LOG_PATH, Logger::NOTICE));
-        $this->loggers['general'] = $generalLogger;
-    }
 }
