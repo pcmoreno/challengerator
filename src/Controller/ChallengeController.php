@@ -4,6 +4,9 @@ declare(strict_types=1);
 namespace App\Controller;
 
 use App\Entity\Challenge\Car;
+use App\Entity\Doctrine\DbChallenge;
+use App\Entity\StorageType;
+use App\Repository\StorageResourceRepositoryInterface;
 use App\Service\InviteService;
 use App\Form\AdminDeleteCarType;
 use App\Form\AdminDeleteVoterType;
@@ -11,6 +14,8 @@ use App\Form\CarType;
 use App\Form\CreateChallengeType;
 use App\Form\VoterType;
 use App\Services\ChallengeService;
+use App\Services\GoogleDriveService;
+use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -18,7 +23,13 @@ use Symfony\Component\HttpFoundation\Response;
 
 class ChallengeController extends AbstractController
 {
-    public function __construct(private ChallengeService $challengeService) {}
+    use AdminGuardTrait;
+
+    public function __construct(
+        private ChallengeService $challengeService,
+        private EntityManagerInterface $em,
+        private StorageResourceRepositoryInterface $storageRepository,
+    ) {}
 
     public function index(): Response
     {
@@ -60,23 +71,56 @@ class ChallengeController extends AbstractController
         ]);
     }
 
-    public function carsDashboardPage(Request $request, string $challengeName): Response
+    public function carsDashboardPage(Request $request, string $challengeName, GoogleDriveService $driveService): Response
     {
         if (!$this->isAdminForChallenge($request, $challengeName)) {
             return $this->redirectToRoute('loginMenu', ['challengeName' => $challengeName]);
         }
 
-        $car = Car::empty();
+        $dbChallenge    = $this->em->getRepository(DbChallenge::class)->findOneBy(['name' => $challengeName]);
+        $driveResource  = $dbChallenge !== null
+            ? $this->storageRepository->findForChallenge($dbChallenge->getId(), StorageType::GoogleDrive)
+            : null;
+        $driveConnected = $driveResource !== null;
+        $driveEmail     = $driveResource?->getCredentials()['cached_email'] ?? null;
+
+        $car  = Car::empty();
         $form = $this->createForm(CarType::class, $car);
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
+            if ($driveResource === null) {
+                $this->addFlash('warning', 'Connect Google Drive before adding cars.');
+                return $this->redirectToRoute('drive_oauth_connect', ['challengeName' => $challengeName]);
+            }
+
+            $credentials = $driveResource->getCredentials();
+            $folderId    = $credentials['drive_folder_id'];
+            $onRefresh   = function (array $newCredentials) use ($driveResource): void {
+                $driveResource->setCredentials($newCredentials);
+                $this->storageRepository->save($driveResource);
+            };
+
+            /** @var \Symfony\Component\HttpFoundation\File\UploadedFile $imageA */
+            $imageA = $form->get('imageA')->getData();
+            /** @var \Symfony\Component\HttpFoundation\File\UploadedFile $imageB */
+            $imageB = $form->get('imageB')->getData();
+
+            $car->setImageUrlA($driveService->uploadFile(
+                ['name' => $imageA->getClientOriginalName(), 'tmp_name' => $imageA->getPathname()],
+                $folderId, $credentials, $onRefresh
+            ));
+            $car->setImageUrlB($driveService->uploadFile(
+                ['name' => $imageB->getClientOriginalName(), 'tmp_name' => $imageB->getPathname()],
+                $folderId, $credentials, $onRefresh
+            ));
+
             $this->challengeService->addCar($challengeName, $car);
             return $this->redirectToRoute('addCarToChallengeFormPage', ['challengeName' => $challengeName]);
         }
 
-        $adminDeleteCar = new \stdClass();
+        $adminDeleteCar             = new \stdClass();
         $adminDeleteCar->carToDelete = '';
-        $adminDeleteCar->adminPass = '';
+        $adminDeleteCar->adminPass   = '';
         $adminDeleteCarForm = $this->createForm(AdminDeleteCarType::class, $adminDeleteCar);
         $adminDeleteCarForm->handleRequest($request);
         if ($adminDeleteCarForm->isSubmitted() && $adminDeleteCarForm->isValid()) {
@@ -87,10 +131,12 @@ class ChallengeController extends AbstractController
         }
 
         return $this->render('car/carDashboard.html.twig', [
-            'form' => $form->createView(),
+            'form'               => $form->createView(),
             'adminDeleteCarForm' => $adminDeleteCarForm->createView(),
             'allCarsInChallenge' => $this->challengeService->getCarsForChallenge($challengeName),
-            'challengeName' => $challengeName,
+            'challengeName'      => $challengeName,
+            'driveConnected'     => $driveConnected,
+            'driveEmail'         => $driveEmail,
         ]);
     }
 
@@ -113,9 +159,9 @@ class ChallengeController extends AbstractController
             return $this->redirectToRoute('addVoterToChallengeFormPage', ['challengeName' => $challengeName]);
         }
 
-        $adminDeleteVoter = new \stdClass();
+        $adminDeleteVoter             = new \stdClass();
         $adminDeleteVoter->voterToDelete = '';
-        $adminDeleteVoter->adminPass = '';
+        $adminDeleteVoter->adminPass     = '';
         $adminDeleteVoterForm = $this->createForm(AdminDeleteVoterType::class, $adminDeleteVoter);
         $adminDeleteVoterForm->handleRequest($request);
         if ($adminDeleteVoterForm->isSubmitted() && $adminDeleteVoterForm->isValid()) {
@@ -126,12 +172,12 @@ class ChallengeController extends AbstractController
         }
 
         return $this->render('/voter/voterDashboard.html.twig', [
-            'form' => $voterForm->createView(),
-            'adminDeleteForm' => $adminDeleteVoterForm->createView(),
-            'allUsersInTheChallenge' => $this->challengeService->getAllVotersForTheChallenge($challengeName),
-            'challengeName' => $challengeName,
-            'selfRegistration' => $this->challengeService->isChallengeOpenToSelfRegistration($challengeName),
-            'selfRegistrationCode' => $this->challengeService->getSelfRegistrationCodeForChallenge($challengeName),
+            'form'                   => $voterForm->createView(),
+            'adminDeleteForm'         => $adminDeleteVoterForm->createView(),
+            'allUsersInTheChallenge'  => $this->challengeService->getAllVotersForTheChallenge($challengeName),
+            'challengeName'           => $challengeName,
+            'selfRegistration'        => $this->challengeService->isChallengeOpenToSelfRegistration($challengeName),
+            'selfRegistrationCode'    => $this->challengeService->getSelfRegistrationCodeForChallenge($challengeName),
         ]);
     }
 
@@ -179,14 +225,5 @@ class ChallengeController extends AbstractController
             $this->addFlash('error', $e->getMessage());
         }
         return $this->redirectToRoute('addVoterToChallengeFormPage', ['challengeName' => $challengeName]);
-    }
-
-
-    private function isAdminForChallenge(Request $request, string $challengeName): bool
-    {
-        if ($this->isGranted('ROLE_SUPER_ADMIN')) {
-            return true;
-        }
-        return in_array($challengeName, $request->getSession()->get('admin_challenges', []), true);
     }
 }

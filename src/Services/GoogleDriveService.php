@@ -3,100 +3,104 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use Exception;
 use Google_Client;
 use Google_Service_Drive;
 use Google_Service_Drive_DriveFile;
-use Psr\Log\LoggerInterface;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class GoogleDriveService
 {
-    private Google_Client $googleClient;
-    private Google_Service_Drive $googleServiceDrive;
+    public function __construct(
+        private readonly string $clientId,
+        private readonly string $clientSecret,
+    ) {}
 
-    public function __construct(private readonly LoggerInterface $logger)
+    public function createAuthUrl(string $state, string $redirectUri): string
     {
-        $this->googleClient = $this->getClient();
-        $this->googleServiceDrive = new Google_Service_Drive($this->googleClient);
+        $client = $this->buildBaseClient();
+        $client->setState($state);
+        $client->setRedirectUri($redirectUri);
+        return $client->createAuthUrl();
     }
 
-    public function listFilesInFolder(string $folderId)
+    public function exchangeCodeForTokens(string $code, string $redirectUri): array
     {
-        $optParams = array(
-            'pageSize' => 100,
-            'fields' => "nextPageToken, files(contentHints/thumbnail,fileExtension,iconLink,id,name,size,thumbnailLink,webContentLink,webViewLink,mimeType,parents)",
-            'q' => "'".$folderId."' in parents"
-        );
-        $results = $this->googleServiceDrive->files->listFiles($optParams);
-
-        return ($results->getFiles());
-    }
-
-    public function uploadFileToGoogleDrive(UploadedFile $driveFile, string $folderId): string
-    {
-        $fileMetadata = new Google_Service_Drive_DriveFile(['name' => $driveFile->getClientOriginalName()]);
-        $fileMetadata->setParents([$folderId]);
-        $content = file_get_contents($driveFile->getPathname());
-        $mimeType = $driveFile->getMimeType();
-
-        try {
-            $file = $this->googleServiceDrive->files->create(
-                $fileMetadata, [
-                    'data' => $content,
-                    'mimeType' => $mimeType,
-                    'fields' => 'id'
-                ]
-            );
-        } catch (Exception $exception) {
-            $this->logger->error("Error from google drive: " . $exception->getMessage());
-            return 'failed';
+        $client = $this->buildBaseClient();
+        $client->setRedirectUri($redirectUri);
+        $tokens = $client->fetchAccessTokenWithAuthCode($code);
+        if (isset($tokens['error'])) {
+            throw new \RuntimeException('Failed to exchange authorization code: ' . ($tokens['error_description'] ?? $tokens['error']));
         }
-        return $file->id;
+        return $tokens;
     }
 
-    private function getClient(): Google_Client
+    public function getConnectedEmail(array $credentials): ?string
+    {
+        $client = $this->buildBaseClient();
+        $client->setAccessToken($credentials);
+        try {
+            $http     = $client->authorize();
+            $response = $http->get('https://www.googleapis.com/oauth2/v2/userinfo');
+            $data     = json_decode((string) $response->getBody(), true);
+            return $data['email'] ?? null;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    public function createFolder(string $name, array $credentials, callable $onCredentialsRefreshed): string
+    {
+        $client = $this->buildClientFromCredentials($credentials, $onCredentialsRefreshed);
+        $drive  = new Google_Service_Drive($client);
+        $folder = new Google_Service_Drive_DriveFile([
+            'name'     => $name,
+            'mimeType' => 'application/vnd.google-apps.folder',
+        ]);
+        $created = $drive->files->create($folder, ['fields' => 'id']);
+        return $created->getId();
+    }
+
+    public function uploadFile(array $file, string $folderId, array $credentials, callable $onCredentialsRefreshed): string
+    {
+        $client   = $this->buildClientFromCredentials($credentials, $onCredentialsRefreshed);
+        $drive    = new Google_Service_Drive($client);
+        $metadata = new Google_Service_Drive_DriveFile([
+            'name'    => $file['name'],
+            'parents' => [$folderId],
+        ]);
+        $mimeType = mime_content_type($file['tmp_name']) ?: 'application/octet-stream';
+        $created  = $drive->files->create($metadata, [
+            'data'     => file_get_contents($file['tmp_name']),
+            'mimeType' => $mimeType,
+            'fields'   => 'id',
+        ]);
+        return $created->getId();
+    }
+
+    private function buildClientFromCredentials(array $credentials, callable $onCredentialsRefreshed): Google_Client
+    {
+        $client = $this->buildBaseClient();
+        $client->setAccessToken($credentials);
+        if ($client->isAccessTokenExpired()) {
+            if (!$client->getRefreshToken()) {
+                throw new \RuntimeException('Storage credentials expired and no refresh token available');
+            }
+            $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
+            $onCredentialsRefreshed($client->getAccessToken());
+        }
+        return $client;
+    }
+
+    private function buildBaseClient(): Google_Client
     {
         $client = new Google_Client();
-        $client->setApplicationName('Google Drive API PHP Quickstart');
-        $client->setScopes(Google_Service_Drive::DRIVE);
-        $client->setAuthConfig(__DIR__ . '/../../credentials.json');
+        $client->setClientId($this->clientId);
+        $client->setClientSecret($this->clientSecret);
+        $client->setScopes([
+            Google_Service_Drive::DRIVE_FILE,
+            'https://www.googleapis.com/auth/userinfo.email',
+        ]);
         $client->setAccessType('offline');
-        $client->setPrompt('select_account consent');
-
-        $tokenPath = __DIR__ . '/../../token.json';
-        if (file_exists($tokenPath)) {
-            $accessToken = json_decode(file_get_contents($tokenPath), true);
-            $client->setAccessToken($accessToken);
-        }
-
-        // If there is no previous token or it's expired.
-        if ($client->isAccessTokenExpired()) {
-            // Refresh the token if possible, else fetch a new one.
-            if ($client->getRefreshToken()) {
-                $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
-            } else {
-                // Request authorization from the user.
-                $authUrl = $client->createAuthUrl();
-                printf("Open the following link in your browser:\n%s\n", $authUrl);
-                print 'Enter verification code: ';
-                $authCode = trim(fgets(STDIN));
-
-                // Exchange authorization code for an access token.
-                $accessToken = $client->fetchAccessTokenWithAuthCode($authCode);
-                $client->setAccessToken($accessToken);
-
-                // Check to see if there was an error.
-                if (array_key_exists('error', $accessToken)) {
-                    throw new Exception(join(', ', $accessToken));
-                }
-            }
-            // Save the token to a file.
-            if (!file_exists(dirname($tokenPath))) {
-                mkdir(dirname($tokenPath), 0700, true);
-            }
-            file_put_contents($tokenPath, json_encode($client->getAccessToken()));
-        }
+        $client->setPrompt('consent');
         return $client;
     }
 }
