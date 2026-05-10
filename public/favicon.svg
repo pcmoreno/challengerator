@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Podium: 2nd place (left) -->
+  <rect x="2"  y="50" width="17" height="12" rx="1.5" fill="#16a34a"/>
+  <!-- Podium: 1st place (centre) -->
+  <rect x="21" y="43" width="22" height="19" rx="1.5" fill="#ff8b38"/>
+  <!-- Podium: 3rd place (right) -->
+  <rect x="45" y="54" width="17" height="8"  rx="1.5" fill="#16a34a"/>
+
+  <!-- Car: rear wheel -->
+  <circle cx="25" cy="38" r="5.5" fill="#1e293b"/>
+  <circle cx="25" cy="38" r="2.5" fill="#94a3b8"/>
+  <!-- Car: front wheel -->
+  <circle cx="39" cy="38" r="5.5" fill="#1e293b"/>
+  <circle cx="39" cy="38" r="2.5" fill="#94a3b8"/>
+
+  <!-- Car: body -->
+  <rect x="17" y="30" width="30" height="8" rx="2.5" fill="#1e293b"/>
+
+  <!-- Car: cabin -->
+  <path d="M22,30 L25,21 L39,21 L42,30 Z" fill="#1e293b"/>
+
+  <!-- Car: window -->
+  <path d="M25,29 L27,23 L37,23 L39,29 Z" fill="#93c5fd" opacity="0.9"/>
+
+  <!-- Car: racing stripe (Automation orange) -->
+  <rect x="17" y="35" width="30" height="2" rx="0.5" fill="#ff8b38"/>
+</svg>
