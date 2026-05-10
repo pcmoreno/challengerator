@@ -1,27 +1,81 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- Podium: 2nd place (left) -->
-  <rect x="2"  y="50" width="17" height="12" rx="1.5" fill="#16a34a"/>
-  <!-- Podium: 1st place (centre) -->
-  <rect x="21" y="43" width="22" height="19" rx="1.5" fill="#ff8b38"/>
-  <!-- Podium: 3rd place (right) -->
-  <rect x="45" y="54" width="17" height="8"  rx="1.5" fill="#16a34a"/>
 
-  <!-- Car: rear wheel -->
-  <circle cx="25" cy="38" r="5.5" fill="#1e293b"/>
-  <circle cx="25" cy="38" r="2.5" fill="#94a3b8"/>
-  <!-- Car: front wheel -->
-  <circle cx="39" cy="38" r="5.5" fill="#1e293b"/>
-  <circle cx="39" cy="38" r="2.5" fill="#94a3b8"/>
+  <!-- Checkered strip (3 rows × 8 cols, 8×4px) -->
+  <rect x="0"  y="53" width="8" height="4" fill="#1e293b"/>
+  <rect x="8"  y="53" width="8" height="4" fill="#f1f5f9"/>
+  <rect x="16" y="53" width="8" height="4" fill="#1e293b"/>
+  <rect x="24" y="53" width="8" height="4" fill="#f1f5f9"/>
+  <rect x="32" y="53" width="8" height="4" fill="#1e293b"/>
+  <rect x="40" y="53" width="8" height="4" fill="#f1f5f9"/>
+  <rect x="48" y="53" width="8" height="4" fill="#1e293b"/>
+  <rect x="56" y="53" width="8" height="4" fill="#f1f5f9"/>
+  <rect x="0"  y="57" width="8" height="4" fill="#f1f5f9"/>
+  <rect x="8"  y="57" width="8" height="4" fill="#1e293b"/>
+  <rect x="16" y="57" width="8" height="4" fill="#f1f5f9"/>
+  <rect x="24" y="57" width="8" height="4" fill="#1e293b"/>
+  <rect x="32" y="57" width="8" height="4" fill="#f1f5f9"/>
+  <rect x="40" y="57" width="8" height="4" fill="#1e293b"/>
+  <rect x="48" y="57" width="8" height="4" fill="#f1f5f9"/>
+  <rect x="56" y="57" width="8" height="4" fill="#1e293b"/>
+  <rect x="0"  y="61" width="8" height="3" fill="#1e293b"/>
+  <rect x="8"  y="61" width="8" height="3" fill="#f1f5f9"/>
+  <rect x="16" y="61" width="8" height="3" fill="#1e293b"/>
+  <rect x="24" y="61" width="8" height="3" fill="#f1f5f9"/>
+  <rect x="32" y="61" width="8" height="3" fill="#1e293b"/>
+  <rect x="40" y="61" width="8" height="3" fill="#f1f5f9"/>
+  <rect x="48" y="61" width="8" height="3" fill="#1e293b"/>
+  <rect x="56" y="61" width="8" height="3" fill="#f1f5f9"/>
 
-  <!-- Car: body -->
-  <rect x="17" y="30" width="30" height="8" rx="2.5" fill="#1e293b"/>
+  <!-- Rear wheel -->
+  <circle cx="13" cy="45" r="6.5" fill="#1e293b"/>
+  <circle cx="13" cy="45" r="4.5" fill="#475569"/>
+  <line x1="13" y1="38.5" x2="13" y2="51.5" stroke="#1e293b" stroke-width="1.2"/>
+  <line x1="6.5" y1="45" x2="19.5" y2="45" stroke="#1e293b" stroke-width="1.2"/>
+  <line x1="8.4" y1="40.4" x2="17.6" y2="49.6" stroke="#1e293b" stroke-width="1.2"/>
+  <line x1="8.4" y1="49.6" x2="17.6" y2="40.4" stroke="#1e293b" stroke-width="1.2"/>
+  <circle cx="13" cy="45" r="2" fill="#1e293b"/>
 
-  <!-- Car: cabin -->
-  <path d="M22,30 L25,21 L39,21 L42,30 Z" fill="#1e293b"/>
+  <!-- Front wheel -->
+  <circle cx="50" cy="45" r="6.5" fill="#1e293b"/>
+  <circle cx="50" cy="45" r="4.5" fill="#475569"/>
+  <line x1="50" y1="38.5" x2="50" y2="51.5" stroke="#1e293b" stroke-width="1.2"/>
+  <line x1="43.5" y1="45" x2="56.5" y2="45" stroke="#1e293b" stroke-width="1.2"/>
+  <line x1="45.4" y1="40.4" x2="54.6" y2="49.6" stroke="#1e293b" stroke-width="1.2"/>
+  <line x1="45.4" y1="49.6" x2="54.6" y2="40.4" stroke="#1e293b" stroke-width="1.2"/>
+  <circle cx="50" cy="45" r="2" fill="#1e293b"/>
 
-  <!-- Car: window -->
-  <path d="M25,29 L27,23 L37,23 L39,29 Z" fill="#93c5fd" opacity="0.9"/>
+  <!-- SUV body with wheel arches -->
+  <path d="M2,42 L2,20 L5,16 L45,16 L53,18 L60,28 L62,30 L62,42 L56,42 Q50,38 44,42 L22,42 Q13,38 4,42 Z" fill="#1e293b"/>
 
-  <!-- Car: racing stripe (Automation orange) -->
-  <rect x="17" y="35" width="30" height="2" rx="0.5" fill="#ff8b38"/>
+  <!-- Rear side window -->
+  <rect x="6" y="19" width="16" height="13" rx="1" fill="#93c5fd" opacity="0.8"/>
+  <!-- B-pillar -->
+  <rect x="22" y="19" width="2" height="13" fill="#1e293b"/>
+  <!-- Front side window -->
+  <rect x="24" y="19" width="14" height="13" rx="1" fill="#93c5fd" opacity="0.8"/>
+  <!-- Windshield -->
+  <path d="M38,32 L43,19 L52,19 L60,29 Z" fill="#93c5fd" opacity="0.8"/>
+
+  <!-- Roof rack rail (green) -->
+  <rect x="8" y="15" width="33" height="1" fill="#16a34a"/>
+  <!-- Cross bars -->
+  <rect x="11" y="14" width="1.5" height="2.5" rx="0.3" fill="#475569"/>
+  <rect x="23" y="14" width="1.5" height="2.5" rx="0.3" fill="#475569"/>
+  <rect x="36" y="14" width="1.5" height="2.5" rx="0.3" fill="#475569"/>
+
+  <!-- Orange belt line -->
+  <rect x="2" y="37.5" width="60" height="2" rx="0.5" fill="#ff8b38"/>
+  <!-- Sill -->
+  <rect x="4" y="41.5" width="56" height="1" rx="0.5" fill="#64748b"/>
+
+  <!-- Headlight -->
+  <rect x="60" y="27" width="2" height="3" rx="0.5" fill="#fde68a"/>
+  <!-- Taillight -->
+  <rect x="2" y="24" width="2" height="5" rx="0.5" fill="#ff8b38"/>
+
+  <!-- Door handle -->
+  <rect x="26" y="28" width="5" height="1.5" rx="0.5" fill="#64748b"/>
+  <!-- Front badge (green) -->
+  <circle cx="58" cy="26" r="1.5" fill="#16a34a"/>
+
 </svg>
