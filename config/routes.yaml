@@ -80,6 +80,13 @@ voteCarForUser:
     methods: [POST]
 
 # -----------------------------------------------
+# Drive image proxy (cached):
+drive_image:
+    path: /image/{fileId}
+    controller: App\Controller\DriveImageController::serve
+    methods: [GET]
+
+# -----------------------------------------------
 # Drive OAuth routes:
 drive_oauth_connect:
     path: /challenge/{challengeName}/drive/connect

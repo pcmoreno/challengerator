@@ -67,6 +67,10 @@ services:
             $votesLogger: '@monolog.logger.votes'
             $loginsLogger: '@monolog.logger.logins'
 
+    App\Controller\DriveImageController:
+        arguments:
+            $cacheDir: '%kernel.project_dir%/var/drive_image_cache'
+
     App\Repository\StorageResourceRepositoryInterface:
         class: App\Repository\Doctrine\DoctrineStorageResourceRepository
 

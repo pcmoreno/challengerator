@@ -1,4 +1,4 @@
-<div id="car-pair" data-controller="voting" class="bg-surface rounded-lg shadow p-6 mb-6">
+<div id="car-pair" data-controller="voting image-full-size" class="bg-surface rounded-lg shadow p-6 mb-6">
     {% set isDev = app.request.server.get('APP_ENV') %}
     <div class="grid grid-cols-2 gap-8 mb-6">
         {% for item in carsToVote %}
@@ -8,10 +8,12 @@
                     <span class="text-xs text-muted">Rating: {{ item.rating.rating() }}</span>
                 {% endif %}
                 <div class="space-y-2 w-full">
-                    <img src="https://drive.google.com/thumbnail?sz=w600&id={{ item.imageUrlA }}" alt="{{ item.name }}"
-                         class="rounded w-full object-cover" style="height:300px">
-                    <img src="https://drive.google.com/thumbnail?sz=w600&id={{ item.imageUrlB }}" alt="{{ item.name }}"
-                         class="rounded w-full object-cover" style="height:300px">
+                    <img src="{{ path('drive_image', {fileId: item.imageUrlA}) }}" alt="{{ item.name }}"
+                         class="rounded w-full object-cover cursor-pointer" style="height:300px"
+                         data-action="click->image-full-size#open">
+                    <img src="{{ path('drive_image', {fileId: item.imageUrlB}) }}" alt="{{ item.name }}"
+                         class="rounded w-full object-cover cursor-pointer" style="height:300px"
+                         data-action="click->image-full-size#open">
                 </div>
                 <form method="post"
                       action="{{ path('voteCarForUser', {'challengeName': challengeName}) }}"
@@ -39,4 +41,5 @@
             </button>
         </form>
     </div>
+
 </div>
