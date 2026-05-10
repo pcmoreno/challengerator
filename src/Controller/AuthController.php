@@ -59,7 +59,7 @@ class AuthController extends AbstractController
             return new JsonResponse('Too many registration attempts. Please try again later.', Response::HTTP_TOO_MANY_REQUESTS);
         }
 
-        $availableChallenges = json_decode($this->challengeService->listChallenges()->getContent(), true);
+        $availableChallenges = $this->challengeService->listChallenges();
         if (!in_array($challengeName, $availableChallenges, true)) {
             return new JsonResponse('invalid challenge', Response::HTTP_UNAUTHORIZED);
         }

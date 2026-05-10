@@ -65,8 +65,8 @@ class DoctrineChallengeRepository implements ChallengeRepositoryInterface
         $carIds   = array_map(fn($c) => $c->getId(), $dbChallenge->getCars()->toArray());
         $voterIds = array_map(fn($u) => (string)$u->getId(), $dbChallenge->getVoters()->toArray());
 
-        return Challenge::fromCouchDocument([
-            '_id'                  => $dbChallenge->getName(),
+        return Challenge::fromArray([
+            'id'                   => $dbChallenge->getName(),
             'name'                 => $dbChallenge->getName(),
             'cars'                 => $carIds,
             'voters'               => $voterIds,
@@ -88,14 +88,14 @@ class DoctrineChallengeRepository implements ChallengeRepositoryInterface
         if ($toAdd) {
             $newUsers = $this->em->getRepository(User::class)->findBy(['id' => $toAdd]);
             foreach ($newUsers as $user) {
-                $user->addChallenge($dbChallenge);
+                $dbChallenge->addVoter($user);
             }
         }
 
         if ($toRemove) {
             foreach ($dbChallenge->getVoters() as $user) {
                 if (in_array($user->getId(), $toRemove)) {
-                    $user->getChallenges()->removeElement($dbChallenge);
+                    $dbChallenge->removeVoter($user);
                 }
             }
         }

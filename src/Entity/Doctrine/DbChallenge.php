@@ -32,7 +32,10 @@ class DbChallenge
     #[ORM\Column(type: 'string', nullable: true)]
     private ?string $selfRegistrationCode = null;
 
-    #[ORM\ManyToMany(targetEntity: User::class, mappedBy: 'challenges')]
+    #[ORM\ManyToMany(targetEntity: User::class)]
+    #[ORM\JoinTable(name: 'challenge_user')]
+    #[ORM\JoinColumn(name: 'challenge_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
+    #[ORM\InverseJoinColumn(name: 'user_id', referencedColumnName: 'id', onDelete: 'CASCADE')]
     private Collection $voters;
 
     #[ORM\OneToMany(targetEntity: DbCar::class, mappedBy: 'challenge', cascade: ['persist', 'remove'])]
@@ -99,6 +102,18 @@ class DbChallenge
     public function getVoters(): Collection
     {
         return $this->voters;
+    }
+
+    public function addVoter(User $user): void
+    {
+        if (!$this->voters->contains($user)) {
+            $this->voters->add($user);
+        }
+    }
+
+    public function removeVoter(User $user): void
+    {
+        $this->voters->removeElement($user);
     }
 
     public function getCars(): Collection

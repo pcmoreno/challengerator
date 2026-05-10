@@ -61,3 +61,12 @@ services:
 
     App\Repository\InviteCodeRepositoryInterface:
         class: App\Repository\Doctrine\DoctrineInviteCodeRepository
+
+    App\Services\ChallengeService:
+        arguments:
+            $votesLogger: '@monolog.logger.votes'
+            $loginsLogger: '@monolog.logger.logins'
+
+    App\Services\GoogleDriveService:
+        arguments:
+            $logger: '@monolog.logger.general_app'
