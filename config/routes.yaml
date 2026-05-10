@@ -53,6 +53,11 @@ addCarToChallengeFormPage:
     path: /challenge/addCarForm/{challengeName}
     controller: App\Controller\ChallengeController::carsDashboardPage
 
+deleteCar:
+    path: /challenge/{challengeName}/car/{carId}/delete
+    controller: App\Controller\ChallengeController::deleteCar
+    methods: [POST]
+
 addVoterToChallengeFormPage:
     path: /challenge/addVoterForm/{challengeName}
     controller: App\Controller\ChallengeController::votersDashboardPage

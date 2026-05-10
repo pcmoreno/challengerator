@@ -8,7 +8,6 @@ use App\Entity\Doctrine\DbChallenge;
 use App\Entity\StorageType;
 use App\Repository\StorageResourceRepositoryInterface;
 use App\Service\InviteService;
-use App\Form\AdminDeleteCarType;
 use App\Form\AdminDeleteVoterType;
 use App\Form\CarType;
 use App\Form\CreateChallengeType;
@@ -122,26 +121,27 @@ class ChallengeController extends AbstractController
             }
         }
 
-        $adminDeleteCar             = new \stdClass();
-        $adminDeleteCar->carToDelete = '';
-        $adminDeleteCar->adminPass   = '';
-        $adminDeleteCarForm = $this->createForm(AdminDeleteCarType::class, $adminDeleteCar);
-        $adminDeleteCarForm->handleRequest($request);
-        if ($adminDeleteCarForm->isSubmitted() && $adminDeleteCarForm->isValid()) {
-            if ($this->challengeService->verifyAdmin($challengeName, $adminDeleteCar->adminPass)) {
-                $this->challengeService->deleteCarFromChallenge($challengeName, $adminDeleteCar->carToDelete);
-            }
-            return $this->redirectToRoute('addCarToChallengeFormPage', ['challengeName' => $challengeName]);
-        }
-
         return $this->render('car/carDashboard.html.twig', [
             'form'               => $form->createView(),
-            'adminDeleteCarForm' => $adminDeleteCarForm->createView(),
             'allCarsInChallenge' => $this->challengeService->getCarsForChallenge($challengeName),
             'challengeName'      => $challengeName,
             'driveConnected'     => $driveConnected,
             'driveEmail'         => $driveEmail,
         ]);
+    }
+
+    public function deleteCar(Request $request, string $challengeName, string $carId): Response
+    {
+        if (!$this->isAdminForChallenge($request, $challengeName)) {
+            return new JsonResponse('Unauthorized', Response::HTTP_FORBIDDEN);
+        }
+
+        try {
+            $this->challengeService->deleteCarFromChallenge($challengeName, $carId);
+        } catch (\Exception $e) {
+            $this->addFlash('error', 'Could not delete car: ' . $e->getMessage());
+        }
+        return $this->redirectToRoute('addCarToChallengeFormPage', ['challengeName' => $challengeName]);
     }
 
     public function votersDashboardPage(Request $request, string $challengeName, InviteService $inviteService): Response
