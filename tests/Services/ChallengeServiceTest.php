@@ -36,7 +36,6 @@ class ChallengeServiceTest extends TestCase
             $this->codes,
             new NullLogger(),
             new NullLogger(),
-            new NullLogger(),
         );
     }
 
