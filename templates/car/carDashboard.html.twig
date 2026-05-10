@@ -8,18 +8,34 @@
         <div class="flex gap-4 text-sm">
             <a href="{{ path('addVoterToChallengeFormPage', {'challengeName': challengeName}) }}"
                class="text-link hover:underline font-semibold">→ Voters</a>
-            <a href="{{ path('uploadFile') }}" target="_blank"
-               class="text-link hover:underline font-semibold">→ Upload Images</a>
         </div>
     </div>
 
-    <p class="text-sm text-muted mb-4">
-        Only Google Drive images are supported. Right-click image → Get Link → copy the ID between
-        <code class="bg-gray-100 px-1 rounded">d/</code> and <code class="bg-gray-100 px-1 rounded">/view</code>.
-    </p>
+    <div class="mb-4 p-4 rounded-lg border {{ driveConnected ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200' }}">
+        {% if driveConnected %}
+            <span class="font-semibold text-green-800">Google Drive connected</span>
+            {% if driveEmail %} — <span class="text-gray-600 text-sm">{{ driveEmail }}</span>{% endif %}
+            <form method="post"
+                  action="{{ path('drive_oauth_disconnect', {'challengeName': challengeName}) }}"
+                  class="inline ml-4">
+                <input type="hidden" name="_token" value="{{ csrf_token('drive_disconnect_' ~ challengeName) }}">
+                <button type="submit" class="text-red-600 hover:underline text-xs">Disconnect</button>
+            </form>
+        {% else %}
+            <span class="font-semibold text-yellow-800">Google Drive not connected.</span>
+            <a href="{{ path('drive_oauth_connect', {'challengeName': challengeName}) }}"
+               class="ml-2 text-blue-700 hover:underline font-semibold">Connect Google Drive →</a>
+        {% endif %}
+    </div>
 
     <div class="bg-panel rounded-lg shadow p-6 mb-6">
-        {{ form(form) }}
+        {% if driveConnected %}
+            {{ form(form) }}
+        {% else %}
+            <div class="opacity-50 p-6 text-center text-gray-400 border rounded-lg">
+                Connect Google Drive to add cars.
+            </div>
+        {% endif %}
     </div>
 
     <div class="bg-surface rounded-lg shadow overflow-hidden mb-6">
