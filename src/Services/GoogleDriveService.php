@@ -76,7 +76,7 @@ class GoogleDriveService
         return $created->getId();
     }
 
-    private function buildClientFromCredentials(array $credentials, callable $onCredentialsRefreshed): Google_Client
+    protected function buildClientFromCredentials(array $credentials, callable $onCredentialsRefreshed): Google_Client
     {
         $client = $this->buildBaseClient();
         $client->setAccessToken($credentials);
@@ -90,7 +90,7 @@ class GoogleDriveService
         return $client;
     }
 
-    private function buildBaseClient(): Google_Client
+    protected function buildBaseClient(): Google_Client
     {
         $client = new Google_Client();
         $client->setClientId($this->clientId);

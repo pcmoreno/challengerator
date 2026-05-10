@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\Request;
  */
 trait AdminGuardTrait
 {
-    private function isAdminForChallenge(Request $request, string $challengeName): bool
+    protected function isAdminForChallenge(Request $request, string $challengeName): bool
     {
         if ($this->isGranted('ROLE_SUPER_ADMIN')) {
             return true;
