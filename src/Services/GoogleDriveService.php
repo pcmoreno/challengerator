@@ -6,6 +6,7 @@ namespace App\Services;
 use Google_Client;
 use Google_Service_Drive;
 use Google_Service_Drive_DriveFile;
+use Google_Service_Drive_Permission;
 
 class GoogleDriveService
 {
@@ -73,7 +74,14 @@ class GoogleDriveService
             'mimeType' => $mimeType,
             'fields'   => 'id',
         ]);
-        return $created->getId();
+        $fileId = $created->getId();
+
+        $drive->permissions->create($fileId, new Google_Service_Drive_Permission([
+            'type' => 'anyone',
+            'role' => 'reader',
+        ]));
+
+        return $fileId;
     }
 
     protected function buildClientFromCredentials(array $credentials, callable $onCredentialsRefreshed): Google_Client
