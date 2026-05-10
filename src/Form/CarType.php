@@ -5,10 +5,12 @@ namespace App\Form;
 
 use App\Entity\Challenge\Car;
 use Symfony\Component\Form\AbstractType;
+use Symfony\Component\Form\Extension\Core\Type\FileType;
 use Symfony\Component\Form\Extension\Core\Type\SubmitType;
 use Symfony\Component\Form\Extension\Core\Type\TextType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Validator\Constraints\File;
 
 class CarType extends AbstractType
 {
@@ -21,17 +23,17 @@ class CarType extends AbstractType
                     'placeholder' => 'fill name of car here'
                 ]
             ])
-            ->add('imageUrlA', TextType::class, [
+            ->add('imageA', FileType::class, [
+                'label'    => 'Image A',
+                'mapped'   => false,
                 'required' => true,
-                'attr' => [
-                    'placeholder' => 'imageA from google drive (e.g: 1uHXf1OkiQQWoCILAfAv7Rv5Yp6-uWL3i)'
-                ]
+                'constraints' => [new File(['mimeTypes' => ['image/jpeg', 'image/png', 'image/webp']])],
             ])
-            ->add('imageUrlB', TextType::class, [
+            ->add('imageB', FileType::class, [
+                'label'    => 'Image B',
+                'mapped'   => false,
                 'required' => true,
-                'attr' => [
-                    'placeholder' => 'imageB from google drive (e.g: 3uHXf1OkiwwWoCILAfAv7Rv5Yp6-uWL69)'
-                ]
+                'constraints' => [new File(['mimeTypes' => ['image/jpeg', 'image/png', 'image/webp']])],
             ])
             ->add('add_car', SubmitType::class);
     }
