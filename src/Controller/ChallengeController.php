@@ -141,7 +141,11 @@ class ChallengeController extends AbstractController
             return $this->redirectToRoute('loginMenu', ['challengeName' => $challengeName]);
         }
 
-        $this->challengeService->initializeChallenge($challengeName);
+        try {
+            $this->challengeService->initializeChallenge($challengeName);
+        } catch (\Exception $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
         return $this->redirectToRoute('addVoterToChallengeFormPage', ['challengeName' => $challengeName]);
     }
 
@@ -166,10 +170,14 @@ class ChallengeController extends AbstractController
             return new JsonResponse('unauthorized', Response::HTTP_FORBIDDEN);
         }
 
-        $this->challengeService->resetRoundOfVoteForUserOfChallenge(
-            $challengeName,
-            $request->get('voterId')
-        );
+        try {
+            $this->challengeService->resetRoundOfVoteForUserOfChallenge(
+                $challengeName,
+                $request->get('voterId')
+            );
+        } catch (\DomainException $e) {
+            $this->addFlash('error', $e->getMessage());
+        }
         return $this->redirectToRoute('addVoterToChallengeFormPage', ['challengeName' => $challengeName]);
     }
 

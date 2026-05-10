@@ -55,8 +55,8 @@ class DoctrineVoterRepository implements VoterRepositoryInterface
     {
         $count = $this->em->createQueryBuilder()
             ->select('COUNT(u.id)')
-            ->from(User::class, 'u')
-            ->join('u.challenges', 'c')
+            ->from(DbChallenge::class, 'c')
+            ->join('c.voters', 'u')
             ->where('u.ipAddress = :ip')
             ->andWhere('c.name = :challengeName')
             ->setParameter('ip', $ip)

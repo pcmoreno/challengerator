@@ -66,4 +66,7 @@ services:
         arguments:
             $votesLogger: '@monolog.logger.votes'
             $loginsLogger: '@monolog.logger.logins'
-            $generalAppLogger: '@monolog.logger.general_app'
+
+    App\Services\GoogleDriveService:
+        arguments:
+            $logger: '@monolog.logger.general_app'
