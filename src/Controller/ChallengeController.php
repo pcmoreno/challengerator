@@ -175,7 +175,7 @@ class ChallengeController extends AbstractController
                 $challengeName,
                 $request->get('voterId')
             );
-        } catch (\DomainException $e) {
+        } catch (\Exception $e) {
             $this->addFlash('error', $e->getMessage());
         }
         return $this->redirectToRoute('addVoterToChallengeFormPage', ['challengeName' => $challengeName]);

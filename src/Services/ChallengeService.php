@@ -57,7 +57,8 @@ class ChallengeService
         }
         $voter = Voter::createForChallenge($voterName, $password, $challengeName, $ip);
         $this->addVoterToChallenge($challengeName, $voter);
-        $saved = $this->voterRepository->findByName($voterName);
+        $saved = $this->voterRepository->findByName($voterName)
+            ?? throw new \RuntimeException('Voter not found after save: ' . $voterName);
         $this->resetRoundOfVoteForUserOfChallenge($challengeName, $saved->getId());
         return true;
     }
