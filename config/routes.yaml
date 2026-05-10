@@ -67,10 +67,6 @@ resetVotesForVoterOnChallenge:
     controller: App\Controller\ChallengeController::resetVotesForVoterOnChallenge
     methods: [POST]
 
-deleteVoterFromChallenge:
-    path: /challenge/deleteVoter/{challengeName}/{voterId}
-    controller: App\Controller\ChallengeController::deleteVoterFromChallenge
-
 # -----------------------------------------------
 # Voting routes:
 voteDashboardForUser:

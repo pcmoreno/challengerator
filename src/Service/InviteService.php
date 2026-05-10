@@ -26,9 +26,8 @@ class InviteService
     {
         $user = $this->em->getRepository(User::class)->findOneBy(['email' => $inviteEmail]);
         if ($user !== null) {
-            $alreadyInChallenge = $user->getChallenges()->exists(
-                fn($_, $c) => $c->getName() === $challengeName
-            );
+            $dbChallenge = $this->em->getRepository(DbChallenge::class)->findOneBy(['name' => $challengeName]);
+            $alreadyInChallenge = $dbChallenge !== null && $dbChallenge->getVoters()->contains($user);
             if ($alreadyInChallenge) {
                 throw new \DomainException("$inviteEmail is already a member of $challengeName.");
             }
@@ -95,7 +94,7 @@ class InviteService
         $challengeName = $verification->getChallengeId();
         $dbChallenge = $this->em->getRepository(DbChallenge::class)->findOneBy(['name' => $challengeName]);
         if ($dbChallenge !== null) {
-            $user->addChallenge($dbChallenge);
+            $dbChallenge->addVoter($user);
         }
 
         $this->em->remove($verification);

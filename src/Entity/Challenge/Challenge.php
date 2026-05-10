@@ -107,10 +107,10 @@ class Challenge
         return $stdclass;
     }
 
-    public static function fromCouchDocument(array $doc): Challenge
+    public static function fromArray(array $doc): Challenge
     {
         $challenge = new Challenge(
-            $doc['_id'],
+            $doc['id'],
             $doc['name'],
             $doc['cars'],
             $doc['voters'],
@@ -119,9 +119,27 @@ class Challenge
         );
         $challenge->adminToken = $doc['adminToken'] ?? null;
         $challenge->adminTokenExpirationDate = $doc['adminTokenExpirationDate'] ?? null;
-        $challenge->revision = $doc['_rev'] ?? null;
         $challenge->allowSelfRegistration = $doc['allowSelfRegistration'] ?? false;
         $challenge->selfRegistrationCode = $doc['selfRegistrationCode'] ?? null;
+
+        return $challenge;
+    }
+
+    public static function fromCouchDocument(array $doc): Challenge
+    {
+        $challenge = self::fromArray([
+            'id'                   => $doc['_id'],
+            'name'                 => $doc['name'],
+            'cars'                 => $doc['cars'],
+            'voters'               => $doc['voters'],
+            'isActive'             => $doc['isActive'],
+            'owner'                => $doc['owner'],
+            'adminToken'           => $doc['adminToken'] ?? null,
+            'adminTokenExpirationDate' => $doc['adminTokenExpirationDate'] ?? null,
+            'allowSelfRegistration' => $doc['allowSelfRegistration'] ?? false,
+            'selfRegistrationCode' => $doc['selfRegistrationCode'] ?? null,
+        ]);
+        $challenge->revision = $doc['_rev'] ?? null;
 
         return $challenge;
     }

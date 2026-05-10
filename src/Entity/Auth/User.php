@@ -3,9 +3,6 @@ declare(strict_types=1);
 
 namespace App\Entity\Auth;
 
-use App\Entity\Doctrine\DbChallenge;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -40,16 +37,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToOne(targetEntity: DiscordProfile::class, mappedBy: 'user', cascade: ['persist', 'remove'])]
     private ?DiscordProfile $discordProfile = null;
 
-    #[ORM\ManyToMany(targetEntity: DbChallenge::class, inversedBy: 'voters')]
-    #[ORM\JoinTable(name: 'challenge_user')]
-    #[ORM\JoinColumn(name: 'user_id', referencedColumnName: 'id')]
-    #[ORM\InverseJoinColumn(name: 'challenge_id', referencedColumnName: 'id')]
-    private Collection $challenges;
-
     public function __construct(string $username)
     {
         $this->username = $username;
-        $this->challenges = new ArrayCollection();
     }
 
     public function getId(): int
@@ -137,18 +127,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setDiscordProfile(?DiscordProfile $discordProfile): void
     {
         $this->discordProfile = $discordProfile;
-    }
-
-    public function getChallenges(): Collection
-    {
-        return $this->challenges;
-    }
-
-    public function addChallenge(DbChallenge $challenge): void
-    {
-        if (!$this->challenges->contains($challenge)) {
-            $this->challenges->add($challenge);
-        }
     }
 
     public function eraseCredentials(): void

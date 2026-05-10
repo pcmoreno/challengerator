@@ -1,0 +1,30 @@
+monolog:
+    channels:
+        - votes
+        - logins
+        - general_app
+
+    handlers:
+        votes_handler:
+            type: stream
+            path: '%kernel.logs_dir%/votes.log'
+            level: notice
+            channels: [votes]
+
+        logins_handler:
+            type: stream
+            path: '%kernel.logs_dir%/logins.log'
+            level: notice
+            channels: [logins]
+
+        general_handler:
+            type: stream
+            path: '%kernel.logs_dir%/general.log'
+            level: notice
+            channels: [general_app]
+
+        main:
+            type: stream
+            path: '%kernel.logs_dir%/app.log'
+            level: debug
+            channels: ['!votes', '!logins', '!general_app']
