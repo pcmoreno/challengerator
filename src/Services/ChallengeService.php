@@ -13,6 +13,7 @@ use App\Repository\ChallengeRepositoryInterface;
 use App\Repository\InviteCodeRepositoryInterface;
 use App\Repository\VoterRepositoryInterface;
 use Psr\Log\LoggerInterface;
+
 class ChallengeService
 {
     public function __construct(
