@@ -93,29 +93,33 @@ class ChallengeController extends AbstractController
                 return $this->redirectToRoute('drive_oauth_connect', ['challengeName' => $challengeName]);
             }
 
-            $credentials = $driveResource->getCredentials();
-            $folderId    = $credentials['drive_folder_id'];
-            $onRefresh   = function (array $newCredentials) use ($driveResource): void {
-                $driveResource->setCredentials($newCredentials);
-                $this->storageRepository->save($driveResource);
-            };
+            try {
+                $credentials = $driveResource->getCredentials();
+                $folderId    = $credentials['drive_folder_id'];
+                $onRefresh   = function (array $newCredentials) use ($driveResource): void {
+                    $driveResource->setCredentials($newCredentials);
+                    $this->storageRepository->save($driveResource);
+                };
 
-            /** @var \Symfony\Component\HttpFoundation\File\UploadedFile $imageA */
-            $imageA = $form->get('imageA')->getData();
-            /** @var \Symfony\Component\HttpFoundation\File\UploadedFile $imageB */
-            $imageB = $form->get('imageB')->getData();
+                /** @var \Symfony\Component\HttpFoundation\File\UploadedFile $imageA */
+                $imageA = $form->get('imageA')->getData();
+                /** @var \Symfony\Component\HttpFoundation\File\UploadedFile $imageB */
+                $imageB = $form->get('imageB')->getData();
 
-            $car->setImageUrlA($driveService->uploadFile(
-                ['name' => $imageA->getClientOriginalName(), 'tmp_name' => $imageA->getPathname()],
-                $folderId, $credentials, $onRefresh
-            ));
-            $car->setImageUrlB($driveService->uploadFile(
-                ['name' => $imageB->getClientOriginalName(), 'tmp_name' => $imageB->getPathname()],
-                $folderId, $credentials, $onRefresh
-            ));
+                $car->setImageUrlA($driveService->uploadFile(
+                    ['name' => $imageA->getClientOriginalName(), 'tmp_name' => $imageA->getPathname()],
+                    $folderId, $credentials, $onRefresh
+                ));
+                $car->setImageUrlB($driveService->uploadFile(
+                    ['name' => $imageB->getClientOriginalName(), 'tmp_name' => $imageB->getPathname()],
+                    $folderId, $credentials, $onRefresh
+                ));
 
-            $this->challengeService->addCar($challengeName, $car);
-            return $this->redirectToRoute('addCarToChallengeFormPage', ['challengeName' => $challengeName]);
+                $this->challengeService->addCar($challengeName, $car);
+                return $this->redirectToRoute('addCarToChallengeFormPage', ['challengeName' => $challengeName]);
+            } catch (\Exception $e) {
+                $this->addFlash('error', 'Could not add car: ' . $e->getMessage());
+            }
         }
 
         $adminDeleteCar             = new \stdClass();

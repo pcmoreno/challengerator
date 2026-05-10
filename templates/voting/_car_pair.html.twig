@@ -8,9 +8,9 @@
                     <span class="text-xs text-muted">Rating: {{ item.rating.rating() }}</span>
                 {% endif %}
                 <div class="space-y-2 w-full">
-                    <img src="https://drive.google.com/uc?id={{ item.imageUrlA }}" alt="{{ item.name }}"
+                    <img src="https://drive.google.com/thumbnail?sz=w600&id={{ item.imageUrlA }}" alt="{{ item.name }}"
                          class="rounded w-full object-cover" style="height:300px">
-                    <img src="https://drive.google.com/uc?id={{ item.imageUrlB }}" alt="{{ item.name }}"
+                    <img src="https://drive.google.com/thumbnail?sz=w600&id={{ item.imageUrlB }}" alt="{{ item.name }}"
                          class="rounded w-full object-cover" style="height:300px">
                 </div>
                 <form method="post"

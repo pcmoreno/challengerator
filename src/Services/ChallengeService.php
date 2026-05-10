@@ -41,8 +41,9 @@ class ChallengeService
 
     public function addCar(string $challengeName, Car $car): void
     {
-        $this->carRepository->save($car);
+        $car->setChallengeId($challengeName);
         $challenge = $this->challengeRepository->find($challengeName);
+        $this->carRepository->save($car);
         $challenge->addCarToChallenge($car);
         $this->challengeRepository->save($challenge);
     }
