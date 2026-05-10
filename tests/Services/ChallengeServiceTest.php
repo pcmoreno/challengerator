@@ -302,6 +302,22 @@ class ChallengeServiceTest extends TestCase
         $this->service->voteOnCars($carParam, 'banana', 'rally', $voter->getId());
     }
 
+    public function test_voteOnCars_throws_when_car_belongs_to_different_challenge(): void
+    {
+        $this->makeChallenge('rally');
+        $this->makeChallenge('sprint');
+        $voter = $this->makeVoter('rally');
+        $carRally  = $this->makeCar('rally');
+        $carSprint = $this->makeCar('sprint');
+
+        $voter->addCarsToSelf([$carRally->getId(), $carSprint->getId()], 'rally');
+        $this->voters->save($voter);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $carParam = $carRally->getId() . 'XXX' . $carSprint->getId();
+        $this->service->voteOnCars($carParam, 'left', 'rally', $voter->getId());
+    }
+
     // --- AddVoterToChallengeFromIp ---
 
     public function test_addVoterFromIp_succeeds_for_new_ip(): void
@@ -332,6 +348,25 @@ class ChallengeServiceTest extends TestCase
         $this->makeChallenge();
         $result = $this->service->AddVoterToChallengeFromIp('rally', 'voter', 'pass', '1.2.3.4');
         $this->assertFalse($result);
+    }
+
+    public function test_addVoterFromIp_into_active_challenge_seeds_voter_queue(): void
+    {
+        $challenge = $this->makeChallenge();
+        $car1 = $this->makeCar();
+        $car2 = $this->makeCar();
+        $challenge->addCarToChallenge($car1);
+        $challenge->addCarToChallenge($car2);
+        $challenge->toggleSelfRegistration();
+        $this->challenges->save($challenge);
+
+        $this->service->initializeChallenge('rally');
+
+        $result = $this->service->AddVoterToChallengeFromIp('rally', 'newvoter', 'pass', '1.2.3.4');
+
+        $this->assertTrue($result);
+        $voter = $this->voters->findByName('newvoter');
+        $this->assertCount(2, $voter->getUnvotedCarsForChallenge('rally'));
     }
 
     public function test_addVoterFromIp_same_ip_different_challenge_is_allowed(): void
@@ -404,6 +439,17 @@ class ChallengeServiceTest extends TestCase
         $this->assertTrue($this->challenges->find('rally')->isActive());
         $updatedVoter = $this->voters->find($voter->getId());
         $this->assertCount(0, $updatedVoter->getUnvotedCarsForChallenge('rally'));
+    }
+
+    // --- resetRoundOfVoteForUserOfChallenge ---
+
+    public function test_resetRoundOfVote_throws_when_voter_not_in_challenge(): void
+    {
+        $this->makeChallenge('rally');
+        $voter = $this->makeVoter('sprint');
+
+        $this->expectException(\DomainException::class);
+        $this->service->resetRoundOfVoteForUserOfChallenge('rally', $voter->getId());
     }
 
     // --- toggleSelfRegistration ---

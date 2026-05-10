@@ -7,22 +7,18 @@ use Exception;
 use Google_Client;
 use Google_Service_Drive;
 use Google_Service_Drive_DriveFile;
-use Monolog\Handler\StreamHandler;
-use Monolog\Logger;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class GoogleDriveService
 {
     private Google_Client $googleClient;
     private Google_Service_Drive $googleServiceDrive;
-    private Logger $googleDriveLogger;
 
-    public function __construct()
+    public function __construct(private readonly LoggerInterface $logger)
     {
         $this->googleClient = $this->getClient();
         $this->googleServiceDrive = new Google_Service_Drive($this->googleClient);
-        $this->googleDriveLogger = new Logger('general');
-        $this->googleDriveLogger->pushHandler(new StreamHandler('logs/general.log', Logger::NOTICE));
     }
 
     public function listFilesInFolder(string $folderId)
@@ -53,7 +49,7 @@ class GoogleDriveService
                 ]
             );
         } catch (Exception $exception) {
-            $this->googleDriveLogger->error("Error from google drive: " . $exception->getMessage());
+            $this->logger->error("Error from google drive: " . $exception->getMessage());
             return 'failed';
         }
         return $file->id;

@@ -22,7 +22,6 @@ class ChallengeService
         private readonly InviteCodeRepositoryInterface $inviteCodeRepository,
         private readonly LoggerInterface $votesLogger,
         private readonly LoggerInterface $loginsLogger,
-        private readonly LoggerInterface $generalAppLogger,
     ) {}
 
     public function createNewChallenge(string $name, string $owner, string $code): void
@@ -161,13 +160,13 @@ class ChallengeService
             }
         }
 
-        $voter->setCarsToVotedForChallenge($carIds, $challengeId);
-
         [$carA, $carB] = $this->carRepository->findMany($carIds);
 
         if ($carA->getChallengeId() !== $challengeId || $carB->getChallengeId() !== $challengeId) {
             throw new \InvalidArgumentException('Car does not belong to this challenge');
         }
+
+        $voter->setCarsToVotedForChallenge($carIds, $challengeId);
 
         $ratingA = $carA->getRating();
         $ratingB = $carB->getRating();
@@ -291,8 +290,9 @@ class ChallengeService
     private function addVoterToChallenge(string $challengeName, Voter $voter): void
     {
         $this->voterRepository->save($voter);
+        $persisted = $this->voterRepository->findByName($voter->getName()) ?? $voter;
         $challenge = $this->challengeRepository->find($challengeName);
-        $challenge->addVoterToChallenge($voter);
+        $challenge->addVoterToChallenge($persisted);
         $this->challengeRepository->save($challenge);
     }
 
