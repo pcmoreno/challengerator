@@ -99,6 +99,21 @@ class ChallengeTest extends TestCase
         $this->assertNotNull($challenge->getAdminToken());
     }
 
+    public function test_getAdminToken_returns_null_for_expired_token(): void
+    {
+        $challenge = Challenge::fromArray([
+            'id'                       => 'info',
+            'name'                     => 'rally',
+            'cars'                     => [],
+            'voters'                   => [],
+            'isActive'                 => false,
+            'owner'                    => 'secret',
+            'adminToken'               => 'expired-token',
+            'adminTokenExpirationDate' => time() - 1,
+        ]);
+        $this->assertNull($challenge->getAdminToken());
+    }
+
     public function test_allowsSelfRegistration_defaults_to_false(): void
     {
         $challenge = Challenge::create('rally', 'secret');

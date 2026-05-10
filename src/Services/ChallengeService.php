@@ -177,9 +177,8 @@ class ChallengeService
         $this->carRepository->save($carB);
         $this->voterRepository->save($voter);
 
-        $logger->notice("Voting received on Challenge: " . $challengeId);
-        $logger->notice($voter->getName() . " voted -- " . $result . " -- between " . $carA->getName() . " and " . $carB->getName());
-        $logger->close();
+        $this->votesLogger->notice("Voting received on Challenge: " . $challengeId);
+        $this->votesLogger->notice($voter->getName() . " voted -- " . $result . " -- between " . $carA->getName() . " and " . $carB->getName());
 
         return $this->getTwoCarsToBeVotedByUser($challengeId, $userId);
     }
@@ -195,7 +194,7 @@ class ChallengeService
             $challenge = $this->challengeRepository->find($challengeName);
             if ($login->user === Role::ADMIN && $login->pass === $challenge->getOwner()) {
                 $token = $this->doLoginForAdmin($challenge);
-                $logger->notice(Role::ADMIN);
+                $this->loginsLogger->notice(Role::ADMIN);
                 return [Role::ADMIN, null, $token];
             }
         }
@@ -204,14 +203,14 @@ class ChallengeService
         if ($voter !== null && password_verify($login->pass, $voter->getAuthKey())) {
             $token = $this->doLoginForUser($voter);
             if ($challenge !== null && $challenge->hasVoter($voter->getId())) {
-                $logger->notice(Role::VOTER);
+                $this->loginsLogger->notice(Role::VOTER);
                 return [Role::VOTER, $voter->getId(), $token];
             }
-            $logger->notice(Role::VOTER_OF_A_DIFFERENT_CHALLENGE);
+            $this->loginsLogger->notice(Role::VOTER_OF_A_DIFFERENT_CHALLENGE);
             return [Role::VOTER_OF_A_DIFFERENT_CHALLENGE, $voter->getId(), $token];
         }
 
-        $logger->notice('failed');
+        $this->loginsLogger->notice('failed');
         return [Role::NONE, null, $token];
     }
 
@@ -253,10 +252,10 @@ class ChallengeService
             }
             $voter->setAuthKey($hashed);
             $this->voterRepository->save($voter);
-            $logger->notice("success");
+            $this->loginsLogger->notice("success");
             return true;
         } catch (\Exception $exception) {
-            $logger->alert($exception->getMessage());
+            $this->loginsLogger->alert($exception->getMessage());
             return false;
         }
     }

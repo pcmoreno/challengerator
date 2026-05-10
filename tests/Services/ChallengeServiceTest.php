@@ -7,12 +7,13 @@ use App\Entity\Auth\Role;
 use App\Entity\Challenge\Car;
 use App\Entity\Challenge\Challenge;
 use App\Entity\Challenge\Voter;
-use App\Repository\InMemory\InMemoryCarRepository;
-use App\Repository\InMemory\InMemoryChallengeRepository;
-use App\Repository\InMemory\InMemoryInviteCodeRepository;
-use App\Repository\InMemory\InMemoryVoterRepository;
+use App\Tests\Repository\InMemory\InMemoryCarRepository;
+use App\Tests\Repository\InMemory\InMemoryChallengeRepository;
+use App\Tests\Repository\InMemory\InMemoryInviteCodeRepository;
+use App\Tests\Repository\InMemory\InMemoryVoterRepository;
 use App\Services\ChallengeService;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\NullLogger;
 
 class ChallengeServiceTest extends TestCase
 {
@@ -28,7 +29,15 @@ class ChallengeServiceTest extends TestCase
         $this->cars = new InMemoryCarRepository();
         $this->voters = new InMemoryVoterRepository();
         $this->codes = new InMemoryInviteCodeRepository(['VALID-CODE']);
-        $this->service = new ChallengeService($this->challenges, $this->cars, $this->voters, $this->codes);
+        $this->service = new ChallengeService(
+            $this->challenges,
+            $this->cars,
+            $this->voters,
+            $this->codes,
+            new NullLogger(),
+            new NullLogger(),
+            new NullLogger(),
+        );
     }
 
     // --- helpers ---
@@ -66,22 +75,21 @@ class ChallengeServiceTest extends TestCase
 
     public function test_createNewChallenge_with_valid_code_creates_challenge(): void
     {
-        $response = $this->service->createNewChallenge('rally', 'secret', 'VALID-CODE');
-        $this->assertSame(200, $response->getStatusCode());
+        $this->service->createNewChallenge('rally', 'secret', 'VALID-CODE');
         $this->assertContains('rally', $this->challenges->listNames());
     }
 
-    public function test_createNewChallenge_with_invalid_code_returns_403(): void
+    public function test_createNewChallenge_with_invalid_code_throws(): void
     {
-        $response = $this->service->createNewChallenge('rally', 'secret', 'WRONG-CODE');
-        $this->assertSame(403, $response->getStatusCode());
+        $this->expectException(\DomainException::class);
+        $this->service->createNewChallenge('rally', 'secret', 'WRONG-CODE');
     }
 
     public function test_createNewChallenge_consumes_the_code(): void
     {
         $this->service->createNewChallenge('rally', 'secret', 'VALID-CODE');
-        $second = $this->service->createNewChallenge('rally2', 'secret', 'VALID-CODE');
-        $this->assertSame(403, $second->getStatusCode());
+        $this->expectException(\DomainException::class);
+        $this->service->createNewChallenge('rally2', 'secret', 'VALID-CODE');
     }
 
     // --- verifyLogin ---
@@ -146,6 +154,28 @@ class ChallengeServiceTest extends TestCase
         $this->assertSame(Role::NONE, $role);
     }
 
+    public function test_verifyLogin_with_reset_password_skips_challenge_lookup(): void
+    {
+        $voter = $this->makeVoter('rally', 'Paulo', 'mypass');
+
+        $login = (object)['user' => 'Paulo', 'pass' => 'mypass'];
+        [$role, $userId] = $this->service->verifyLogin($login, 'reset password');
+
+        $this->assertSame(Role::VOTER_OF_A_DIFFERENT_CHALLENGE, $role);
+        $this->assertSame($voter->getId(), $userId);
+    }
+
+    public function test_verifyLogin_voter_wrong_password_returns_none(): void
+    {
+        $this->makeChallenge();
+        $this->makeVoter('rally', 'Paulo', 'correctpass');
+
+        $login = (object)['user' => 'Paulo', 'pass' => 'wrongpass'];
+        [$role] = $this->service->verifyLogin($login, 'rally');
+
+        $this->assertSame(Role::NONE, $role);
+    }
+
     // --- addCar / getCarsForChallenge ---
 
     public function test_addCar_adds_car_to_challenge(): void
@@ -170,7 +200,7 @@ class ChallengeServiceTest extends TestCase
         $car2 = $this->makeCar();
         $car3 = $this->makeCar();
 
-        $voter->addCarsToSelf([$car1->getId(), $car2->getId(), $car3->getId()], 'rally', true);
+        $voter->addCarsToSelf([$car1->getId(), $car2->getId(), $car3->getId()], 'rally');
         $this->voters->save($voter);
 
         [$selectedCars, $remaining] = $this->service->getTwoCarsToBeVotedByUser('rally', $voter->getId());
@@ -184,7 +214,7 @@ class ChallengeServiceTest extends TestCase
         $this->makeChallenge();
         $voter = $this->makeVoter();
         $car = $this->makeCar();
-        $voter->addCarsToSelf([$car->getId()], 'rally', true);
+        $voter->addCarsToSelf([$car->getId()], 'rally');
         $this->voters->save($voter);
 
         [$selectedCars, $remaining] = $this->service->getTwoCarsToBeVotedByUser('rally', $voter->getId());
@@ -201,7 +231,7 @@ class ChallengeServiceTest extends TestCase
         $voter = $this->makeVoter();
         $car1 = $this->makeCar();
         $car2 = $this->makeCar();
-        $voter->addCarsToSelf([$car1->getId(), $car2->getId()], 'rally', true);
+        $voter->addCarsToSelf([$car1->getId(), $car2->getId()], 'rally');
         $this->voters->save($voter);
 
         $carParam = $car1->getId() . 'XXX' . $car2->getId();
@@ -217,7 +247,7 @@ class ChallengeServiceTest extends TestCase
         $voter = $this->makeVoter();
         $car1 = $this->makeCar();
         $car2 = $this->makeCar();
-        $voter->addCarsToSelf([$car1->getId(), $car2->getId()], 'rally', true);
+        $voter->addCarsToSelf([$car1->getId(), $car2->getId()], 'rally');
         $this->voters->save($voter);
 
         $carParam = $car1->getId() . 'XXX' . $car2->getId();
@@ -233,7 +263,7 @@ class ChallengeServiceTest extends TestCase
         $voter = $this->makeVoter();
         $car1 = $this->makeCar();
         $car2 = $this->makeCar();
-        $voter->addCarsToSelf([$car1->getId(), $car2->getId()], 'rally', true);
+        $voter->addCarsToSelf([$car1->getId(), $car2->getId()], 'rally');
         $this->voters->save($voter);
 
         $carParam = $car1->getId() . 'XXX' . $car2->getId();
@@ -249,13 +279,27 @@ class ChallengeServiceTest extends TestCase
         $voter = $this->makeVoter();
         $car1 = $this->makeCar();
         $car2 = $this->makeCar();
-        $voter->addCarsToSelf([$car1->getId(), $car2->getId()], 'rally', true);
+        $voter->addCarsToSelf([$car1->getId(), $car2->getId()], 'rally');
         $voter->setCarsToVotedForChallenge([$car1->getId()], 'rally');
         $this->voters->save($voter);
 
         $this->expectException(\Exception::class);
         $carParam = $car1->getId() . 'XXX' . $car2->getId();
         $this->service->voteOnCars($carParam, 'left', 'rally', $voter->getId());
+    }
+
+    public function test_voteOnCars_throws_on_invalid_result_string(): void
+    {
+        $this->makeChallenge();
+        $voter = $this->makeVoter();
+        $car1 = $this->makeCar();
+        $car2 = $this->makeCar();
+        $voter->addCarsToSelf([$car1->getId(), $car2->getId()], 'rally');
+        $this->voters->save($voter);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $carParam = $car1->getId() . 'XXX' . $car2->getId();
+        $this->service->voteOnCars($carParam, 'banana', 'rally', $voter->getId());
     }
 
     // --- AddVoterToChallengeFromIp ---
@@ -290,6 +334,22 @@ class ChallengeServiceTest extends TestCase
         $this->assertFalse($result);
     }
 
+    public function test_addVoterFromIp_same_ip_different_challenge_is_allowed(): void
+    {
+        $rally = $this->makeChallenge('rally');
+        $rally->toggleSelfRegistration();
+        $this->challenges->save($rally);
+
+        $sprint = $this->makeChallenge('sprint');
+        $sprint->toggleSelfRegistration();
+        $this->challenges->save($sprint);
+
+        $this->service->AddVoterToChallengeFromIp('rally', 'voter1', 'pass', '1.2.3.4');
+        $result = $this->service->AddVoterToChallengeFromIp('sprint', 'voter2', 'pass', '1.2.3.4');
+
+        $this->assertTrue($result);
+    }
+
     // --- initializeChallenge ---
 
     public function test_initializeChallenge_distributes_all_cars_to_voters_and_activates(): void
@@ -306,13 +366,44 @@ class ChallengeServiceTest extends TestCase
         $challenge->addVoterToChallenge($voter);
         $this->challenges->save($challenge);
 
-        $response = $this->service->initializeChallenge('rally');
+        $this->service->initializeChallenge('rally');
 
-        $this->assertSame(200, $response->getStatusCode());
         $this->assertTrue($this->challenges->find('rally')->isActive());
 
         $updatedVoter = $this->voters->find($voter->getId());
         $this->assertCount(2, $updatedVoter->getUnvotedCarsForChallenge('rally'));
+    }
+
+    public function test_initializeChallenge_with_zero_voters_still_activates(): void
+    {
+        $this->makeChallenge();
+
+        $car1 = $this->makeCar();
+        $car2 = $this->makeCar();
+        $challenge = $this->challenges->find('rally');
+        $challenge->addCarToChallenge($car1);
+        $challenge->addCarToChallenge($car2);
+        $this->challenges->save($challenge);
+
+        $this->service->initializeChallenge('rally');
+
+        $this->assertTrue($this->challenges->find('rally')->isActive());
+    }
+
+    public function test_initializeChallenge_with_zero_cars_still_activates(): void
+    {
+        $this->makeChallenge();
+        $voter = $this->makeVoter();
+
+        $challenge = $this->challenges->find('rally');
+        $challenge->addVoterToChallenge($voter);
+        $this->challenges->save($challenge);
+
+        $this->service->initializeChallenge('rally');
+
+        $this->assertTrue($this->challenges->find('rally')->isActive());
+        $updatedVoter = $this->voters->find($voter->getId());
+        $this->assertCount(0, $updatedVoter->getUnvotedCarsForChallenge('rally'));
     }
 
     // --- toggleSelfRegistration ---

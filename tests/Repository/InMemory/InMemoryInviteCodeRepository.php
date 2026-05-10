@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Repository\InMemory;
+namespace App\Tests\Repository\InMemory;
 
 use App\Repository\InviteCodeRepositoryInterface;
 
