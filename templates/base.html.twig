@@ -51,6 +51,25 @@
         &copy; pcmoreno — 2026
     </footer>
 
+    <div data-controller="delete-confirm"
+         class="hidden fixed inset-0 z-50 flex items-center justify-center" role="dialog" aria-modal="true">
+        <div class="absolute inset-0 bg-black/50"></div>
+        <div class="relative bg-surface rounded-xl shadow-xl p-8 w-full max-w-sm mx-4">
+            <h2 class="text-xl font-bold text-heading mb-2">Confirm Delete</h2>
+            <p data-delete-confirm-target="description" class="text-sm text-muted mb-6"></p>
+            <div class="flex gap-3">
+                <button type="button" data-action="delete-confirm#cancel"
+                        class="flex-1 rounded-md px-4 py-2 text-sm font-semibold shadow ring-1 ring-gray-300 hover:bg-gray-50 transition">
+                    Cancel
+                </button>
+                <button type="button" data-action="delete-confirm#confirm"
+                        class="flex-1 rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-red-500 transition">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
     {% block importmap %}{{ importmap('app') }}{% endblock %}
 </body>
 </html>

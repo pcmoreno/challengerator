@@ -46,7 +46,7 @@
                     <th class="px-3 py-2 text-left">Rating</th>
                     <th class="px-3 py-2 text-left">Image A</th>
                     <th class="px-3 py-2 text-left">Image B</th>
-                    <th class="px-3 py-2 text-left">ID</th>
+                    <th class="px-3 py-2"></th>
                 </tr>
             </thead>
             <tbody>
@@ -56,14 +56,18 @@
                         <td class="px-3 py-2">{{ item.rating.rating() }}</td>
                         <td class="px-3 py-2 font-mono text-xs truncate max-w-xs">{{ item.imageUrlA }}</td>
                         <td class="px-3 py-2 font-mono text-xs truncate max-w-xs">{{ item.imageUrlB }}</td>
-                        <td class="px-3 py-2 font-mono text-xs">{{ item.id }}</td>
+                        <td class="px-3 py-2 text-right">
+                            <form method="post"
+                                  action="{{ path('deleteCar', {challengeName: challengeName, carId: item.id}) }}"
+                                  data-turbo-confirm="Delete {{ item.name }}? This cannot be undone.">
+                                <button type="submit" class="text-gray-500 hover:text-red-500 transition cursor-pointer" aria-label="Delete car">
+                                    {% include 'icons/trash.html.twig' %}
+                                </button>
+                            </form>
+                        </td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
-    </div>
-
-    <div class="bg-panel rounded-lg shadow p-6">
-        {{ form(adminDeleteCarForm) }}
     </div>
 {% endblock %}
