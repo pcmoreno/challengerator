@@ -9,6 +9,7 @@ use App\Exception\BusinessLogicException;
 use App\Exception\ChallengeDoesNotExistException;
 use App\Services\InviteService;
 use App\Tests\Repository\InMemory\InMemoryEmailVerificationRepository;
+use App\Tests\Repository\InMemory\InMemoryTransaction;
 use App\Tests\Repository\InMemory\InMemoryUserRepository;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use PHPUnit\Framework\TestCase;
@@ -38,6 +39,7 @@ class InviteServiceTest extends TestCase
         $this->service = new InviteService(
             $this->users,
             $this->verifications,
+            new InMemoryTransaction(),
             $mailer,
             $urlGenerator,
             $hasher,
@@ -124,10 +126,11 @@ class InviteServiceTest extends TestCase
         $bob->setEmail('bob@example.com');
         $this->users->save($bob);
 
-        // alice is being invited; she tries to claim username 'bob' which belongs to bob
+        $this->users->seedChallenge('rally');
         $verification = $this->makeVerification('alice@example.com', 'rally');
 
         $this->expectException(BusinessLogicException::class);
+        $this->expectExceptionMessage('username is already taken');
         $this->service->acceptInvite($verification, 'bob', 'pw');
     }
 
@@ -158,6 +161,7 @@ class InviteServiceTest extends TestCase
         $racingService = new InviteService(
             $throwingUsers,
             $this->verifications,
+            new InMemoryTransaction(),
             $this->createMock(MailerInterface::class),
             $urlGenerator,
             $hasher,
