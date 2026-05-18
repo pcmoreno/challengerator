@@ -179,15 +179,13 @@ class ChallengeService
                     throw new \InvalidArgumentException('Car does not belong to this challenge');
                 }
 
-                $voter->setCarsToVotedForChallenge($carIds, $challengeId);
-
                 $ratingA = $carA->getRating();
                 $ratingB = $carB->getRating();
                 RatingService::compareAndAdjust($ratingA, $ratingB, $outcome);
 
                 $this->carRepository->save($carA);
                 $this->carRepository->save($carB);
-                $this->voterRepository->save($voter);
+                $this->voterRepository->markCarsVoted($userId, $challengeId, $carIds);
 
                 return [$voter->getName(), $carA->getName(), $carB->getName()];
             }

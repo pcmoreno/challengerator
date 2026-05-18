@@ -79,4 +79,9 @@ class CouchVoterRepository implements VoterRepositoryInterface
     {
         $this->client->deleteDoc($this->client->getDoc($id));
     }
+
+    public function markCarsVoted(string $voterId, string $challengeName, array $carIds): void
+    {
+        throw new \LogicException('CouchVoterRepository is no longer wired; use DoctrineVoterRepository.');
+    }
 }

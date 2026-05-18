@@ -10,6 +10,7 @@ use App\Entity\Doctrine\DbCar;
 use App\Entity\Doctrine\DbChallenge;
 use App\Entity\Doctrine\DbVoterCarQueue;
 use App\Repository\VoterRepositoryInterface;
+use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -109,6 +110,28 @@ class DoctrineVoterRepository implements VoterRepositoryInterface
             $this->em()->remove($user);
             $this->em()->flush();
         }
+    }
+
+    public function markCarsVoted(string $voterId, string $challengeName, array $carIds): void
+    {
+        if ($carIds === []) {
+            return;
+        }
+        $this->em()->getConnection()->executeStatement(
+            'UPDATE voter_car_queue vcq
+             INNER JOIN challenge c ON vcq.challenge_id = c.id
+             SET vcq.status = :voted
+             WHERE vcq.user_id = :userId AND c.name = :challengeName AND vcq.car_id IN (:carIds)',
+            [
+                'voted'         => DbVoterCarQueue::STATUS_VOTED,
+                'userId'        => (int) $voterId,
+                'challengeName' => $challengeName,
+                'carIds'        => $carIds,
+            ],
+            [
+                'carIds' => ArrayParameterType::STRING,
+            ]
+        );
     }
 
     private function toDomain(User $user): Voter

@@ -13,4 +13,5 @@ interface VoterRepositoryInterface
     public function hasVoterFromIpForChallenge(string $ip, string $challengeName): bool;
     public function save(Voter $voter): void;
     public function delete(string $id): void;
+    public function markCarsVoted(string $voterId, string $challengeName, array $carIds): void;
 }
