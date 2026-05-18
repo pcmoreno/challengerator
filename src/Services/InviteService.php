@@ -8,6 +8,7 @@ use App\Entity\Auth\User;
 use App\Exception\BusinessLogicException;
 use App\Repository\EmailVerificationRepositoryInterface;
 use App\Repository\UserRepositoryInterface;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
@@ -97,7 +98,12 @@ class InviteService
         $user->setPassword($this->passwordHasher->hashPassword($user, $plainPassword));
         $user->verify();
 
-        $this->userRepository->save($user);
+        try {
+            $this->userRepository->save($user);
+        } catch (UniqueConstraintViolationException) {
+            throw new BusinessLogicException('This invite link was already accepted. Please log in.');
+        }
+
         $this->userRepository->addToChallenge($user, $verification->getChallengeId() ?? '');
 
         $this->verificationRepository->delete($verification);
