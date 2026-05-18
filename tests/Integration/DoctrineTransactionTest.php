@@ -3,10 +3,12 @@ declare(strict_types=1);
 
 namespace App\Tests\Integration;
 
+use App\Entity\Auth\User;
 use App\Entity\Doctrine\DbCar;
 use App\Entity\Doctrine\DbChallenge;
 use App\Exception\ConcurrentModificationException;
 use App\Repository\Doctrine\DoctrineTransaction;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
@@ -25,6 +27,7 @@ class DoctrineTransactionTest extends KernelTestCase
         $conn->executeStatement('SET FOREIGN_KEY_CHECKS=0');
         $conn->executeStatement('DELETE FROM car WHERE id = :id', ['id' => '__tx_test_car__']);
         $conn->executeStatement('DELETE FROM challenge WHERE name = :n', ['n' => '__tx_test__']);
+        $conn->executeStatement('DELETE FROM `user` WHERE username LIKE :u', ['u' => '__tx_unique_test%']);
         $conn->executeStatement('SET FOREIGN_KEY_CHECKS=1');
     }
 
@@ -34,6 +37,7 @@ class DoctrineTransactionTest extends KernelTestCase
         $conn->executeStatement('SET FOREIGN_KEY_CHECKS=0');
         $conn->executeStatement('DELETE FROM car WHERE id = :id', ['id' => '__tx_test_car__']);
         $conn->executeStatement('DELETE FROM challenge WHERE name = :n', ['n' => '__tx_test__']);
+        $conn->executeStatement('DELETE FROM `user` WHERE username LIKE :u', ['u' => '__tx_unique_test%']);
         $conn->executeStatement('SET FOREIGN_KEY_CHECKS=1');
         parent::tearDown();
     }
@@ -93,7 +97,6 @@ class DoctrineTransactionTest extends KernelTestCase
         $registry = $this->registry;
 
         $this->expectException(ConcurrentModificationException::class);
-
         $this->transaction->transactionalWithRetry(function () use ($registry): void {
             $em    = $registry->getManager();
             $dbCar = $em->find(DbCar::class, '__tx_test_car__');
@@ -104,5 +107,35 @@ class DoctrineTransactionTest extends KernelTestCase
             );
             $dbCar->setRating(1600);
         }, maxAttempts: 3);
+    }
+
+    public function test_transactional_em_stays_open_after_unique_constraint_violation(): void
+    {
+        $em = $this->registry->getManager();
+
+        $user1 = new User('__tx_unique_test_1__');
+        $user1->setEmail('__tx_unique_test@example.com');
+        $em->persist($user1);
+        $em->flush();
+        $em->clear();
+
+        // Attempt to insert a second user with the same email inside a transaction
+        try {
+            $this->transaction->transactional(function () use ($em): void {
+                $user2 = new User('__tx_unique_test_2__');
+                $user2->setEmail('__tx_unique_test@example.com');
+                $em->persist($user2);
+            });
+            $this->fail('Expected UniqueConstraintViolationException');
+        } catch (UniqueConstraintViolationException) {
+            // expected
+        }
+
+        // EM must be usable after the transaction — resetManager() ensures a fresh one
+        $found = $this->registry->getManager()
+            ->getRepository(User::class)
+            ->findOneBy(['username' => '__tx_unique_test_1__']);
+
+        $this->assertNotNull($found, 'EM must still be usable after UniqueConstraintViolationException inside transactional()');
     }
 }

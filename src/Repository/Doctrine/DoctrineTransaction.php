@@ -14,7 +14,23 @@ class DoctrineTransaction implements TransactionInterface
 
     public function transactional(callable $fn): mixed
     {
-        return $this->registry->getManager()->wrapInTransaction($fn);
+        $em   = $this->registry->getManager();
+        $conn = $em->getConnection();
+        $conn->beginTransaction();
+        try {
+            $result = $fn();
+            $em->flush();
+            $conn->commit();
+            return $result;
+        } catch (\Throwable $e) {
+            // UnitOfWork::commit() rolls back and closes the EM in its finally block when
+            // an exception occurs during flush, so the connection may already be rolled back.
+            if ($conn->isTransactionActive()) {
+                $conn->rollBack();
+            }
+            $this->registry->resetManager();
+            throw $e;
+        }
     }
 
     public function transactionalWithRetry(callable $fn, int $maxAttempts = 3): mixed
@@ -35,7 +51,9 @@ class DoctrineTransaction implements TransactionInterface
                 $this->registry->resetManager();
                 $last = $e;
             } catch (\Throwable $e) {
-                $conn->rollBack();
+                if ($conn->isTransactionActive()) {
+                    $conn->rollBack();
+                }
                 throw $e;
             }
         }
