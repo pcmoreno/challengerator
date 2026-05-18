@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Entity\Challenge;
 
 use App\Exception\ImpossibleVotedCarsAmountException;
-use DateInterval;
 use Symfony\Component\Uid\Uuid;
 
 class Voter
@@ -13,8 +12,6 @@ class Voter
     private string $name;
     private RoundOfComparisons $roundsOfComparison;
     private string $authKey;
-    private ?string $token;
-    private ?int $tokenExpirationDate;
     private ?string $ipAddress;
 
     public static function createForChallenge(string $name, string $pass, string $challengeId, string $ip = 'default'): Voter
@@ -22,8 +19,6 @@ class Voter
         $voter = new Voter();
         $voter->id = Uuid::v6()->jsonSerialize();
         $voter->name = $name;
-        $voter->tokenExpirationDate = null;
-        $voter->token = null;
         $hashed_password = password_hash($pass, PASSWORD_BCRYPT);
         if ($hashed_password === false || $hashed_password === null) {
             throw new \Exception('Failed Hashing Password, creation of Voter aborted');
@@ -59,8 +54,6 @@ class Voter
         $stdClass->name = $this->name;
         $stdClass->challenges = $this->roundsOfComparison->toArray();
         $stdClass->key = $this->authKey;
-        $stdClass->token = $this->token ?? null;
-        $stdClass->tokenExpirationDate = $this->tokenExpirationDate ?? null;
         $stdClass->ipAddress = $this->ipAddress ?? null;
         return $stdClass;
     }
@@ -84,8 +77,6 @@ class Voter
         }
         $voter->roundsOfComparison = $roundsOfComparisons;
         $voter->authKey = $data['key'];
-        $voter->token = $data['token'];
-        $voter->tokenExpirationDate = $data['tokenExpirationDate'] ?? null;
         $voter->ipAddress = $data['ipAddress'] ?? null;
         return $voter;
     }
@@ -136,27 +127,6 @@ class Voter
         $this->authKey = $authKey;
     }
 
-    public function generateToken(): void
-    {
-        $token = Uuid::v4()->jsonSerialize();
-        $this->token = $token;
-        $endTime = (new \DateTime())->add(new DateInterval('PT20M'));
-        $this->tokenExpirationDate = $endTime->getTimestamp();
-    }
-
-    public function getTokenExpirationDate(): ?int
-    {
-        return $this->tokenExpirationDate;
-    }
-
-    public function getToken(): ?string
-    {
-        if ((new \DateTime())->getTimestamp() > $this->getTokenExpirationDate()) {
-            $this->token = null;
-        }
-        return $this->token;
-    }
-
     public function countComparisonsMadeForChallenge($challengeName): int
     {
         $total = $this->roundsOfComparison->getCarsComparedForChallenge($challengeName);
@@ -189,8 +159,6 @@ class Voter
         $voter->name = $data['name'];
         $voter->authKey = $data['authKey'];
         $voter->ipAddress = $data['ipAddress'];
-        $voter->token = null;
-        $voter->tokenExpirationDate = null;
         $voter->roundsOfComparison = $data['rounds'];
         return $voter;
     }

@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace App\Tests\Services;
 
-use App\Entity\Auth\Role;
 use App\Entity\Challenge\Car;
 use App\Entity\Challenge\Challenge;
 use App\Entity\Challenge\Voter;
@@ -63,13 +62,6 @@ class ChallengeServiceTest extends TestCase
         return $voter;
     }
 
-    private function adminToken(Challenge $challenge): string
-    {
-        $challenge->generateAdminToken();
-        $this->challenges->save($challenge);
-        return $challenge->getAdminToken();
-    }
-
     // --- createNewChallenge ---
 
     public function test_createNewChallenge_with_valid_code_creates_challenge(): void
@@ -89,90 +81,6 @@ class ChallengeServiceTest extends TestCase
         $this->service->createNewChallenge('rally', 'secret', 'VALID-CODE');
         $this->expectException(\DomainException::class);
         $this->service->createNewChallenge('rally2', 'secret', 'VALID-CODE');
-    }
-
-    // --- verifyLogin ---
-
-    public function test_verifyLogin_admin_success(): void
-    {
-        $challenge = $this->makeChallenge('rally', 'adminpass');
-
-        $login = (object)['user' => Role::ADMIN, 'pass' => 'adminpass'];
-        [$role, $userId, $token] = $this->service->verifyLogin($login, 'rally');
-
-        $this->assertSame(Role::ADMIN, $role);
-        $this->assertNull($userId);
-        $this->assertNotNull($token);
-    }
-
-    public function test_verifyLogin_admin_wrong_password_returns_none(): void
-    {
-        $this->makeChallenge('rally', 'adminpass');
-
-        $login = (object)['user' => Role::ADMIN, 'pass' => 'wrong'];
-        [$role] = $this->service->verifyLogin($login, 'rally');
-
-        $this->assertSame(Role::NONE, $role);
-    }
-
-    public function test_verifyLogin_voter_success(): void
-    {
-        $challenge = $this->makeChallenge();
-        $voter = $this->makeVoter('rally', 'Paulo', 'mypass');
-        $challenge->addVoterToChallenge($voter);
-        $this->challenges->save($challenge);
-
-        $login = (object)['user' => 'Paulo', 'pass' => 'mypass'];
-        [$role, $userId, $token] = $this->service->verifyLogin($login, 'rally');
-
-        $this->assertSame(Role::VOTER, $role);
-        $this->assertSame($voter->getId(), $userId);
-        $this->assertNotNull($token);
-    }
-
-    public function test_verifyLogin_voter_of_different_challenge(): void
-    {
-        $this->makeChallenge('rally');
-        $this->makeChallenge('sprint');
-        $voter = $this->makeVoter('sprint', 'Paulo', 'mypass');
-        $sprint = $this->challenges->find('sprint');
-        $sprint->addVoterToChallenge($voter);
-        $this->challenges->save($sprint);
-
-        $login = (object)['user' => 'Paulo', 'pass' => 'mypass'];
-        [$role] = $this->service->verifyLogin($login, 'rally');
-
-        $this->assertSame(Role::VOTER_OF_A_DIFFERENT_CHALLENGE, $role);
-    }
-
-    public function test_verifyLogin_unknown_user_returns_none(): void
-    {
-        $this->makeChallenge();
-        $login = (object)['user' => 'nobody', 'pass' => 'pass'];
-        [$role] = $this->service->verifyLogin($login, 'rally');
-        $this->assertSame(Role::NONE, $role);
-    }
-
-    public function test_verifyLogin_with_reset_password_skips_challenge_lookup(): void
-    {
-        $voter = $this->makeVoter('rally', 'Paulo', 'mypass');
-
-        $login = (object)['user' => 'Paulo', 'pass' => 'mypass'];
-        [$role, $userId] = $this->service->verifyLogin($login, 'reset password');
-
-        $this->assertSame(Role::VOTER_OF_A_DIFFERENT_CHALLENGE, $role);
-        $this->assertSame($voter->getId(), $userId);
-    }
-
-    public function test_verifyLogin_voter_wrong_password_returns_none(): void
-    {
-        $this->makeChallenge();
-        $this->makeVoter('rally', 'Paulo', 'correctpass');
-
-        $login = (object)['user' => 'Paulo', 'pass' => 'wrongpass'];
-        [$role] = $this->service->verifyLogin($login, 'rally');
-
-        $this->assertSame(Role::NONE, $role);
     }
 
     // --- addCar / getCarsForChallenge ---
@@ -285,6 +193,18 @@ class ChallengeServiceTest extends TestCase
         $this->expectException(\Exception::class);
         $carParam = $car1->getId() . 'XXX' . $car2->getId();
         $this->service->voteOnCars($carParam, 'left', 'rally', $voter->getId());
+    }
+
+    public function test_voteOnCars_throws_when_same_car_submitted_twice(): void
+    {
+        $this->makeChallenge();
+        $voter = $this->makeVoter();
+        $car = $this->makeCar();
+        $voter->addCarsToSelf([$car->getId()], 'rally');
+        $this->voters->save($voter);
+
+        $this->expectException(\App\Exception\BusinessLogicException::class);
+        $this->service->voteOnCars($car->getId() . 'XXX' . $car->getId(), 'left', 'rally', $voter->getId());
     }
 
     public function test_voteOnCars_throws_on_invalid_result_string(): void

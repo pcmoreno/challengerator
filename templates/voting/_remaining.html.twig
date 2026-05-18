@@ -1,12 +1,5 @@
 <div id="cars-remaining" class="bg-surface rounded-lg shadow p-4">
-    <h3 class="text-sm font-semibold text-muted mb-2">
+    <h3 class="text-sm font-semibold text-muted">
         Cars left to compare: {{ carsNotVoted|length }}
     </h3>
-    {% if carsNotVoted is not empty %}
-        <ul class="columns-2 text-sm text-muted list-disc list-inside">
-            {% for car in carsNotVoted %}
-                <li>{{ car }}</li>
-            {% endfor %}
-        </ul>
-    {% endif %}
 </div>
