@@ -8,10 +8,16 @@ use App\Entity\Challenge\Challenge;
 use App\Entity\Doctrine\DbChallenge;
 use App\Repository\ChallengeRepositoryInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ManagerRegistry;
 
 class DoctrineChallengeRepository implements ChallengeRepositoryInterface
 {
-    public function __construct(private EntityManagerInterface $em) {}
+    public function __construct(private readonly ManagerRegistry $registry) {}
+
+    private function em(): EntityManagerInterface
+    {
+        return $this->registry->getManager();
+    }
 
     public function create(string $name): void
     {
@@ -20,7 +26,7 @@ class DoctrineChallengeRepository implements ChallengeRepositoryInterface
 
     public function find(string $name): Challenge
     {
-        $dbChallenge = $this->em->getRepository(DbChallenge::class)->findOneBy(['name' => $name]);
+        $dbChallenge = $this->em()->getRepository(DbChallenge::class)->findOneBy(['name' => $name]);
         if ($dbChallenge === null) {
             throw new \Exception("Challenge not found: $name");
         }
@@ -29,7 +35,7 @@ class DoctrineChallengeRepository implements ChallengeRepositoryInterface
 
     public function save(Challenge $challenge): void
     {
-        $dbChallenge = $this->em->getRepository(DbChallenge::class)
+        $dbChallenge = $this->em()->getRepository(DbChallenge::class)
             ->findOneBy(['name' => $challenge->getName()]);
 
         if ($dbChallenge === null) {
@@ -44,14 +50,14 @@ class DoctrineChallengeRepository implements ChallengeRepositoryInterface
 
         $this->syncVoters($dbChallenge, $challenge->getVoters());
 
-        $this->em->persist($dbChallenge);
-        $this->em->flush();
+        $this->em()->persist($dbChallenge);
+        $this->em()->flush();
     }
 
     public function listNames(): array
     {
         return array_column(
-            $this->em->getRepository(DbChallenge::class)
+            $this->em()->getRepository(DbChallenge::class)
                 ->createQueryBuilder('c')
                 ->select('c.name')
                 ->getQuery()
@@ -86,7 +92,7 @@ class DoctrineChallengeRepository implements ChallengeRepositoryInterface
         $toRemove = array_diff($currentIds, $voterIds);
 
         if ($toAdd) {
-            $newUsers = $this->em->getRepository(User::class)->findBy(['id' => $toAdd]);
+            $newUsers = $this->em()->getRepository(User::class)->findBy(['id' => $toAdd]);
             foreach ($newUsers as $user) {
                 $dbChallenge->addVoter($user);
             }
