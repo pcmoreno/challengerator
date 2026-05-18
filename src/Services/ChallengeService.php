@@ -11,7 +11,9 @@ use App\Exception\BusinessLogicException;
 use App\Repository\CarRepositoryInterface;
 use App\Repository\ChallengeRepositoryInterface;
 use App\Repository\InviteCodeRepositoryInterface;
+use App\Repository\TransactionInterface;
 use App\Repository\VoterRepositoryInterface;
+use Doctrine\ORM\OptimisticLockException;
 use Psr\Log\LoggerInterface;
 
 class ChallengeService
@@ -21,6 +23,7 @@ class ChallengeService
         private readonly CarRepositoryInterface $carRepository,
         private readonly VoterRepositoryInterface $voterRepository,
         private readonly InviteCodeRepositoryInterface $inviteCodeRepository,
+        private readonly TransactionInterface $transaction,
         private readonly LoggerInterface $votesLogger,
         private readonly LoggerInterface $loginsLogger,
     ) {}
@@ -170,20 +173,45 @@ class ChallengeService
             throw new \InvalidArgumentException('Car does not belong to this challenge');
         }
 
-        $voter->setCarsToVotedForChallenge($carIds, $challengeId);
+        $voterName = $voter->getName();
+        $carAName  = $carA->getName();
+        $carBName  = $carB->getName();
 
-        $ratingA = $carA->getRating();
-        $ratingB = $carB->getRating();
-        RatingService::compareAndAdjust($ratingA, $ratingB, $outcome);
+        $next = null;
+        $lastException = null;
+        for ($attempt = 0; $attempt < 3; $attempt++) {
+            try {
+                $next = $this->transaction->transactional(function () use (
+                    $voter, $carIds, $challengeId, $carA, $carB, $outcome, $userId
+                ): array {
+                    $voter->setCarsToVotedForChallenge($carIds, $challengeId);
 
-        $this->carRepository->save($carA);
-        $this->carRepository->save($carB);
-        $this->voterRepository->save($voter);
+                    $ratingA = $carA->getRating();
+                    $ratingB = $carB->getRating();
+                    RatingService::compareAndAdjust($ratingA, $ratingB, $outcome);
+
+                    $this->carRepository->save($carA);
+                    $this->carRepository->save($carB);
+                    $this->voterRepository->save($voter);
+
+                    return $this->getTwoCarsToBeVotedByUser($challengeId, $userId);
+                });
+                break;
+            } catch (OptimisticLockException $e) {
+                $lastException = $e;
+                [$carA, $carB] = $this->carRepository->findMany($carIds);
+                $voter = $this->voterRepository->find($userId);
+            }
+        }
+
+        if ($next === null) {
+            throw new BusinessLogicException('Vote conflict after retries; please try again', 0, $lastException);
+        }
 
         $this->votesLogger->notice("Voting received on Challenge: " . $challengeId);
-        $this->votesLogger->notice($voter->getName() . " voted -- " . $result . " -- between " . $carA->getName() . " and " . $carB->getName());
+        $this->votesLogger->notice($voterName . " voted -- " . $result . " -- between " . $carAName . " and " . $carBName);
 
-        return $this->getTwoCarsToBeVotedByUser($challengeId, $userId);
+        return $next;
     }
 
     public function verifyAdmin(string $challengeName, string $adminpass): bool

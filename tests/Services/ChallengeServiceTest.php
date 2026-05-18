@@ -9,6 +9,7 @@ use App\Entity\Challenge\Voter;
 use App\Tests\Repository\InMemory\InMemoryCarRepository;
 use App\Tests\Repository\InMemory\InMemoryChallengeRepository;
 use App\Tests\Repository\InMemory\InMemoryInviteCodeRepository;
+use App\Tests\Repository\InMemory\InMemoryTransaction;
 use App\Tests\Repository\InMemory\InMemoryVoterRepository;
 use App\Services\ChallengeService;
 use PHPUnit\Framework\TestCase;
@@ -33,6 +34,7 @@ class ChallengeServiceTest extends TestCase
             $this->cars,
             $this->voters,
             $this->codes,
+            new InMemoryTransaction(),
             new NullLogger(),
             new NullLogger(),
         );
