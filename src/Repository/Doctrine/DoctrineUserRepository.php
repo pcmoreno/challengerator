@@ -5,6 +5,7 @@ namespace App\Repository\Doctrine;
 
 use App\Entity\Auth\User;
 use App\Entity\Doctrine\DbChallenge;
+use App\Exception\ChallengeDoesNotExistException;
 use App\Repository\UserRepositoryInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
@@ -54,7 +55,7 @@ class DoctrineUserRepository implements UserRepositoryInterface
     {
         $dbChallenge = $this->em()->getRepository(DbChallenge::class)->findOneBy(['name' => $challengeName]);
         if ($dbChallenge === null) {
-            return;
+            throw new ChallengeDoesNotExistException($challengeName);
         }
         $dbChallenge->addVoter($user);
         $this->em()->flush();

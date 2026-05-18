@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Tests\Repository\InMemory;
 
 use App\Entity\Auth\User;
+use App\Exception\ChallengeDoesNotExistException;
 use App\Repository\UserRepositoryInterface;
 
 class InMemoryUserRepository implements UserRepositoryInterface
@@ -54,6 +55,14 @@ class InMemoryUserRepository implements UserRepositoryInterface
 
     public function addToChallenge(User $user, string $challengeName): void
     {
+        if (!array_key_exists($challengeName, $this->members)) {
+            throw new ChallengeDoesNotExistException($challengeName);
+        }
         $this->members[$challengeName][] = (string) $user->getId();
+    }
+
+    public function seedChallenge(string $challengeName): void
+    {
+        $this->members[$challengeName] ??= [];
     }
 }

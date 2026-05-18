@@ -6,9 +6,12 @@ namespace App\Tests\Services;
 use App\Entity\Auth\EmailVerification;
 use App\Entity\Auth\User;
 use App\Exception\BusinessLogicException;
+use App\Exception\ChallengeDoesNotExistException;
 use App\Services\InviteService;
 use App\Tests\Repository\InMemory\InMemoryEmailVerificationRepository;
+use App\Tests\Repository\InMemory\InMemoryTransaction;
 use App\Tests\Repository\InMemory\InMemoryUserRepository;
+use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use PHPUnit\Framework\TestCase;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
@@ -36,6 +39,7 @@ class InviteServiceTest extends TestCase
         $this->service = new InviteService(
             $this->users,
             $this->verifications,
+            new InMemoryTransaction(),
             $mailer,
             $urlGenerator,
             $hasher,
@@ -63,6 +67,7 @@ class InviteServiceTest extends TestCase
         $user = new User('alice');
         $user->setEmail('alice@example.com');
         $this->users->save($user);
+        $this->users->seedChallenge('rally');
         $this->users->addToChallenge($user, 'rally');
 
         $this->expectException(BusinessLogicException::class);
@@ -71,6 +76,7 @@ class InviteServiceTest extends TestCase
 
     public function test_acceptInvite_creates_new_user_when_no_existing_email_match(): void
     {
+        $this->users->seedChallenge('rally');
         $verification = $this->makeVerification('new@example.com', 'rally');
 
         $this->service->acceptInvite($verification, 'newbie', 'secret');
@@ -89,6 +95,7 @@ class InviteServiceTest extends TestCase
         $existing->setEmail('alice@example.com');
         $this->users->save($existing);
 
+        $this->users->seedChallenge('challengeY');
         $verification = $this->makeVerification('alice@example.com', 'challengeY');
 
         $this->service->acceptInvite($verification, 'alice', 'newpass');
@@ -104,6 +111,7 @@ class InviteServiceTest extends TestCase
         $alice->setEmail('alice@example.com');
         $this->users->save($alice);
 
+        $this->users->seedChallenge('challengeY');
         $verification = $this->makeVerification('alice@example.com', 'challengeY');
 
         // alice tries to accept for challenge Y using her existing username — must not throw
@@ -118,11 +126,51 @@ class InviteServiceTest extends TestCase
         $bob->setEmail('bob@example.com');
         $this->users->save($bob);
 
-        // alice is being invited; she tries to claim username 'bob' which belongs to bob
+        $this->users->seedChallenge('rally');
         $verification = $this->makeVerification('alice@example.com', 'rally');
 
         $this->expectException(BusinessLogicException::class);
+        $this->expectExceptionMessage('username is already taken');
         $this->service->acceptInvite($verification, 'bob', 'pw');
+    }
+
+    public function test_acceptInvite_throws_when_challenge_was_deleted(): void
+    {
+        // challenge 'gone' is never seeded in the user repository
+        $verification = $this->makeVerification('new@example.com', 'gone');
+
+        $this->expectException(ChallengeDoesNotExistException::class);
+        $this->service->acceptInvite($verification, 'newbie', 'pw');
+    }
+
+    public function test_acceptInvite_throws_friendly_error_on_duplicate_email_race(): void
+    {
+        $driverException = new \Doctrine\DBAL\Driver\PDO\Exception('Duplicate entry', '23000', 1062);
+        $uniqueEx = new UniqueConstraintViolationException($driverException, null);
+
+        $throwingUsers = $this->createMock(\App\Repository\UserRepositoryInterface::class);
+        $throwingUsers->method('findByEmail')->willReturn(null);
+        $throwingUsers->method('findByUsername')->willReturn(null);
+        $throwingUsers->method('save')->willThrowException($uniqueEx);
+
+        $urlGenerator = $this->createMock(UrlGeneratorInterface::class);
+        $urlGenerator->method('generate')->willReturn('https://example.com/accept/token');
+        $hasher = $this->createMock(UserPasswordHasherInterface::class);
+        $hasher->method('hashPassword')->willReturnCallback(fn(User $u, string $pw) => 'hashed_' . $pw);
+
+        $racingService = new InviteService(
+            $throwingUsers,
+            $this->verifications,
+            new InMemoryTransaction(),
+            $this->createMock(MailerInterface::class),
+            $urlGenerator,
+            $hasher,
+        );
+
+        $verification = $this->makeVerification('new@example.com', 'rally');
+        $this->expectException(BusinessLogicException::class);
+        $this->expectExceptionMessage('already accepted');
+        $racingService->acceptInvite($verification, 'newbie', 'pw');
     }
 
     private function makeVerification(string $email, string $challengeName): EmailVerification
