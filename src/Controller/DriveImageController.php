@@ -46,7 +46,8 @@ class DriveImageController extends AbstractController
                 throw new NotFoundHttpException('Image not available');
             }
 
-            if (@getimagesizefromstring($contents) === false) {
+            $info = @getimagesizefromstring($contents);
+            if ($info === false) {
                 throw new NotFoundHttpException('Image not available');
             }
 
@@ -55,9 +56,10 @@ class DriveImageController extends AbstractController
             rename($tmp, $cachePath);
         } else {
             $contents = file_get_contents($cachePath);
+            $info     = @getimagesizefromstring($contents);
         }
 
-        $mimeType = @getimagesizefromstring($contents)['mime'] ?? 'image/jpeg';
+        $mimeType = $info['mime'] ?? 'image/jpeg';
 
         return new Response(
             $contents,
