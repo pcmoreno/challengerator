@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Entity\Challenge;
 
+use App\Exception\ImpossibleVotedCarsAmountException;
 use DateInterval;
 use Symfony\Component\Uid\Uuid;
 
@@ -159,7 +160,11 @@ class Voter
     public function countComparisonsMadeForChallenge($challengeName): int
     {
         $total = $this->roundsOfComparison->getCarsComparedForChallenge($challengeName);
-        return (count($total))/2;
+        $count = count($total);
+        if ($count % 2 !== 0) {
+            throw new ImpossibleVotedCarsAmountException($count, $this->id, $challengeName);
+        }
+        return $count / 2;
     }
 
     public function countCarsLeftToCompareForChallenge($challengeName): int
