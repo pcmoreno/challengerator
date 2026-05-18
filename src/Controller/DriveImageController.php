@@ -6,6 +6,7 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Contracts\HttpClient\Exception\HttpExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
@@ -37,7 +38,7 @@ class DriveImageController extends AbstractController
             try {
                 $response = $this->httpClient->request('GET', $url, ['timeout' => 5]);
                 $contents = $response->getContent();
-            } catch (TransportExceptionInterface) {
+            } catch (TransportExceptionInterface | HttpExceptionInterface) {
                 throw new NotFoundHttpException('Image not available');
             }
 
