@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Entity\Auth\Role;
 use App\Entity\Challenge\Car;
 use App\Entity\Challenge\Challenge;
 use App\Entity\Challenge\Outcome;
@@ -135,7 +134,7 @@ class ChallengeService
 
         $selectedIndices = array_rand($carsToVote, 2);
         $selectedCarIds = [$carsToVote[$selectedIndices[0]], $carsToVote[$selectedIndices[1]]];
-        $remaining = array_diff_key($carsToVote, array_flip($selectedIndices));
+        $remaining = array_values(array_diff_key($carsToVote, array_flip($selectedIndices)));
 
         $selectedCars = $this->carRepository->findMany($selectedCarIds);
 
