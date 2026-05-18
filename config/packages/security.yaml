@@ -31,4 +31,5 @@ security:
 
     access_control:
         - { path: ^/challenge/new$, roles: ROLE_SUPER_ADMIN }
+        - { path: ^/image/, roles: ROLE_VOTER }
         - { path: ^/vote/, roles: ROLE_VOTER }

@@ -6,12 +6,19 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Contracts\HttpClient\Exception\HttpExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class DriveImageController extends AbstractController
 {
-    private const CACHE_TTL = 86400 * 30; // 30 days
+    private const CACHE_TTL    = 86400 * 30;
+    private const MAX_BYTES    = 5 * 1024 * 1024;
 
-    public function __construct(private readonly string $cacheDir) {}
+    public function __construct(
+        private readonly string $cacheDir,
+        private readonly HttpClientInterface $httpClient,
+    ) {}
 
     public function serve(string $fileId): Response
     {
@@ -19,21 +26,43 @@ class DriveImageController extends AbstractController
             throw new NotFoundHttpException();
         }
 
+        if (!is_dir($this->cacheDir)) {
+            @mkdir($this->cacheDir, 0750, true);
+        }
+
         $cachePath = $this->cacheDir . '/' . $fileId;
 
         if (!file_exists($cachePath)) {
-            $url      = 'https://drive.google.com/thumbnail?sz=w1200&id=' . $fileId;
-            $contents = @file_get_contents($url);
-            if ($contents === false || strlen($contents) === 0) {
+            $url = 'https://drive.google.com/thumbnail?sz=w1200&id=' . $fileId;
+
+            try {
+                $response = $this->httpClient->request('GET', $url, ['timeout' => 5]);
+                $contents = $response->getContent();
+            } catch (TransportExceptionInterface | HttpExceptionInterface) {
                 throw new NotFoundHttpException('Image not available');
             }
-            file_put_contents($cachePath, $contents);
+
+            if ($contents === '' || strlen($contents) > self::MAX_BYTES) {
+                throw new NotFoundHttpException('Image not available');
+            }
+
+            $info = @getimagesizefromstring($contents);
+            if ($info === false) {
+                throw new NotFoundHttpException('Image not available');
+            }
+
+            $tmp = $cachePath . '.tmp';
+            file_put_contents($tmp, $contents);
+            rename($tmp, $cachePath);
+        } else {
+            $contents = file_get_contents($cachePath);
+            $info     = @getimagesizefromstring($contents);
         }
 
-        $mimeType = mime_content_type($cachePath) ?: 'image/jpeg';
+        $mimeType = $info['mime'] ?? 'image/jpeg';
 
         return new Response(
-            file_get_contents($cachePath),
+            $contents,
             200,
             [
                 'Content-Type'  => $mimeType,
