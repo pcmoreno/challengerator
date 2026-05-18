@@ -103,6 +103,11 @@ class ChallengeService
     public function initializeChallenge(string $challengeName): void
     {
         $challenge = $this->challengeRepository->find($challengeName);
+
+        if ($challenge->isActive()) {
+            throw new BusinessLogicException('Challenge is already running.');
+        }
+
         $carIds = $challenge->getCars();
 
         foreach ($this->voterRepository->findMany($challenge->getVoters()) as $voter) {
