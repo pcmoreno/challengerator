@@ -6,6 +6,7 @@ namespace App\Controller;
 use App\Entity\Challenge\Car;
 use App\Entity\Doctrine\DbChallenge;
 use App\Entity\StorageType;
+use App\Exception\ImpossibleVotedCarsAmountException;
 use App\Repository\StorageResourceRepositoryInterface;
 use App\Services\InviteService;
 use App\Form\AdminDeleteVoterType;
@@ -179,10 +180,31 @@ class ChallengeController extends AbstractController
             return $this->redirectToRoute('addVoterToChallengeFormPage', ['challengeName' => $challengeName]);
         }
 
+        $allUsersInTheChallenge = [];
+        $corruptVoters = [];
+        foreach ($this->challengeService->getAllVotersForTheChallenge($challengeName) as $voter) {
+            try {
+                $comparisons = (string) $voter->countComparisonsMadeForChallenge($challengeName);
+            } catch (ImpossibleVotedCarsAmountException) {
+                $comparisons = 'Exception';
+                $corruptVoters[] = $voter->getName();
+            }
+            $allUsersInTheChallenge[] = [
+                'name'        => $voter->getName(),
+                'id'          => $voter->getId(),
+                'ipAddress'   => $voter->getIpAddress(),
+                'comparisons' => $comparisons,
+                'carsLeft'    => $voter->countCarsLeftToCompareForChallenge($challengeName),
+            ];
+        }
+        if ($corruptVoters !== []) {
+            $this->addFlash('error', 'Data corruption detected — odd vote count for: ' . implode(', ', $corruptVoters));
+        }
+
         return $this->render('/voter/voterDashboard.html.twig', [
             'form'                   => $voterForm->createView(),
             'adminDeleteForm'         => $adminDeleteVoterForm->createView(),
-            'allUsersInTheChallenge'  => $this->challengeService->getAllVotersForTheChallenge($challengeName),
+            'allUsersInTheChallenge'  => $allUsersInTheChallenge,
             'challengeName'           => $challengeName,
             'selfRegistration'        => $this->challengeService->isChallengeOpenToSelfRegistration($challengeName),
             'selfRegistrationCode'    => $this->challengeService->getSelfRegistrationCodeForChallenge($challengeName),
