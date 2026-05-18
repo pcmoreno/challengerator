@@ -35,6 +35,10 @@ class DbCar
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
     private ?\DateTimeImmutable $updatedOn = null;
 
+    #[ORM\Version]
+    #[ORM\Column(type: 'integer')]
+    private int $version = 1;
+
     public function __construct(string $id, DbChallenge $challenge, string $name, string $imageUrlA, string $imageUrlB)
     {
         $this->id = $id;

@@ -62,6 +62,9 @@ services:
     App\Repository\InviteCodeRepositoryInterface:
         class: App\Repository\Doctrine\DoctrineInviteCodeRepository
 
+    App\Repository\TransactionInterface:
+        class: App\Repository\Doctrine\DoctrineTransaction
+
     App\Services\ChallengeService:
         arguments:
             $votesLogger: '@monolog.logger.votes'
