@@ -7,4 +7,7 @@ interface TransactionInterface
 {
     /** @template T @param callable(): T $fn @return T */
     public function transactional(callable $fn): mixed;
+
+    /** @template T @param callable(): T $fn @return T */
+    public function transactionalWithRetry(callable $fn, int $maxAttempts = 3): mixed;
 }

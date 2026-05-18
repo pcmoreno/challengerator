@@ -11,4 +11,9 @@ class InMemoryTransaction implements TransactionInterface
     {
         return $fn();
     }
+
+    public function transactionalWithRetry(callable $fn, int $maxAttempts = 3): mixed
+    {
+        return $fn();
+    }
 }
