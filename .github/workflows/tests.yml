@@ -41,7 +41,7 @@ jobs:
         run: docker compose exec -T challengeator-app php bin/console doctrine:migrations:migrate --no-interaction
 
       - name: Run unit tests
-        run: docker compose exec -T challengeator-app php vendor/bin/phpunit --testsuite unit
+        run: docker compose exec -T challengeator-app php vendor/bin/phpunit --no-coverage --testsuite unit
 
       - name: Run integration tests
-        run: docker compose exec -T challengeator-app php vendor/bin/phpunit --testsuite integration
+        run: docker compose exec -T challengeator-app php vendor/bin/phpunit --no-coverage --testsuite integration
