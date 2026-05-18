@@ -6,6 +6,8 @@ namespace App\Tests\Services;
 use App\Entity\Challenge\Car;
 use App\Entity\Challenge\Challenge;
 use App\Entity\Challenge\Voter;
+use App\Exception\BusinessLogicException;
+use App\Tests\Repository\InMemory\FlakyTransaction;
 use App\Tests\Repository\InMemory\InMemoryCarRepository;
 use App\Tests\Repository\InMemory\InMemoryChallengeRepository;
 use App\Tests\Repository\InMemory\InMemoryInviteCodeRepository;
@@ -388,5 +390,30 @@ class ChallengeServiceTest extends TestCase
         $code = $this->service->toggleSelfRegistrationForChallenge('rally');
         $this->assertNotEmpty($code);
         $this->assertSame($code, $this->service->getSelfRegistrationCodeForChallenge('rally'));
+    }
+
+    // --- voteOnCars retry ---
+
+    public function test_voteOnCars_throws_BusinessLogicException_when_all_retries_exhausted(): void
+    {
+        $flakyService = new ChallengeService(
+            $this->challenges,
+            $this->cars,
+            $this->voters,
+            $this->codes,
+            new FlakyTransaction(3),
+            new NullLogger(),
+            new NullLogger(),
+        );
+
+        $this->makeChallenge();
+        $voter = $this->makeVoter();
+        $carA  = $this->makeCar('car-a');
+        $carB  = $this->makeCar('car-b');
+        $voter->addCarsToSelf([$carA->getId(), $carB->getId()], 'rally');
+        $this->voters->save($voter);
+
+        $this->expectException(BusinessLogicException::class);
+        $flakyService->voteOnCars($carA->getId() . 'XXX' . $carB->getId(), 'left', 'rally', $voter->getId());
     }
 }

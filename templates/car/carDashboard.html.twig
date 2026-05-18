@@ -60,6 +60,7 @@
                             <form method="post"
                                   action="{{ path('deleteCar', {challengeName: challengeName, carId: item.id}) }}"
                                   data-turbo-confirm="Delete {{ item.name }}? This cannot be undone.">
+                                <input type="hidden" name="_token" value="{{ csrf_token('delete_car_' ~ item.id) }}">
                                 <button type="submit" class="text-gray-500 hover:text-red-500 transition cursor-pointer" aria-label="Delete car">
                                     {% include 'icons/trash.html.twig' %}
                                 </button>

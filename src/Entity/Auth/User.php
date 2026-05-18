@@ -34,6 +34,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type: 'json')]
     private array $roles = [];
 
+    #[ORM\Version]
+    #[ORM\Column(type: 'integer')]
+    private int $version = 1;
+
     #[ORM\OneToOne(targetEntity: DiscordProfile::class, mappedBy: 'user', cascade: ['persist', 'remove'])]
     private ?DiscordProfile $discordProfile = null;
 
