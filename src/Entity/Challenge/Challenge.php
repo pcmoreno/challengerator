@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace App\Entity\Challenge;
 
-use DateInterval;
 use Symfony\Component\Uid\Uuid;
 
 class Challenge
@@ -15,8 +14,6 @@ class Challenge
     private bool $isActive;
     private string $owner;
     private ?string $revision;
-    private ?string $adminToken;
-    private ?int $adminTokenExpirationDate;
     private bool $allowSelfRegistration;
     private ?string $selfRegistrationCode;
 
@@ -29,8 +26,6 @@ class Challenge
         $this->isActive = $isActive;
         $this->owner = $owner;
         $this->revision = null;
-        $this->adminToken = null;
-        $this->adminTokenExpirationDate = null;
         $this->allowSelfRegistration = false;
         $this->selfRegistrationCode = null;
     }
@@ -94,12 +89,6 @@ class Challenge
         if ($this->revision !== null) {
             $stdclass->_rev = $this->revision;
         }
-        if ($this->adminToken !== null) {
-            $stdclass->adminToken = $this->adminToken;
-        }
-        if ($this->adminTokenExpirationDate !== null) {
-            $stdclass->adminTokenExpirationDate = $this->adminTokenExpirationDate;
-        }
         $stdclass->allowSelfRegistration = $this->allowSelfRegistration;
          if (null !== $this->selfRegistrationCode) {
              $stdclass->selfRegistrationCode =  $this->selfRegistrationCode;
@@ -117,8 +106,6 @@ class Challenge
             $doc['isActive'],
             $doc['owner']
         );
-        $challenge->adminToken = $doc['adminToken'] ?? null;
-        $challenge->adminTokenExpirationDate = $doc['adminTokenExpirationDate'] ?? null;
         $challenge->allowSelfRegistration = $doc['allowSelfRegistration'] ?? false;
         $challenge->selfRegistrationCode = $doc['selfRegistrationCode'] ?? null;
 
@@ -134,8 +121,6 @@ class Challenge
             'voters'               => $doc['voters'],
             'isActive'             => $doc['isActive'],
             'owner'                => $doc['owner'],
-            'adminToken'           => $doc['adminToken'] ?? null,
-            'adminTokenExpirationDate' => $doc['adminTokenExpirationDate'] ?? null,
             'allowSelfRegistration' => $doc['allowSelfRegistration'] ?? false,
             'selfRegistrationCode' => $doc['selfRegistrationCode'] ?? null,
         ]);
@@ -189,30 +174,9 @@ class Challenge
         return $this->name;
     }
 
-    public function getAdminToken(): ?string
-    {
-        if ((new \DateTime())->getTimestamp() > $this->getAdminTokenExpirationDate()) {
-            $this->adminToken = null;
-        }
-        return $this->adminToken;
-    }
-
-    public function generateAdminToken(): void
-    {
-        $token = Uuid::v4()->jsonSerialize();
-        $this->adminToken = $token;
-        $endTime = (new \DateTime())->add(new DateInterval('PT10M'));
-        $this->adminTokenExpirationDate = $endTime->getTimestamp();
-    }
-
     public function allowsSelfRegistration(): bool
     {
         return $this->allowSelfRegistration;
-    }
-
-    private function getAdminTokenExpirationDate(): ?int
-    {
-        return $this->adminTokenExpirationDate;
     }
 
     public function getSelfRegistrationCode(): ?string

@@ -86,34 +86,6 @@ class ChallengeTest extends TestCase
         $this->assertTrue($challenge->isActive());
     }
 
-    public function test_getAdminToken_returns_null_before_generation(): void
-    {
-        $challenge = Challenge::create('rally', 'secret');
-        $this->assertNull($challenge->getAdminToken());
-    }
-
-    public function test_generateAdminToken_sets_non_null_token(): void
-    {
-        $challenge = Challenge::create('rally', 'secret');
-        $challenge->generateAdminToken();
-        $this->assertNotNull($challenge->getAdminToken());
-    }
-
-    public function test_getAdminToken_returns_null_for_expired_token(): void
-    {
-        $challenge = Challenge::fromArray([
-            'id'                       => 'info',
-            'name'                     => 'rally',
-            'cars'                     => [],
-            'voters'                   => [],
-            'isActive'                 => false,
-            'owner'                    => 'secret',
-            'adminToken'               => 'expired-token',
-            'adminTokenExpirationDate' => time() - 1,
-        ]);
-        $this->assertNull($challenge->getAdminToken());
-    }
-
     public function test_allowsSelfRegistration_defaults_to_false(): void
     {
         $challenge = Challenge::create('rally', 'secret');
@@ -143,16 +115,14 @@ class ChallengeTest extends TestCase
     {
         $expiry = time() + 9999;
         $data = [
-            'id'                       => 'info',
-            'name'                     => 'rally',
-            'cars'                     => ['car-1', 'car-2'],
-            'voters'                   => ['42', '99'],
-            'isActive'                 => true,
-            'owner'                    => 'hashed-secret',
-            'adminToken'               => 'tok-abc',
-            'adminTokenExpirationDate' => $expiry,
-            'allowSelfRegistration'    => true,
-            'selfRegistrationCode'     => 'code-xyz',
+            'id'                    => 'info',
+            'name'                  => 'rally',
+            'cars'                  => ['car-1', 'car-2'],
+            'voters'                => ['42', '99'],
+            'isActive'              => true,
+            'owner'                 => 'hashed-secret',
+            'allowSelfRegistration' => true,
+            'selfRegistrationCode'  => 'code-xyz',
         ];
 
         $challenge = Challenge::fromArray($data);
@@ -164,13 +134,11 @@ class ChallengeTest extends TestCase
         $this->assertSame(['42', '99'], $challenge->getVoters());
         $this->assertTrue($challenge->allowsSelfRegistration());
         $this->assertSame('code-xyz', $challenge->getSelfRegistrationCode());
-        $this->assertSame('tok-abc', $challenge->getAdminToken());
     }
 
     public function test_toCouchDocument_roundtrip_via_fromCouchDocument(): void
     {
         $challenge = Challenge::create('rally', 'secret');
-        $challenge->generateAdminToken();
 
         $doc = json_decode(json_encode($challenge->toCouchDocument()), true);
         $doc['_rev'] = '1-abc';

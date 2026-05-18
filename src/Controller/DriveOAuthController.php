@@ -59,7 +59,7 @@ class DriveOAuthController extends AbstractController
         $storedNonce = $request->getSession()->get($sessionKey);
         $request->getSession()->remove($sessionKey);
 
-        if ($storedNonce !== $nonce) {
+        if (!$storedNonce || !hash_equals($storedNonce, $nonce)) {
             return new Response('Invalid nonce', Response::HTTP_BAD_REQUEST);
         }
 

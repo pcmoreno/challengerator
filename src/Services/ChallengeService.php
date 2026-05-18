@@ -3,11 +3,11 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Entity\Auth\Role;
 use App\Entity\Challenge\Car;
 use App\Entity\Challenge\Challenge;
 use App\Entity\Challenge\Outcome;
 use App\Entity\Challenge\Voter;
+use App\Exception\BusinessLogicException;
 use App\Repository\CarRepositoryInterface;
 use App\Repository\ChallengeRepositoryInterface;
 use App\Repository\InviteCodeRepositoryInterface;
@@ -132,16 +132,13 @@ class ChallengeService
             return [[], []];
         }
 
-        $selectedCarIds = [];
-        while (count($selectedCarIds) < 2) {
-            $random = rand(0, count($carsToVote) - 1);
-            $selectedCarIds[] = $carsToVote[$random];
-            array_splice($carsToVote, $random, 1);
-        }
+        $selectedIndices = array_rand($carsToVote, 2);
+        $selectedCarIds = [$carsToVote[$selectedIndices[0]], $carsToVote[$selectedIndices[1]]];
+        $remaining = array_values(array_diff_key($carsToVote, array_flip($selectedIndices)));
 
         $selectedCars = $this->carRepository->findMany($selectedCarIds);
 
-        return [$selectedCars, $carsToVote];
+        return [$selectedCars, $remaining];
     }
 
     public function listChallenges(): array
@@ -153,6 +150,10 @@ class ChallengeService
     {
         $outcome = Outcome::tryFrom($result) ?? throw new \InvalidArgumentException('Wrong Result Chosen: ' . $result);
         $carIds = explode('XXX', $cars);
+
+        if (count($carIds) !== 2 || $carIds[0] === $carIds[1]) {
+            throw new BusinessLogicException('Pair must contain two distinct cars');
+        }
 
         $voter = $this->voterRepository->find($userId);
         $unvotedCars = $voter->getUnvotedCarsForChallenge($challengeId);
@@ -185,53 +186,10 @@ class ChallengeService
         return $this->getTwoCarsToBeVotedByUser($challengeId, $userId);
     }
 
-    public function verifyLogin(\stdClass $login, string $challengeName): array
-    {
-        $this->loginsLogger->notice($login->user . " is trying to login to " . $challengeName);
-
-        $token = null;
-        $challenge = null;
-
-        if ($challengeName !== 'reset password') {
-            $challenge = $this->challengeRepository->find($challengeName);
-            if ($login->user === Role::ADMIN && $login->pass === $challenge->getOwner()) {
-                $token = $this->doLoginForAdmin($challenge);
-                $this->loginsLogger->notice(Role::ADMIN);
-                return [Role::ADMIN, null, $token];
-            }
-        }
-
-        $voter = $this->voterRepository->findByName($login->user);
-        if ($voter !== null && password_verify($login->pass, $voter->getAuthKey())) {
-            $token = $this->doLoginForUser($voter);
-            if ($challenge !== null && $challenge->hasVoter($voter->getId())) {
-                $this->loginsLogger->notice(Role::VOTER);
-                return [Role::VOTER, $voter->getId(), $token];
-            }
-            $this->loginsLogger->notice(Role::VOTER_OF_A_DIFFERENT_CHALLENGE);
-            return [Role::VOTER_OF_A_DIFFERENT_CHALLENGE, $voter->getId(), $token];
-        }
-
-        $this->loginsLogger->notice('failed');
-        return [Role::NONE, null, $token];
-    }
-
     public function verifyAdmin(string $challengeName, string $adminpass): bool
     {
         $challenge = $this->challengeRepository->find($challengeName);
         return password_verify($adminpass, $challenge->getOwner());
-    }
-
-    public function isVoterTokenValid(string $tokenShown, string $voterId): bool
-    {
-        $voter = $this->voterRepository->find($voterId);
-        return $voter !== null && $voter->getToken() !== null && $voter->getToken() === $tokenShown;
-    }
-
-    public function isAdminTokenValid(string $tokenShown, string $challengeName): bool
-    {
-        $challenge = $this->challengeRepository->find($challengeName);
-        return $challenge->getAdminToken() !== null && $challenge->getAdminToken() === $tokenShown;
     }
 
     public function verifyVoterCredentials(string $username, string $password): bool
@@ -297,20 +255,6 @@ class ChallengeService
         $challenge = $this->challengeRepository->find($challengeName);
         $challenge->addVoterToChallenge($persisted);
         $this->challengeRepository->save($challenge);
-    }
-
-    private function doLoginForUser(Voter $voter): string
-    {
-        $voter->generateToken();
-        $this->voterRepository->save($voter);
-        return $voter->getToken();
-    }
-
-    private function doLoginForAdmin(Challenge $challenge): string
-    {
-        $challenge->generateAdminToken();
-        $this->challengeRepository->save($challenge);
-        return $challenge->getAdminToken();
     }
 
 }

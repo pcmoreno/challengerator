@@ -8,30 +8,18 @@ use PHPUnit\Framework\TestCase;
 
 class VoterTest extends TestCase
 {
-    public function test_token_expiration_should_be_20_minutes_in_the_future(): void
-    {
-        $voter = Voter::createForChallenge('testVoter', 'testPass', 'testChallenge');
-        $this->assertNull($voter->getTokenExpirationDate());
-        $this->assertNull($voter->getToken());
-
-        $voter->generateToken();
-        $this->assertNotNull($voter->getToken());
-        $this->assertTrue((new \DateTime())->getTimestamp() < $voter->getTokenExpirationDate());
-        $this->assertEquals(1200, (new \DateTime())->setTimestamp($voter->getTokenExpirationDate())->getTimestamp() - (new \DateTime())->getTimestamp());
-    }
-
     public function test_addCarsToSelf_throws_if_not_registered_for_challenge(): void
     {
         $voter = Voter::createForChallenge('Paulo', 'pass', 'challenge-A');
 
         $this->expectException(\Exception::class);
-        $voter->addCarsToSelf(['car1', 'car2'], 'challenge-B', true);
+        $voter->addCarsToSelf(['car1', 'car2'], 'challenge-B');
     }
 
     public function test_addCarsToSelf_sets_cars_for_registered_challenge(): void
     {
         $voter = Voter::createForChallenge('Paulo', 'pass', 'challenge-A');
-        $voter->addCarsToSelf(['car1', 'car2'], 'challenge-A', true);
+        $voter->addCarsToSelf(['car1', 'car2'], 'challenge-A');
 
         $this->assertSame(['car1', 'car2'], $voter->getUnvotedCarsForChallenge('challenge-A'));
     }
@@ -39,7 +27,7 @@ class VoterTest extends TestCase
     public function test_setCarsToVotedForChallenge_moves_cars(): void
     {
         $voter = Voter::createForChallenge('Paulo', 'pass', 'challenge-A');
-        $voter->addCarsToSelf(['car1', 'car2', 'car3'], 'challenge-A', true);
+        $voter->addCarsToSelf(['car1', 'car2', 'car3'], 'challenge-A');
 
         $voter->setCarsToVotedForChallenge(['car1', 'car2'], 'challenge-A');
 
@@ -59,7 +47,7 @@ class VoterTest extends TestCase
     public function test_countCarsLeftToCompare_reflects_queue(): void
     {
         $voter = Voter::createForChallenge('Paulo', 'pass', 'rally');
-        $voter->addCarsToSelf(['car1', 'car2', 'car3'], 'rally', true);
+        $voter->addCarsToSelf(['car1', 'car2', 'car3'], 'rally');
 
         $this->assertSame(3, $voter->countCarsLeftToCompareForChallenge('rally'));
 
