@@ -54,6 +54,7 @@ class DoctrineTransaction implements TransactionInterface
                 if ($conn->isTransactionActive()) {
                     $conn->rollBack();
                 }
+                $this->registry->resetManager();
                 throw $e;
             }
         }

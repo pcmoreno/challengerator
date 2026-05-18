@@ -40,11 +40,19 @@ class DoctrineEmailVerificationRepository implements EmailVerificationRepository
     public function delete(EmailVerification $verification): void
     {
         $em = $this->em();
-        // After a manager reset (e.g. following a rolled-back transaction) the entity
-        // may be detached from the fresh EM — refetch it before removing.
-        $managed = $em->contains($verification)
-            ? $verification
-            : $em->find(EmailVerification::class, $verification->getId());
+        if ($em->contains($verification)) {
+            $em->remove($verification);
+            $em->flush();
+            return;
+        }
+        // After a manager reset the entity may be detached — refetch by ID.
+        // Guard against un-persisted entities whose $id is uninitialized.
+        try {
+            $id = $verification->getId();
+        } catch (\Error) {
+            return;
+        }
+        $managed = $em->find(EmailVerification::class, $id);
         if ($managed === null) {
             return;
         }
