@@ -136,6 +136,10 @@ class ChallengeController extends AbstractController
             return new JsonResponse('Unauthorized', Response::HTTP_FORBIDDEN);
         }
 
+        if (!$this->isCsrfTokenValid('delete_car_' . $carId, $request->request->get('_token'))) {
+            return new JsonResponse('Invalid CSRF token', Response::HTTP_FORBIDDEN);
+        }
+
         try {
             $this->challengeService->deleteCarFromChallenge($challengeName, $carId);
         } catch (\Exception $e) {
@@ -191,6 +195,11 @@ class ChallengeController extends AbstractController
             return $this->redirectToRoute('loginMenu', ['challengeName' => $challengeName]);
         }
 
+        if (!$this->isCsrfTokenValid('start_challenge_' . $challengeName, $request->request->get('_token'))) {
+            $this->addFlash('error', 'Invalid CSRF token.');
+            return $this->redirectToRoute('addVoterToChallengeFormPage', ['challengeName' => $challengeName]);
+        }
+
         try {
             $this->challengeService->initializeChallenge($challengeName);
         } catch (\Exception $e) {
@@ -205,6 +214,10 @@ class ChallengeController extends AbstractController
             return new JsonResponse('Unauthorized', Response::HTTP_FORBIDDEN);
         }
 
+        if (!$this->isCsrfTokenValid('toggle_self_reg_' . $challengeName, $request->request->get('_token'))) {
+            return new JsonResponse('Invalid CSRF token', Response::HTTP_FORBIDDEN);
+        }
+
         $code = $this->challengeService->toggleSelfRegistrationForChallenge($challengeName);
         if ($code) {
             return $this->redirectToRoute('addVoterToChallengeFormPage', ['challengeName' => $challengeName]);
@@ -215,15 +228,20 @@ class ChallengeController extends AbstractController
     public function resetVotesForVoterOnChallenge(Request $request): Response
     {
         $challengeName = $request->get('challengeName');
+        $voterId = $request->get('voterId');
 
         if (!$this->isAdminForChallenge($request, $challengeName)) {
             return new JsonResponse('unauthorized', Response::HTTP_FORBIDDEN);
         }
 
+        if (!$this->isCsrfTokenValid('reset_voter_' . $voterId, $request->request->get('_token'))) {
+            return new JsonResponse('Invalid CSRF token', Response::HTTP_FORBIDDEN);
+        }
+
         try {
             $this->challengeService->resetRoundOfVoteForUserOfChallenge(
                 $challengeName,
-                $request->get('voterId')
+                $voterId
             );
         } catch (\Exception $e) {
             $this->addFlash('error', $e->getMessage());

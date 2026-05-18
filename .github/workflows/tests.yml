@@ -1,0 +1,47 @@
+name: Tests
+
+on:
+  push:
+
+jobs:
+  phpunit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create .env
+        run: |
+          cat > .env <<'EOF'
+          APP_ENV=dev
+          APP_SECRET=ci_secret
+          DATABASE_URL=mysql://challengerator:challengerator@challengeator-mariadb:3306/challengerator?serverVersion=10.11
+          COUCHDB_URL=http://admin:admin@challengeator-couch:5984
+          MAILER_DSN=null://null
+          LOCK_DSN=flock
+          GOOGLE_CLIENT_ID=
+          GOOGLE_CLIENT_SECRET=
+          EOF
+
+      - name: Prepare host directories for volume mounts
+        run: mkdir -p ~/.composer/cache ~/.ssh
+
+      - name: Start services
+        run: docker compose up -d challengeator-mariadb challengeator-app
+
+      - name: Wait for MariaDB
+        run: |
+          timeout 60 bash -c \
+            'until docker compose exec -T challengeator-mariadb mysqladmin ping -h localhost -u root --password=root --silent; do sleep 2; done'
+
+      - name: Install dependencies
+        run: docker compose exec -T challengeator-app composer install --no-interaction --prefer-dist
+
+      - name: Run migrations
+        run: docker compose exec -T challengeator-app php bin/console doctrine:migrations:migrate --no-interaction
+
+      - name: Run unit tests
+        run: docker compose exec -T challengeator-app php vendor/bin/phpunit --no-coverage --testsuite unit
+
+      - name: Run integration tests
+        run: docker compose exec -T challengeator-app php vendor/bin/phpunit --no-coverage --testsuite integration

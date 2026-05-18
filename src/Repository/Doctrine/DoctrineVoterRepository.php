@@ -11,14 +11,20 @@ use App\Entity\Doctrine\DbChallenge;
 use App\Entity\Doctrine\DbVoterCarQueue;
 use App\Repository\VoterRepositoryInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ManagerRegistry;
 
 class DoctrineVoterRepository implements VoterRepositoryInterface
 {
-    public function __construct(private EntityManagerInterface $em) {}
+    public function __construct(private readonly ManagerRegistry $registry) {}
+
+    private function em(): EntityManagerInterface
+    {
+        return $this->registry->getManager();
+    }
 
     public function find(string $id): ?Voter
     {
-        $user = $this->em->find(User::class, (int)$id);
+        $user = $this->em()->find(User::class, (int)$id);
         return $user ? $this->toDomain($user) : null;
     }
 
@@ -28,7 +34,7 @@ class DoctrineVoterRepository implements VoterRepositoryInterface
             return [];
         }
 
-        $users = $this->em->getRepository(User::class)
+        $users = $this->em()->getRepository(User::class)
             ->createQueryBuilder('u')
             ->where('u.id IN (:ids)')
             ->andWhere("u.roles NOT LIKE :superAdmin")
@@ -47,13 +53,13 @@ class DoctrineVoterRepository implements VoterRepositoryInterface
 
     public function findByName(string $name): ?Voter
     {
-        $user = $this->em->getRepository(User::class)->findOneBy(['username' => $name]);
+        $user = $this->em()->getRepository(User::class)->findOneBy(['username' => $name]);
         return $user ? $this->toDomain($user) : null;
     }
 
     public function hasVoterFromIpForChallenge(string $ip, string $challengeName): bool
     {
-        $count = $this->em->createQueryBuilder()
+        $count = $this->em()->createQueryBuilder()
             ->select('COUNT(u.id)')
             ->from(DbChallenge::class, 'c')
             ->join('c.voters', 'u')
@@ -70,10 +76,10 @@ class DoctrineVoterRepository implements VoterRepositoryInterface
     public function save(Voter $voter): void
     {
         $rawId = $voter->getId();
-        $user  = ctype_digit($rawId) ? $this->em->find(User::class, (int)$rawId) : null;
+        $user  = ctype_digit($rawId) ? $this->em()->find(User::class, (int)$rawId) : null;
 
         if ($user === null) {
-            $user = $this->em->getRepository(User::class)->findOneBy(['username' => $voter->getName()]);
+            $user = $this->em()->getRepository(User::class)->findOneBy(['username' => $voter->getName()]);
             if ($user !== null && in_array('ROLE_SUPER_ADMIN', $user->getRoles(), true)) {
                 throw new \DomainException('Cannot add a super admin as a voter.');
             }
@@ -83,27 +89,31 @@ class DoctrineVoterRepository implements VoterRepositoryInterface
             $user = new User($voter->getName());
         }
 
-        $user->setPassword($voter->getAuthKey());
-        $user->setIpAddress($voter->getIpAddress());
-        $this->em->persist($user);
-        $this->em->flush();
+        if ($user->getPassword() !== $voter->getAuthKey()) {
+            $user->setPassword($voter->getAuthKey());
+        }
+        if ($user->getIpAddress() !== $voter->getIpAddress()) {
+            $user->setIpAddress($voter->getIpAddress());
+        }
+        $this->em()->persist($user);
+        $this->em()->flush();
 
         $this->syncQueue($user, $voter);
-        $this->em->flush();
+        $this->em()->flush();
     }
 
     public function delete(string $id): void
     {
-        $user = $this->em->find(User::class, (int)$id);
+        $user = $this->em()->find(User::class, (int)$id);
         if ($user !== null) {
-            $this->em->remove($user);
-            $this->em->flush();
+            $this->em()->remove($user);
+            $this->em()->flush();
         }
     }
 
     private function toDomain(User $user): Voter
     {
-        $queueRows = $this->em->getRepository(DbVoterCarQueue::class)->findBy(['user' => $user->getId()]);
+        $queueRows = $this->em()->getRepository(DbVoterCarQueue::class)->findBy(['user' => $user->getId()]);
 
         $grouped = [];
         foreach ($queueRows as $row) {
@@ -125,7 +135,7 @@ class DoctrineVoterRepository implements VoterRepositoryInterface
         }
 
         // registered challenges with no queue entries still need to be present
-        $registeredChallenges = $this->em->createQueryBuilder()
+        $registeredChallenges = $this->em()->createQueryBuilder()
             ->select('c')
             ->from(DbChallenge::class, 'c')
             ->join('c.voters', 'u')
@@ -151,11 +161,11 @@ class DoctrineVoterRepository implements VoterRepositoryInterface
 
     private function syncQueue(User $user, Voter $voter): void
     {
-        $existing = $this->em->getRepository(DbVoterCarQueue::class)->findBy(['user' => $user->getId()]);
+        $existing = $this->em()->getRepository(DbVoterCarQueue::class)->findBy(['user' => $user->getId()]);
         foreach ($existing as $row) {
-            $this->em->remove($row);
+            $this->em()->remove($row);
         }
-        $this->em->flush();
+        $this->em()->flush();
 
         $rounds = $voter->getChallengeRounds();
 
@@ -172,12 +182,12 @@ class DoctrineVoterRepository implements VoterRepositoryInterface
         }
 
         $carMap = [];
-        foreach ($this->em->getRepository(DbCar::class)->findBy(['id' => $allCarIds]) as $dbCar) {
+        foreach ($this->em()->getRepository(DbCar::class)->findBy(['id' => $allCarIds]) as $dbCar) {
             $carMap[$dbCar->getId()] = $dbCar;
         }
 
         $challengeMap = [];
-        foreach ($this->em->getRepository(DbChallenge::class)->findBy(['name' => $challengeNames]) as $dbChallenge) {
+        foreach ($this->em()->getRepository(DbChallenge::class)->findBy(['name' => $challengeNames]) as $dbChallenge) {
             $challengeMap[$dbChallenge->getName()] = $dbChallenge;
         }
 
@@ -190,7 +200,7 @@ class DoctrineVoterRepository implements VoterRepositoryInterface
             foreach ($queues['carsToVote'] ?? [] as $carId) {
                 $dbCar = $carMap[$carId] ?? null;
                 if ($dbCar !== null) {
-                    $this->em->persist(new DbVoterCarQueue($user, $dbChallenge, $dbCar));
+                    $this->em()->persist(new DbVoterCarQueue($user, $dbChallenge, $dbCar));
                 }
             }
 
@@ -199,7 +209,7 @@ class DoctrineVoterRepository implements VoterRepositoryInterface
                 if ($dbCar !== null) {
                     $row = new DbVoterCarQueue($user, $dbChallenge, $dbCar);
                     $row->markVoted();
-                    $this->em->persist($row);
+                    $this->em()->persist($row);
                 }
             }
         }

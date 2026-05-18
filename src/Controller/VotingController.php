@@ -43,7 +43,8 @@ class VotingController extends AbstractController
 
         try {
             [$carsToVote, $carsNotVoted] = $this->challengeService->voteOnCars($cars, $result, $challengeName, $userId);
-        } catch (\InvalidArgumentException|\DomainException) {
+        } catch (\InvalidArgumentException|\DomainException $e) {
+            $this->addFlash('warning', $e->getMessage());
             return $this->redirectToRoute('voteDashboardForUser', ['challengeName' => $challengeName]);
         }
 

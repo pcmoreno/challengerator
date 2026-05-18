@@ -6,10 +6,15 @@ namespace App\Tests\Services;
 use App\Entity\Challenge\Car;
 use App\Entity\Challenge\Challenge;
 use App\Entity\Challenge\Voter;
+use App\Exception\BusinessLogicException;
+use App\Exception\ConcurrentModificationException;
+use App\Tests\Repository\InMemory\FlakyTransaction;
 use App\Tests\Repository\InMemory\InMemoryCarRepository;
 use App\Tests\Repository\InMemory\InMemoryChallengeRepository;
 use App\Tests\Repository\InMemory\InMemoryInviteCodeRepository;
+use App\Tests\Repository\InMemory\InMemoryTransaction;
 use App\Tests\Repository\InMemory\InMemoryVoterRepository;
+use App\Repository\TransactionInterface;
 use App\Services\ChallengeService;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -33,6 +38,7 @@ class ChallengeServiceTest extends TestCase
             $this->cars,
             $this->voters,
             $this->codes,
+            new InMemoryTransaction(),
             new NullLogger(),
             new NullLogger(),
         );
@@ -386,5 +392,49 @@ class ChallengeServiceTest extends TestCase
         $code = $this->service->toggleSelfRegistrationForChallenge('rally');
         $this->assertNotEmpty($code);
         $this->assertSame($code, $this->service->getSelfRegistrationCodeForChallenge('rally'));
+    }
+
+    // --- voteOnCars retry ---
+
+    private function makeServiceWith(TransactionInterface $tx): ChallengeService
+    {
+        return new ChallengeService(
+            $this->challenges,
+            $this->cars,
+            $this->voters,
+            $this->codes,
+            $tx,
+            new NullLogger(),
+            new NullLogger(),
+        );
+    }
+
+    public function test_voteOnCars_throws_ConcurrentModificationException_when_all_retries_exhausted(): void
+    {
+        $this->makeChallenge();
+        $voter = $this->makeVoter();
+        $carA  = $this->makeCar();
+        $carB  = $this->makeCar();
+        $voter->addCarsToSelf([$carA->getId(), $carB->getId()], 'rally');
+        $this->voters->save($voter);
+
+        $this->expectException(ConcurrentModificationException::class);
+        $this->makeServiceWith(new FlakyTransaction(2))
+            ->voteOnCars($carA->getId() . 'XXX' . $carB->getId(), 'left', 'rally', $voter->getId());
+    }
+
+    public function test_voteOnCars_succeeds_with_normal_transaction(): void
+    {
+        $this->makeChallenge();
+        $voter = $this->makeVoter();
+        $carA  = $this->makeCar();
+        $carB  = $this->makeCar();
+        $voter->addCarsToSelf([$carA->getId(), $carB->getId()], 'rally');
+        $this->voters->save($voter);
+
+        [$nextCars] = $this->makeServiceWith(new InMemoryTransaction())
+            ->voteOnCars($carA->getId() . 'XXX' . $carB->getId(), 'left', 'rally', $voter->getId());
+
+        $this->assertEmpty($nextCars);
     }
 }

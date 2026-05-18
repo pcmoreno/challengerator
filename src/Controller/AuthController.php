@@ -19,6 +19,7 @@ class AuthController extends AbstractController
     public function __construct(
         private ChallengeService $challengeService,
         private RateLimiterFactory $selfRegistrationLimiter,
+        private RateLimiterFactory $changePasswordLimiter,
     ) {}
 
     public function loginFormPage(Request $request, string $challengeName): Response
@@ -129,6 +130,11 @@ class AuthController extends AbstractController
 
     public function changePasswordForVoter(Request $request): Response
     {
+        $limiter = $this->changePasswordLimiter->create($request->getClientIp());
+        if (!$limiter->consume()->isAccepted()) {
+            return new Response('Too many password change attempts. Please try again later.', Response::HTTP_TOO_MANY_REQUESTS);
+        }
+
         $message = '';
         $changePass = new \stdClass();
         $changePass->username = '';

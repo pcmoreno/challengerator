@@ -21,6 +21,7 @@
             </span>
         </h3>
         <form method="post" action="{{ path('toggleSelfRegistrationForChallenge', {'challengeName': challengeName}) }}" class="inline">
+            <input type="hidden" name="_token" value="{{ csrf_token('toggle_self_reg_' ~ challengeName) }}">
             <button type="submit" class="text-link hover:underline text-sm bg-transparent border-0 p-0 cursor-pointer">[toggle on/off]</button>
         </form>
         {% if selfRegistrationCode is defined and selfRegistration == 'active' %}
@@ -54,6 +55,7 @@
                             <form method="post" action="{{ path('resetVotesForVoterOnChallenge') }}">
                                 <input type="hidden" name="challengeName" value="{{ challengeName }}">
                                 <input type="hidden" name="voterId" value="{{ voter.id }}">
+                                <input type="hidden" name="_token" value="{{ csrf_token('reset_voter_' ~ voter.id) }}">
                                 <button type="submit" class="text-link hover:underline text-xs bg-transparent border-0 p-0 cursor-pointer">
                                     give more votes
                                 </button>
@@ -72,6 +74,7 @@
     <div class="text-center">
         <form method="post" action="{{ path('startChallenge', {'challengeName': challengeName}) }}"
               data-turbo-confirm="Everyone will be able to vote again. Continue?">
+            <input type="hidden" name="_token" value="{{ csrf_token('start_challenge_' ~ challengeName) }}">
             <button type="submit"
                     class="btn-primary font-bold py-2 px-8 rounded">
                 Open Challenge

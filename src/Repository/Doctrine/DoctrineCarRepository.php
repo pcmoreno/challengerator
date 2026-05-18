@@ -9,14 +9,20 @@ use App\Entity\Doctrine\DbCar;
 use App\Entity\Doctrine\DbChallenge;
 use App\Repository\CarRepositoryInterface;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\Persistence\ManagerRegistry;
 
 class DoctrineCarRepository implements CarRepositoryInterface
 {
-    public function __construct(private EntityManagerInterface $em) {}
+    public function __construct(private readonly ManagerRegistry $registry) {}
+
+    private function em(): EntityManagerInterface
+    {
+        return $this->registry->getManager();
+    }
 
     public function find(string $id): Car
     {
-        $dbCar = $this->em->find(DbCar::class, $id);
+        $dbCar = $this->em()->find(DbCar::class, $id);
         if ($dbCar === null) {
             throw new \Exception("Car not found: $id");
         }
@@ -29,7 +35,7 @@ class DoctrineCarRepository implements CarRepositoryInterface
             return [];
         }
 
-        $dbCars = $this->em->getRepository(DbCar::class)
+        $dbCars = $this->em()->getRepository(DbCar::class)
             ->createQueryBuilder('c')
             ->where('c.id IN (:ids)')
             ->setParameter('ids', $ids)
@@ -47,10 +53,10 @@ class DoctrineCarRepository implements CarRepositoryInterface
 
     public function save(Car $car): void
     {
-        $dbCar = $this->em->find(DbCar::class, $car->getId());
+        $dbCar = $this->em()->find(DbCar::class, $car->getId());
 
         if ($dbCar === null) {
-            $dbChallenge = $this->em->getRepository(DbChallenge::class)
+            $dbChallenge = $this->em()->getRepository(DbChallenge::class)
                 ->findOneBy(['name' => $car->getChallengeId()]);
 
             if ($dbChallenge === null) {
@@ -61,16 +67,16 @@ class DoctrineCarRepository implements CarRepositoryInterface
         }
 
         $dbCar->setRating($car->getRating()->getRating());
-        $this->em->persist($dbCar);
-        $this->em->flush();
+        $this->em()->persist($dbCar);
+        $this->em()->flush();
     }
 
     public function delete(string $id): void
     {
-        $dbCar = $this->em->find(DbCar::class, $id);
+        $dbCar = $this->em()->find(DbCar::class, $id);
         if ($dbCar !== null) {
-            $this->em->remove($dbCar);
-            $this->em->flush();
+            $this->em()->remove($dbCar);
+            $this->em()->flush();
         }
     }
 
