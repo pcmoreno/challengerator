@@ -7,12 +7,14 @@ use App\Entity\Challenge\Car;
 use App\Entity\Challenge\Challenge;
 use App\Entity\Challenge\Voter;
 use App\Exception\BusinessLogicException;
+use App\Exception\ConcurrentModificationException;
 use App\Tests\Repository\InMemory\FlakyTransaction;
 use App\Tests\Repository\InMemory\InMemoryCarRepository;
 use App\Tests\Repository\InMemory\InMemoryChallengeRepository;
 use App\Tests\Repository\InMemory\InMemoryInviteCodeRepository;
 use App\Tests\Repository\InMemory\InMemoryTransaction;
 use App\Tests\Repository\InMemory\InMemoryVoterRepository;
+use App\Repository\TransactionInterface;
 use App\Services\ChallengeService;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
@@ -394,26 +396,46 @@ class ChallengeServiceTest extends TestCase
 
     // --- voteOnCars retry ---
 
-    public function test_voteOnCars_throws_BusinessLogicException_when_all_retries_exhausted(): void
+    private function makeServiceWith(TransactionInterface $tx): ChallengeService
     {
-        $flakyService = new ChallengeService(
+        return new ChallengeService(
             $this->challenges,
             $this->cars,
             $this->voters,
             $this->codes,
-            new FlakyTransaction(3),
+            $tx,
             new NullLogger(),
             new NullLogger(),
         );
+    }
 
+    public function test_voteOnCars_throws_ConcurrentModificationException_when_all_retries_exhausted(): void
+    {
         $this->makeChallenge();
         $voter = $this->makeVoter();
-        $carA  = $this->makeCar('car-a');
-        $carB  = $this->makeCar('car-b');
+        $carA  = $this->makeCar();
+        $carB  = $this->makeCar();
         $voter->addCarsToSelf([$carA->getId(), $carB->getId()], 'rally');
         $this->voters->save($voter);
 
-        $this->expectException(BusinessLogicException::class);
-        $flakyService->voteOnCars($carA->getId() . 'XXX' . $carB->getId(), 'left', 'rally', $voter->getId());
+        $this->expectException(ConcurrentModificationException::class);
+        $this->makeServiceWith(new FlakyTransaction(2))
+            ->voteOnCars($carA->getId() . 'XXX' . $carB->getId(), 'left', 'rally', $voter->getId());
+    }
+
+    public function test_voteOnCars_succeeds_when_transactionalWithRetry_succeeds_after_conflict(): void
+    {
+        $this->makeChallenge();
+        $voter = $this->makeVoter();
+        $carA  = $this->makeCar();
+        $carB  = $this->makeCar();
+        $voter->addCarsToSelf([$carA->getId(), $carB->getId()], 'rally');
+        $this->voters->save($voter);
+
+        // FlakyTransaction(1) simulates one internal conflict that was resolved before returning
+        [$nextCars] = $this->makeServiceWith(new FlakyTransaction(1))
+            ->voteOnCars($carA->getId() . 'XXX' . $carB->getId(), 'left', 'rally', $voter->getId());
+
+        $this->assertEmpty($nextCars);
     }
 }
