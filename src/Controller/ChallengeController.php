@@ -7,7 +7,7 @@ use App\Entity\Challenge\Car;
 use App\Entity\Doctrine\DbChallenge;
 use App\Entity\StorageType;
 use App\Repository\StorageResourceRepositoryInterface;
-use App\Service\InviteService;
+use App\Services\InviteService;
 use App\Form\AdminDeleteVoterType;
 use App\Form\CarType;
 use App\Form\CreateChallengeType;

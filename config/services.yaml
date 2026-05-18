@@ -77,6 +77,12 @@ services:
     App\Repository\StorageResourceRepositoryInterface:
         class: App\Repository\Doctrine\DoctrineStorageResourceRepository
 
+    App\Repository\UserRepositoryInterface:
+        class: App\Repository\Doctrine\DoctrineUserRepository
+
+    App\Repository\EmailVerificationRepositoryInterface:
+        class: App\Repository\Doctrine\DoctrineEmailVerificationRepository
+
     App\Services\GoogleDriveService:
         arguments:
             $clientId: '%env(GOOGLE_CLIENT_ID)%'
