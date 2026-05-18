@@ -83,8 +83,12 @@ class DoctrineVoterRepository implements VoterRepositoryInterface
             $user = new User($voter->getName());
         }
 
-        $user->setPassword($voter->getAuthKey());
-        $user->setIpAddress($voter->getIpAddress());
+        if ($user->getPassword() !== $voter->getAuthKey()) {
+            $user->setPassword($voter->getAuthKey());
+        }
+        if ($user->getIpAddress() !== $voter->getIpAddress()) {
+            $user->setIpAddress($voter->getIpAddress());
+        }
         $this->em->persist($user);
         $this->em->flush();
 

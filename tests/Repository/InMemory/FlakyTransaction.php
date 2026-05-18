@@ -3,8 +3,8 @@ declare(strict_types=1);
 
 namespace App\Tests\Repository\InMemory;
 
+use App\Exception\ConcurrentModificationException;
 use App\Repository\TransactionInterface;
-use Doctrine\ORM\OptimisticLockException;
 
 class FlakyTransaction implements TransactionInterface
 {
@@ -24,7 +24,9 @@ class FlakyTransaction implements TransactionInterface
     {
         if ($this->failsRemaining > 0) {
             $this->failsRemaining--;
-            throw OptimisticLockException::lockFailed(new \stdClass());
+            if ($this->failsRemaining > 0) {
+                throw new ConcurrentModificationException('simulated conflict');
+            }
         }
         return $fn();
     }

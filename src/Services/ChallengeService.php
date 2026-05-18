@@ -13,7 +13,6 @@ use App\Repository\ChallengeRepositoryInterface;
 use App\Repository\InviteCodeRepositoryInterface;
 use App\Repository\TransactionInterface;
 use App\Repository\VoterRepositoryInterface;
-use Doctrine\ORM\OptimisticLockException;
 use Psr\Log\LoggerInterface;
 
 class ChallengeService
@@ -158,8 +157,8 @@ class ChallengeService
             throw new BusinessLogicException('Pair must contain two distinct cars');
         }
 
-        try {
-            $this->transaction->transactionalWithRetry(function () use ($carIds, $challengeId, $userId, $outcome, $result): void {
+        [$voterName, $carAName, $carBName] = $this->transaction->transactionalWithRetry(
+            function () use ($carIds, $challengeId, $userId, $outcome): array {
                 $voter = $this->voterRepository->find($userId);
                 $unvotedCars = $voter->getUnvotedCarsForChallenge($challengeId);
 
@@ -185,12 +184,12 @@ class ChallengeService
                 $this->carRepository->save($carB);
                 $this->voterRepository->save($voter);
 
-                $this->votesLogger->notice("Voting received on Challenge: " . $challengeId);
-                $this->votesLogger->notice($voter->getName() . " voted -- " . $result . " -- between " . $carA->getName() . " and " . $carB->getName());
-            });
-        } catch (OptimisticLockException $e) {
-            throw new BusinessLogicException('Vote conflict after retries; please try again', 0, $e);
-        }
+                return [$voter->getName(), $carA->getName(), $carB->getName()];
+            }
+        );
+
+        $this->votesLogger->notice("Voting received on Challenge: " . $challengeId);
+        $this->votesLogger->notice($voterName . " voted -- " . $result . " -- between " . $carAName . " and " . $carBName);
 
         return $this->getTwoCarsToBeVotedByUser($challengeId, $userId);
     }
