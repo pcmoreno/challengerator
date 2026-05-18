@@ -5,34 +5,33 @@ namespace App\Repository\Doctrine;
 
 use App\Exception\ConcurrentModificationException;
 use App\Repository\TransactionInterface;
+use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\OptimisticLockException;
-use Doctrine\Persistence\ManagerRegistry;
 
 class DoctrineTransaction implements TransactionInterface
 {
-    public function __construct(private readonly ManagerRegistry $registry) {}
+    public function __construct(private readonly EntityManagerInterface $em) {}
 
     public function transactional(callable $fn): mixed
     {
-        return $this->registry->getManager()->wrapInTransaction($fn);
+        return $this->em->wrapInTransaction($fn);
     }
 
     public function transactionalWithRetry(callable $fn, int $maxAttempts = 3): mixed
     {
         $last = null;
+        $conn = $this->em->getConnection();
 
         for ($i = 0; $i < $maxAttempts; $i++) {
-            $em   = $this->registry->getManager();
-            $conn = $em->getConnection();
             $conn->beginTransaction();
             try {
                 $result = $fn();
-                $em->flush();
+                $this->em->flush();
                 $conn->commit();
                 return $result;
             } catch (OptimisticLockException $e) {
                 $conn->rollBack();
-                $this->registry->resetManager();
+                $this->em->clear();
                 $last = $e;
             } catch (\Throwable $e) {
                 $conn->rollBack();

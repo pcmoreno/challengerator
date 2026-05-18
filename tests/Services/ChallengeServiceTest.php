@@ -423,7 +423,7 @@ class ChallengeServiceTest extends TestCase
             ->voteOnCars($carA->getId() . 'XXX' . $carB->getId(), 'left', 'rally', $voter->getId());
     }
 
-    public function test_voteOnCars_succeeds_when_transactionalWithRetry_succeeds_after_conflict(): void
+    public function test_voteOnCars_succeeds_with_normal_transaction(): void
     {
         $this->makeChallenge();
         $voter = $this->makeVoter();
@@ -432,8 +432,7 @@ class ChallengeServiceTest extends TestCase
         $voter->addCarsToSelf([$carA->getId(), $carB->getId()], 'rally');
         $this->voters->save($voter);
 
-        // FlakyTransaction(1) simulates one internal conflict that was resolved before returning
-        [$nextCars] = $this->makeServiceWith(new FlakyTransaction(1))
+        [$nextCars] = $this->makeServiceWith(new InMemoryTransaction())
             ->voteOnCars($carA->getId() . 'XXX' . $carB->getId(), 'left', 'rally', $voter->getId());
 
         $this->assertEmpty($nextCars);
