@@ -1,13 +1,13 @@
 <?php
 declare(strict_types=1);
 
-namespace App\Service;
+namespace App\Services;
 
 use App\Entity\Auth\EmailVerification;
 use App\Entity\Auth\User;
-use App\Entity\Doctrine\DbChallenge;
 use App\Exception\BusinessLogicException;
-use Doctrine\ORM\EntityManagerInterface;
+use App\Repository\EmailVerificationRepositoryInterface;
+use App\Repository\UserRepositoryInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
@@ -17,7 +17,8 @@ use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 class InviteService
 {
     public function __construct(
-        private EntityManagerInterface $em,
+        private UserRepositoryInterface $userRepository,
+        private EmailVerificationRepositoryInterface $verificationRepository,
         private MailerInterface $mailer,
         private UrlGeneratorInterface $urlGenerator,
         private UserPasswordHasherInterface $passwordHasher,
@@ -25,22 +26,13 @@ class InviteService
 
     public function invite(string $inviteEmail, string $challengeName): void
     {
-        $existingUser = $this->em->getRepository(User::class)->findOneBy(['email' => $inviteEmail]);
-        if ($existingUser !== null) {
-            $dbChallenge = $this->em->getRepository(DbChallenge::class)->findOneBy(['name' => $challengeName]);
-            if ($dbChallenge !== null && $dbChallenge->getVoters()->contains($existingUser)) {
-                throw new BusinessLogicException("$inviteEmail is already a member of $challengeName.");
-            }
+        $existingUser = $this->userRepository->findByEmail($inviteEmail);
+        if ($existingUser !== null && $this->userRepository->isInChallenge($existingUser, $challengeName)) {
+            throw new BusinessLogicException("$inviteEmail is already a member of $challengeName.");
         }
 
-        // Delete any pending invites for the same email+challenge (re-invite deduplication)
-        $pending = $this->em->getRepository(EmailVerification::class)->findBy([
-            'email'       => $inviteEmail,
-            'challengeId' => $challengeName,
-            'type'        => EmailVerification::TYPE_JOIN_CHALLENGE,
-        ]);
-        foreach ($pending as $old) {
-            $this->em->remove($old);
+        foreach ($this->verificationRepository->findPendingByEmailAndChallenge($inviteEmail, $challengeName) as $old) {
+            $this->verificationRepository->delete($old);
         }
 
         $token = bin2hex(random_bytes(32));
@@ -52,8 +44,7 @@ class InviteService
             EmailVerification::TYPE_JOIN_CHALLENGE,
             $challengeName,
         );
-        $this->em->persist($verification);
-        $this->em->flush();
+        $this->verificationRepository->save($verification);
 
         $link = $this->urlGenerator->generate(
             'voter_accept_invite',
@@ -76,8 +67,7 @@ class InviteService
 
     public function findValidVerification(string $token): ?EmailVerification
     {
-        $verification = $this->em->getRepository(EmailVerification::class)
-            ->findOneBy(['token' => $token]);
+        $verification = $this->verificationRepository->findByToken($token);
 
         if ($verification === null || $verification->isExpired() || !$verification->isJoinChallenge()) {
             return null;
@@ -88,18 +78,18 @@ class InviteService
 
     public function acceptInvite(EmailVerification $verification, string $username, string $plainPassword): void
     {
-        $existing = $this->em->getRepository(User::class)->findOneBy(['username' => $username]);
-        if ($existing !== null) {
+        $inviteEmail = $verification->getEmail();
+
+        $user = $this->userRepository->findByEmail($inviteEmail);
+
+        $existing = $this->userRepository->findByUsername($username);
+        if ($existing !== null && ($user === null || $existing->getId() !== $user->getId())) {
             throw new BusinessLogicException('That username is already taken. Please choose another.');
         }
 
-        $inviteEmail = $verification->getEmail();
-
-        $user = $this->em->getRepository(User::class)->findOneBy(['email' => $inviteEmail]);
         if ($user === null) {
             $user = new User($username);
             $user->setEmail($inviteEmail);
-            $this->em->persist($user);
         } else {
             $user->setUsername($username);
         }
@@ -107,14 +97,9 @@ class InviteService
         $user->setPassword($this->passwordHasher->hashPassword($user, $plainPassword));
         $user->verify();
 
-        $challengeName = $verification->getChallengeId();
-        $dbChallenge = $this->em->getRepository(DbChallenge::class)->findOneBy(['name' => $challengeName]);
-        if ($dbChallenge !== null) {
-            $dbChallenge->addVoter($user);
-        }
+        $this->userRepository->save($user);
+        $this->userRepository->addToChallenge($user, $verification->getChallengeId() ?? '');
 
-        $this->em->remove($verification);
-        $this->em->flush();
+        $this->verificationRepository->delete($verification);
     }
-
 }

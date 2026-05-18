@@ -6,7 +6,7 @@ namespace App\Controller;
 use App\Form\AcceptInviteType;
 use App\Form\ChangePasswordType;
 use App\Form\SignUpType;
-use App\Service\InviteService;
+use App\Services\InviteService;
 use App\Services\ChallengeService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
