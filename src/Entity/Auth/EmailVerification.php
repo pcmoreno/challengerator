@@ -18,8 +18,11 @@ class EmailVerification
     private int $id;
 
     #[ORM\ManyToOne(targetEntity: User::class)]
-    #[ORM\JoinColumn(nullable: false, onDelete: 'CASCADE')]
-    private User $user;
+    #[ORM\JoinColumn(nullable: true, onDelete: 'CASCADE')]
+    private ?User $user;
+
+    #[ORM\Column(type: 'string', length: 254)]
+    private string $email;
 
     #[ORM\Column(type: 'string', unique: true)]
     private string $token;
@@ -33,9 +36,10 @@ class EmailVerification
     #[ORM\Column(type: 'string', nullable: true)]
     private ?string $challengeId = null;
 
-    public function __construct(User $user, string $token, \DateTimeImmutable $expiresAt, string $type, ?string $challengeId = null)
+    public function __construct(?User $user, string $email, string $token, \DateTimeImmutable $expiresAt, string $type, ?string $challengeId = null)
     {
         $this->user = $user;
+        $this->email = $email;
         $this->token = $token;
         $this->expiresAt = $expiresAt;
         $this->type = $type;
@@ -47,9 +51,19 @@ class EmailVerification
         return $this->id;
     }
 
-    public function getUser(): User
+    public function getUser(): ?User
     {
         return $this->user;
+    }
+
+    public function setUser(User $user): void
+    {
+        $this->user = $user;
+    }
+
+    public function getEmail(): string
+    {
+        return $this->email;
     }
 
     public function getToken(): string

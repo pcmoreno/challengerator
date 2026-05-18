@@ -6,6 +6,7 @@ namespace App\Service;
 use App\Entity\Auth\EmailVerification;
 use App\Entity\Auth\User;
 use App\Entity\Doctrine\DbChallenge;
+use App\Exception\BusinessLogicException;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Mailer\MailerInterface;
@@ -24,22 +25,28 @@ class InviteService
 
     public function invite(string $inviteEmail, string $challengeName): void
     {
-        $user = $this->em->getRepository(User::class)->findOneBy(['email' => $inviteEmail]);
-        if ($user !== null) {
+        $existingUser = $this->em->getRepository(User::class)->findOneBy(['email' => $inviteEmail]);
+        if ($existingUser !== null) {
             $dbChallenge = $this->em->getRepository(DbChallenge::class)->findOneBy(['name' => $challengeName]);
-            $alreadyInChallenge = $dbChallenge !== null && $dbChallenge->getVoters()->contains($user);
-            if ($alreadyInChallenge) {
-                throw new \DomainException("$inviteEmail is already a member of $challengeName.");
+            if ($dbChallenge !== null && $dbChallenge->getVoters()->contains($existingUser)) {
+                throw new BusinessLogicException("$inviteEmail is already a member of $challengeName.");
             }
-        } else {
-            $user = new User('invite_' . bin2hex(random_bytes(8)));
-            $user->setEmail($inviteEmail);
-            $this->em->persist($user);
+        }
+
+        // Delete any pending invites for the same email+challenge (re-invite deduplication)
+        $pending = $this->em->getRepository(EmailVerification::class)->findBy([
+            'email'       => $inviteEmail,
+            'challengeId' => $challengeName,
+            'type'        => EmailVerification::TYPE_JOIN_CHALLENGE,
+        ]);
+        foreach ($pending as $old) {
+            $this->em->remove($old);
         }
 
         $token = bin2hex(random_bytes(32));
         $verification = new EmailVerification(
-            $user,
+            null,
+            $inviteEmail,
             $token,
             new \DateTimeImmutable('+48 hours'),
             EmailVerification::TYPE_JOIN_CHALLENGE,
@@ -82,12 +89,21 @@ class InviteService
     public function acceptInvite(EmailVerification $verification, string $username, string $plainPassword): void
     {
         $existing = $this->em->getRepository(User::class)->findOneBy(['username' => $username]);
-        if ($existing !== null && $existing->getId() !== $verification->getUser()->getId()) {
-            throw new \DomainException('That username is already taken. Please choose another.');
+        if ($existing !== null) {
+            throw new BusinessLogicException('That username is already taken. Please choose another.');
         }
 
-        $user = $verification->getUser();
-        $user->setUsername($username);
+        $inviteEmail = $verification->getEmail();
+
+        $user = $this->em->getRepository(User::class)->findOneBy(['email' => $inviteEmail]);
+        if ($user === null) {
+            $user = new User($username);
+            $user->setEmail($inviteEmail);
+            $this->em->persist($user);
+        } else {
+            $user->setUsername($username);
+        }
+
         $user->setPassword($this->passwordHasher->hashPassword($user, $plainPassword));
         $user->verify();
 
