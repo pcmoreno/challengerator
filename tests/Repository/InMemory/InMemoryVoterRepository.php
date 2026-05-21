@@ -50,4 +50,13 @@ class InMemoryVoterRepository implements VoterRepositoryInterface
     {
         unset($this->voters[$id]);
     }
+
+    public function markCarsVoted(string $voterId, string $challengeName, array $carIds): void
+    {
+        $voter = $this->voters[$voterId] ?? null;
+        if ($voter === null || $carIds === []) {
+            return;
+        }
+        $voter->setCarsToVotedForChallenge($carIds, $challengeName);
+    }
 }
