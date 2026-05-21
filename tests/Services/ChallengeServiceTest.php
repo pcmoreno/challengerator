@@ -243,6 +243,21 @@ class ChallengeServiceTest extends TestCase
         $this->service->voteOnCars($carParam, 'left', 'rally', $voter->getId());
     }
 
+    public function test_voteOnCars_throws_when_car_deleted_after_queue_seeded(): void
+    {
+        $this->makeChallenge();
+        $voter = $this->makeVoter();
+        $car1 = $this->makeCar();
+        $car2 = $this->makeCar();
+        $voter->addCarsToSelf([$car1->getId(), $car2->getId()], 'rally');
+        $this->voters->save($voter);
+
+        $this->cars->delete($car2->getId());
+
+        $this->expectException(\RuntimeException::class);
+        $this->service->voteOnCars($car1->getId() . 'XXX' . $car2->getId(), 'left', 'rally', $voter->getId());
+    }
+
     // --- AddVoterToChallengeFromIp ---
 
     public function test_addVoterFromIp_succeeds_for_new_ip(): void
