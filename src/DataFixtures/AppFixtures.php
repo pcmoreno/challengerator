@@ -11,7 +11,6 @@ use App\Repository\CarRepositoryInterface;
 use App\Repository\ChallengeRepositoryInterface;
 use App\Repository\VoterRepositoryInterface;
 use Doctrine\Bundle\FixturesBundle\Fixture;
-use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ObjectManager;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 
@@ -22,7 +21,6 @@ class AppFixtures extends Fixture
         private ChallengeRepositoryInterface $challenges,
         private CarRepositoryInterface $cars,
         private VoterRepositoryInterface $voters,
-        private EntityManagerInterface $em,
     ) {}
 
     public function load(ObjectManager $manager): void
@@ -75,7 +73,7 @@ class AppFixtures extends Fixture
         // Initialize voting queues so voters can vote immediately
         $challenge = $this->challenges->find('dev-rally');
         foreach ($this->voters->findMany($challenge->getVoters()) as $voter) {
-            $voter->addCarsToSelf($carIds, 'dev-rally', true);
+            $voter->addCarsToSelf($carIds, 'dev-rally');
             $this->voters->save($voter);
         }
     }
