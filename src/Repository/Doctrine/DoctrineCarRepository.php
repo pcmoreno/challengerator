@@ -47,8 +47,13 @@ class DoctrineCarRepository implements CarRepositoryInterface
             $indexed[$dbCar->getId()] = $this->toDomain($dbCar);
         }
 
+        $missing = array_values(array_diff($ids, array_keys($indexed)));
+        if ($missing !== []) {
+            throw new \RuntimeException('Cars not found: ' . implode(', ', $missing));
+        }
+
         // preserve input order
-        return array_values(array_filter(array_map(fn($id) => $indexed[$id] ?? null, $ids)));
+        return array_values(array_map(fn($id) => $indexed[$id], $ids));
     }
 
     public function save(Car $car): void
