@@ -117,13 +117,15 @@ class DoctrineVoterRepository implements VoterRepositoryInterface
         if ($carIds === []) {
             return;
         }
-        $this->em()->getConnection()->executeStatement(
+        $affected = $this->em()->getConnection()->executeStatement(
             'UPDATE voter_car_queue vcq
              INNER JOIN challenge c ON vcq.challenge_id = c.id
              SET vcq.status = :voted
-             WHERE vcq.user_id = :userId AND c.name = :challengeName AND vcq.car_id IN (:carIds)',
+             WHERE vcq.user_id = :userId AND c.name = :challengeName AND vcq.car_id IN (:carIds)
+               AND vcq.status = :pending',
             [
                 'voted'         => DbVoterCarQueue::STATUS_VOTED,
+                'pending'       => DbVoterCarQueue::STATUS_PENDING,
                 'userId'        => (int) $voterId,
                 'challengeName' => $challengeName,
                 'carIds'        => $carIds,
@@ -132,6 +134,13 @@ class DoctrineVoterRepository implements VoterRepositoryInterface
                 'carIds' => ArrayParameterType::STRING,
             ]
         );
+        if ($affected !== count($carIds)) {
+            throw new \RuntimeException(sprintf(
+                'markCarsVoted updated %d rows, expected %d — vote not recorded',
+                $affected,
+                count($carIds)
+            ));
+        }
     }
 
     private function toDomain(User $user): Voter
