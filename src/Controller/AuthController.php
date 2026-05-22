@@ -110,7 +110,7 @@ class AuthController extends AbstractController
             'form'                 => $form->createView(),
             'challengeName'        => $challengeName,
             'challengeDisplayName' => $this->challengeService->getDisplayNameForChallenge($challengeName),
-        ]);
+        ], new Response(status: $form->isSubmitted() ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK));
     }
 
     public function confirmSelfRegistration(Request $request, string $token, InviteService $inviteService): Response

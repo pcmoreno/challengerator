@@ -90,6 +90,10 @@ class InviteService
 
     public function requestSelfRegistration(string $email, string $username, string $challengeName): void
     {
+        if (trim($email) === '' || trim($username) === '') {
+            throw new BusinessLogicException('Email and username are required.');
+        }
+
         $existingUser = $this->userRepository->findByEmail($email);
 
         if ($existingUser !== null && $existingUser->isVerified()) {
