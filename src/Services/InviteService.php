@@ -30,6 +30,17 @@ class InviteService
     public function invite(string $inviteEmail, string $challengeName): void
     {
         $existingUser = $this->userRepository->findByEmail($inviteEmail);
+
+        if ($existingUser !== null && $existingUser->isVerified()) {
+            if ($this->userRepository->isInChallenge($existingUser, $challengeName)) {
+                throw new BusinessLogicException("$inviteEmail is already a member of $challengeName.");
+            }
+            // Verified user not yet in this challenge: enroll directly, no credential setup needed.
+            $this->userRepository->addToChallenge($existingUser, $challengeName);
+            $this->sendAddedToChallengeNotification($inviteEmail, $challengeName);
+            return;
+        }
+
         if ($existingUser !== null && $this->userRepository->isInChallenge($existingUser, $challengeName)) {
             throw new BusinessLogicException("$inviteEmail is already a member of $challengeName.");
         }
@@ -68,6 +79,27 @@ class InviteService
         $this->mailer->send($message);
     }
 
+    private function sendAddedToChallengeNotification(string $email, string $challengeName): void
+    {
+        $loginUrl = $this->urlGenerator->generate(
+            'loginMenu',
+            ['challengeName' => $challengeName],
+            UrlGeneratorInterface::ABSOLUTE_URL,
+        );
+
+        $message = (new TemplatedEmail())
+            ->from(new Address('noreply@challengerator.local', 'Challengerator'))
+            ->to($email)
+            ->subject("You've been added to $challengeName")
+            ->htmlTemplate('email/voter_added.html.twig')
+            ->context([
+                'challengeName' => $challengeName,
+                'loginUrl'      => $loginUrl,
+            ]);
+
+        $this->mailer->send($message);
+    }
+
     public function findValidVerification(string $token): ?EmailVerification
     {
         $verification = $this->verificationRepository->findByToken($token);
@@ -84,6 +116,12 @@ class InviteService
         $inviteEmail = $verification->getEmail();
 
         $user = $this->userRepository->findByEmail($inviteEmail);
+
+        if ($user !== null && $user->isVerified()) {
+            // This token predates the current invite flow. Invalidate it and surface the anomaly.
+            $this->verificationRepository->delete($verification);
+            throw new BusinessLogicException('This invite link is no longer valid. Please ask the challenge admin to re-invite you.');
+        }
 
         $existing = $this->userRepository->findByUsername($username);
         if ($existing !== null && ($user === null || $existing->getId() !== $user->getId())) {

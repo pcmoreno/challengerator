@@ -74,6 +74,54 @@ class InviteServiceTest extends TestCase
         $this->service->invite('alice@example.com', 'rally');
     }
 
+    public function test_invite_enrolls_verified_user_directly_without_verification_token(): void
+    {
+        $alice = new User('alice');
+        $alice->setEmail('alice@example.com');
+        $alice->verify();
+        $this->users->save($alice);
+        $this->users->seedChallenge('rally');
+
+        $this->service->invite('alice@example.com', 'rally');
+
+        $this->assertSame(0, $this->verifications->count(), 'No setup token should be created for a verified user');
+        $this->assertTrue($this->users->isInChallenge($alice, 'rally'), 'Verified user must be enrolled directly');
+    }
+
+    public function test_invite_throws_when_verified_user_already_member_of_challenge(): void
+    {
+        $alice = new User('alice');
+        $alice->setEmail('alice@example.com');
+        $alice->verify();
+        $this->users->save($alice);
+        $this->users->seedChallenge('rally');
+        $this->users->addToChallenge($alice, 'rally');
+
+        $this->expectException(BusinessLogicException::class);
+        $this->service->invite('alice@example.com', 'rally');
+    }
+
+    public function test_acceptInvite_throws_and_deletes_token_for_stale_verified_user_token(): void
+    {
+        $alice = new User('alice');
+        $alice->setEmail('alice@example.com');
+        $alice->verify();
+        $this->users->save($alice);
+
+        $this->users->seedChallenge('rally');
+        $verification = $this->makeVerification('alice@example.com', 'rally');
+
+        try {
+            $this->service->acceptInvite($verification, 'alice', 'newpass');
+            $this->fail('Expected BusinessLogicException was not thrown');
+        } catch (BusinessLogicException) {
+            // expected
+        }
+
+        $this->assertSame(0, $this->verifications->count(), 'Stale token must be deleted');
+        $this->assertNull($alice->getPassword(), 'Password must not be changed');
+    }
+
     public function test_acceptInvite_creates_new_user_when_no_existing_email_match(): void
     {
         $this->users->seedChallenge('rally');
