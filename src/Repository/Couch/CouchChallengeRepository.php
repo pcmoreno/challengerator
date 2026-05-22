@@ -4,10 +4,13 @@ declare(strict_types=1);
 namespace App\Repository\Couch;
 
 use App\Entity\Challenge\Challenge;
-use App\Repository\ChallengeRepositoryInterface;
 use PHPOnCouch\CouchClient;
 
-class CouchChallengeRepository implements ChallengeRepositoryInterface
+/**
+ * CouchDB-backed challenge repository — not wired in services.yaml, reserved for future use.
+ * Does not implement ChallengeRepositoryInterface until it matches the full contract.
+ */
+class CouchChallengeRepository
 {
     private const SYSTEM_DBS = ['cars', 'voters', '_users', '_replicator', '_global_changes', 'codes'];
 
