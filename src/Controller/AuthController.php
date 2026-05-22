@@ -21,6 +21,7 @@ class AuthController extends AbstractController
         private ChallengeService $challengeService,
         private RateLimiterFactory $selfRegistrationLimiter,
         private RateLimiterFactory $changePasswordLimiter,
+        private RateLimiterFactory $adminLoginLimiter,
     ) {}
 
     public function loginFormPage(Request $request, string $challengeName): Response
@@ -42,10 +43,16 @@ class AuthController extends AbstractController
             return new JsonResponse('Invalid CSRF token', Response::HTTP_FORBIDDEN);
         }
 
+        $limiter = $this->adminLoginLimiter->create($request->getClientIp());
+        if (!$limiter->consume()->isAccepted()) {
+            return new Response('Too many login attempts. Please try again later.', Response::HTTP_TOO_MANY_REQUESTS);
+        }
+
         $adminPass = $request->request->get('admin_pass', '');
 
         if ($this->challengeService->verifyAdmin($challengeName, $adminPass)) {
             $session = $request->getSession();
+            $session->migrate(true);
             $adminChallenges = $session->get('admin_challenges', []);
             $adminChallenges[] = $challengeName;
             $session->set('admin_challenges', array_unique($adminChallenges));

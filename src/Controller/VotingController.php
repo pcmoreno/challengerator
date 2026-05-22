@@ -5,6 +5,7 @@ namespace App\Controller;
 
 use App\Services\ChallengeService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\UX\Turbo\TurboBundle;
@@ -40,6 +41,10 @@ class VotingController extends AbstractController
     {
         if ($this->isGranted('ROLE_SUPER_ADMIN')) {
             return $this->redirectToRoute('index');
+        }
+
+        if (!$this->isCsrfTokenValid('vote_' . $challengeName, $request->request->get('_token'))) {
+            return new JsonResponse('Invalid CSRF token', Response::HTTP_FORBIDDEN);
         }
 
         $userId = (string)$this->getUser()->getId();

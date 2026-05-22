@@ -8,3 +8,7 @@ framework:
             policy: sliding_window
             limit: 5
             interval: '1 hour'
+        admin_login:
+            policy: sliding_window
+            limit: 10
+            interval: '15 minutes'
