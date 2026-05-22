@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>You've been invited to {{ challengeName }}</title>
+    <title>You've been invited to {{ challengeDisplayName }}</title>
 </head>
 <body style="margin:0;padding:0;background-color:#171717;font-family:Arial,Helvetica,sans-serif;">
 
@@ -35,10 +35,13 @@
                             Car design challenge
                         </p>
 
-                        <p style="margin:0 0 16px 0;color:#dadada;font-size:16px;line-height:1.6;">
+                        <p style="margin:0 0 4px 0;color:#dadada;font-size:16px;line-height:1.6;">
                             You have been invited to participate in
-                            <strong style="color:#ff8b38;">{{ challengeName }}</strong>
+                            <strong style="color:#ff8b38;">{{ challengeDisplayName }}</strong>
                             — a head-to-head car design voting competition.
+                        </p>
+                        <p style="margin:0 0 24px 0;color:#666666;font-size:13px;">
+                            Challenge ID: <span style="color:#999999;">{{ challengeName }}</span>
                         </p>
                         <p style="margin:0 0 32px 0;color:#dadada;font-size:16px;line-height:1.6;">
                             Click the button below to set up your account and start voting.
@@ -50,7 +53,7 @@
                                 <td style="background-color:#ff8b38;border-radius:4px;">
                                     <a href="{{ link }}"
                                        style="display:inline-block;padding:14px 36px;color:#ffffff;text-decoration:none;font-weight:bold;font-size:16px;">
-                                        Join {{ challengeName }}
+                                        Join {{ challengeDisplayName }}
                                     </a>
                                 </td>
                             </tr>

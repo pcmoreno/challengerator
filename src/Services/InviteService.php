@@ -6,6 +6,7 @@ namespace App\Services;
 use App\Entity\Auth\EmailVerification;
 use App\Entity\Auth\User;
 use App\Exception\BusinessLogicException;
+use App\Repository\ChallengeRepositoryInterface;
 use App\Repository\EmailVerificationRepositoryInterface;
 use App\Repository\TransactionInterface;
 use App\Repository\UserRepositoryInterface;
@@ -21,6 +22,7 @@ class InviteService
     public function __construct(
         private UserRepositoryInterface $userRepository,
         private EmailVerificationRepositoryInterface $verificationRepository,
+        private ChallengeRepositoryInterface $challengeRepository,
         private TransactionInterface $transaction,
         private MailerInterface $mailer,
         private UrlGeneratorInterface $urlGenerator,
@@ -66,14 +68,17 @@ class InviteService
             UrlGeneratorInterface::ABSOLUTE_URL,
         );
 
+        $challengeDisplayName = $this->challengeRepository->find($challengeName)->getDisplayName();
+
         $message = (new TemplatedEmail())
             ->from(new Address('noreply@challengerator.local', 'Challengerator'))
             ->to($inviteEmail)
-            ->subject("You've been invited to join $challengeName")
+            ->subject("You've been invited to join $challengeDisplayName")
             ->htmlTemplate('email/voter_invite.html.twig')
             ->context([
-                'link' => $link,
-                'challengeName' => $challengeName,
+                'link'                 => $link,
+                'challengeName'        => $challengeName,
+                'challengeDisplayName' => $challengeDisplayName,
             ]);
 
         $this->mailer->send($message);
@@ -87,14 +92,17 @@ class InviteService
             UrlGeneratorInterface::ABSOLUTE_URL,
         );
 
+        $challengeDisplayName = $this->challengeRepository->find($challengeName)->getDisplayName();
+
         $message = (new TemplatedEmail())
             ->from(new Address('noreply@challengerator.local', 'Challengerator'))
             ->to($email)
-            ->subject("You've been added to $challengeName")
+            ->subject("You've been added to $challengeDisplayName")
             ->htmlTemplate('email/voter_added.html.twig')
             ->context([
-                'challengeName' => $challengeName,
-                'loginUrl'      => $loginUrl,
+                'challengeName'        => $challengeName,
+                'challengeDisplayName' => $challengeDisplayName,
+                'loginUrl'             => $loginUrl,
             ]);
 
         $this->mailer->send($message);
@@ -137,14 +145,17 @@ class InviteService
             UrlGeneratorInterface::ABSOLUTE_URL,
         );
 
+        $challengeDisplayName = $this->challengeRepository->find($challengeName)->getDisplayName();
+
         $message = (new TemplatedEmail())
             ->from(new Address('noreply@challengerator.local', 'Challengerator'))
             ->to($email)
-            ->subject("Confirm your registration for $challengeName")
+            ->subject("Confirm your registration for $challengeDisplayName")
             ->htmlTemplate('email/self_registration_confirm.html.twig')
             ->context([
-                'challengeName' => $challengeName,
-                'confirmUrl'    => $confirmUrl,
+                'challengeName'        => $challengeName,
+                'challengeDisplayName' => $challengeDisplayName,
+                'confirmUrl'           => $confirmUrl,
             ]);
 
         $this->mailer->send($message);

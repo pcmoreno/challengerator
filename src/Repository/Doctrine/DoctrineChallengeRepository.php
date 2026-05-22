@@ -39,9 +39,10 @@ class DoctrineChallengeRepository implements ChallengeRepositoryInterface
             ->findOneBy(['name' => $challenge->getName()]);
 
         if ($dbChallenge === null) {
-            $dbChallenge = new DbChallenge($challenge->getName(), $challenge->getOwner());
+            $dbChallenge = new DbChallenge($challenge->getName(), $challenge->getOwner(), $challenge->getDisplayName());
         } else {
             $dbChallenge->setAdminPassword($challenge->getOwner());
+            $dbChallenge->setDisplayName($challenge->getDisplayName());
         }
 
         $dbChallenge->setIsActive($challenge->isActive());
@@ -56,14 +57,11 @@ class DoctrineChallengeRepository implements ChallengeRepositoryInterface
 
     public function listNames(): array
     {
-        return array_column(
-            $this->em()->getRepository(DbChallenge::class)
-                ->createQueryBuilder('c')
-                ->select('c.name')
-                ->getQuery()
-                ->getArrayResult(),
-            'name'
-        );
+        return $this->em()->getRepository(DbChallenge::class)
+            ->createQueryBuilder('c')
+            ->select('c.name', 'c.displayName')
+            ->getQuery()
+            ->getArrayResult();
     }
 
     private function toDomain(DbChallenge $dbChallenge): Challenge
@@ -72,14 +70,15 @@ class DoctrineChallengeRepository implements ChallengeRepositoryInterface
         $voterIds = array_map(fn($u) => (string)$u->getId(), $dbChallenge->getVoters()->toArray());
 
         return Challenge::fromArray([
-            'id'                   => $dbChallenge->getName(),
-            'name'                 => $dbChallenge->getName(),
-            'cars'                 => $carIds,
-            'voters'               => $voterIds,
-            'isActive'             => $dbChallenge->isActive(),
-            'owner'                => $dbChallenge->getAdminPassword(),
+            'id'                    => $dbChallenge->getName(),
+            'name'                  => $dbChallenge->getName(),
+            'displayName'           => $dbChallenge->getDisplayName(),
+            'cars'                  => $carIds,
+            'voters'                => $voterIds,
+            'isActive'              => $dbChallenge->isActive(),
+            'owner'                 => $dbChallenge->getAdminPassword(),
             'allowSelfRegistration' => $dbChallenge->isAllowSelfRegistration(),
-            'selfRegistrationCode' => $dbChallenge->getSelfRegistrationCode(),
+            'selfRegistrationCode'  => $dbChallenge->getSelfRegistrationCode(),
         ]);
     }
 

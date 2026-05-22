@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Complete your registration | {{ challengeName }}{% endblock %}
+{% block title %}Complete your registration | {{ challengeDisplayName }}{% endblock %}
 
 {% block body %}
     <div class="max-w-md mx-auto mt-8">
@@ -12,7 +12,7 @@
         </div>
     {% else %}
         <h2 class="text-2xl font-bold text-center text-heading mb-2">Almost there, {{ username }}!</h2>
-        <p class="text-center text-muted mb-6">Choose a password to complete your registration for <strong>{{ challengeName }}</strong>.</p>
+        <p class="text-center text-muted mb-6">Choose a password to complete your registration for <strong>{{ challengeDisplayName }}</strong>.</p>
 
         {% for message in app.flashes('error') %}
             <div class="mb-4 alert-error">{{ message }}</div>

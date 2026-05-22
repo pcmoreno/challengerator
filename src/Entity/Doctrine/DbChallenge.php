@@ -20,6 +20,9 @@ class DbChallenge
     #[ORM\Column(type: 'string', length: 100, unique: true)]
     private string $name;
 
+    #[ORM\Column(type: 'string', length: 150)]
+    private string $displayName;
+
     #[ORM\Column(type: 'string')]
     private string $adminPassword;
 
@@ -41,9 +44,10 @@ class DbChallenge
     #[ORM\OneToMany(targetEntity: DbCar::class, mappedBy: 'challenge', cascade: ['persist', 'remove'])]
     private Collection $cars;
 
-    public function __construct(string $name, string $adminPassword)
+    public function __construct(string $name, string $adminPassword, string $displayName = '')
     {
         $this->name = $name;
+        $this->displayName = $displayName !== '' ? $displayName : $name;
         $this->adminPassword = $adminPassword;
         $this->voters = new ArrayCollection();
         $this->cars = new ArrayCollection();
@@ -57,6 +61,16 @@ class DbChallenge
     public function getName(): string
     {
         return $this->name;
+    }
+
+    public function getDisplayName(): string
+    {
+        return $this->displayName;
+    }
+
+    public function setDisplayName(string $displayName): void
+    {
+        $this->displayName = $displayName;
     }
 
     public function getAdminPassword(): string

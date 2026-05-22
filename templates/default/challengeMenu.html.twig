@@ -22,9 +22,12 @@
                     <tbody>
                         {% for item in challenges %}
                             <tr class="border-t {{ loop.index is even ? 'bg-row-even' : 'bg-row-odd' }}">
-                                <td class="px-4 py-3">{{ item }}</td>
+                                <td class="px-4 py-3">
+                                    {{ item.displayName }}
+                                    <span class="text-xs text-muted ml-1">({{ item.name }})</span>
+                                </td>
                                 <td class="px-4 py-3 text-right">
-                                    <a href="{{ path('loginMenu', {'challengeName': item}) }}"
+                                    <a href="{{ path('loginMenu', {'challengeName': item.name}) }}"
                                        class="btn-primary font-bold py-1 px-4 rounded text-sm">
                                         GO TO
                                     </a>

@@ -1,6 +1,6 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Check your email | {{ challengeName }}{% endblock %}
+{% block title %}Check your email | {{ challengeDisplayName }}{% endblock %}
 
 {% block body %}
     <div class="max-w-md mx-auto mt-8">
@@ -11,7 +11,8 @@
             </p>
             <p class="text-muted text-sm">
                 Open it within 10 minutes to complete your registration for
-                <strong>{{ challengeName }}</strong>.
+                <strong>{{ challengeDisplayName }}</strong>
+                <span class="text-xs">({{ challengeName }})</span>.
             </p>
         </div>
     </div>

@@ -26,7 +26,8 @@ class AuthController extends AbstractController
     public function loginFormPage(Request $request, string $challengeName): Response
     {
         return $this->render('default/login.html.twig', [
-            'challengeName' => $challengeName,
+            'challengeName'        => $challengeName,
+            'challengeDisplayName' => $this->challengeService->getDisplayNameForChallenge($challengeName),
         ]);
     }
 
@@ -87,14 +88,16 @@ class AuthController extends AbstractController
             }
 
             return $this->render('default/selfRegistrationPending.html.twig', [
-                'challengeName' => $challengeName,
-                'email'         => $newVoter->email,
+                'challengeName'        => $challengeName,
+                'challengeDisplayName' => $this->challengeService->getDisplayNameForChallenge($challengeName),
+                'email'                => $newVoter->email,
             ]);
         }
 
         return $this->render('default/signup.html.twig', [
-            'form'          => $form->createView(),
-            'challengeName' => $challengeName,
+            'form'                 => $form->createView(),
+            'challengeName'        => $challengeName,
+            'challengeDisplayName' => $this->challengeService->getDisplayNameForChallenge($challengeName),
         ]);
     }
 
@@ -128,10 +131,11 @@ class AuthController extends AbstractController
         }
 
         return $this->render('default/confirmRegistration.html.twig', [
-            'invalid'       => false,
-            'challengeName' => $verification->getChallengeId(),
-            'username'      => $verification->getPendingUsername(),
-            'form'          => $form->createView(),
+            'invalid'              => false,
+            'challengeName'        => $verification->getChallengeId(),
+            'challengeDisplayName' => $this->challengeService->getDisplayNameForChallenge($verification->getChallengeId()),
+            'username'             => $verification->getPendingUsername(),
+            'form'                 => $form->createView(),
         ]);
     }
 
@@ -164,9 +168,10 @@ class AuthController extends AbstractController
         }
 
         return $this->render('default/acceptInvite.html.twig', [
-            'form' => $form->createView(),
-            'challengeName' => $verification->getChallengeId(),
-            'invalid' => false,
+            'form'                 => $form->createView(),
+            'challengeName'        => $verification->getChallengeId(),
+            'challengeDisplayName' => $this->challengeService->getDisplayNameForChallenge($verification->getChallengeId()),
+            'invalid'              => false,
         ], new Response(status: $form->isSubmitted() ? Response::HTTP_UNPROCESSABLE_ENTITY : Response::HTTP_OK));
     }
 

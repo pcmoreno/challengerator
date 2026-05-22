@@ -5,9 +5,11 @@ namespace App\Tests\Services;
 
 use App\Entity\Auth\EmailVerification;
 use App\Entity\Auth\User;
+use App\Entity\Challenge\Challenge;
 use App\Exception\BusinessLogicException;
 use App\Exception\ChallengeDoesNotExistException;
 use App\Services\InviteService;
+use App\Tests\Repository\InMemory\InMemoryChallengeRepository;
 use App\Tests\Repository\InMemory\InMemoryEmailVerificationRepository;
 use App\Tests\Repository\InMemory\InMemoryTransaction;
 use App\Tests\Repository\InMemory\InMemoryUserRepository;
@@ -21,12 +23,17 @@ class InviteServiceTest extends TestCase
 {
     private InMemoryUserRepository $users;
     private InMemoryEmailVerificationRepository $verifications;
+    private InMemoryChallengeRepository $challenges;
     private InviteService $service;
 
     protected function setUp(): void
     {
         $this->users         = new InMemoryUserRepository();
         $this->verifications = new InMemoryEmailVerificationRepository();
+        $this->challenges    = new InMemoryChallengeRepository();
+        foreach (['rally', 'challengeY'] as $slug) {
+            $this->challenges->save(Challenge::create($slug, $slug, 'secret'));
+        }
 
         $mailer = $this->createMock(MailerInterface::class);
 
@@ -39,6 +46,7 @@ class InviteServiceTest extends TestCase
         $this->service = new InviteService(
             $this->users,
             $this->verifications,
+            $this->challenges,
             new InMemoryTransaction(),
             $mailer,
             $urlGenerator,
@@ -209,6 +217,7 @@ class InviteServiceTest extends TestCase
         $racingService = new InviteService(
             $throwingUsers,
             $this->verifications,
+            $this->challenges,
             new InMemoryTransaction(),
             $this->createMock(MailerInterface::class),
             $urlGenerator,

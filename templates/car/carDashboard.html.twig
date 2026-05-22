@@ -1,10 +1,10 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Car Dashboard | {{ challengeName }}{% endblock %}
+{% block title %}Car Dashboard | {{ challengeDisplayName }}{% endblock %}
 
 {% block body %}
     <div class="mb-6 flex justify-between items-center">
-        <h2 class="text-2xl font-bold text-heading">Car Dashboard — {{ challengeName }}</h2>
+        <h2 class="text-2xl font-bold text-heading">Car Dashboard — {{ challengeDisplayName }}</h2>
         <div class="flex gap-4 text-sm">
             <a href="{{ path('addVoterToChallengeFormPage', {'challengeName': challengeName}) }}"
                class="text-link hover:underline font-semibold">→ Voters</a>

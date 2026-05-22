@@ -18,6 +18,15 @@ class CreateChallengeType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
+            ->add('displayName', TextType::class, [
+                    'required' => true,
+                    'constraints' => [
+                        new Length(['min' => 3, 'max' => 150]),
+                        new NotBlank(),
+                    ],
+                    'attr' => ['placeholder' => 'e.g. Automation Challenge 1980'],
+                ]
+            )
             ->add('challengeName', TextType::class, [
                     'required' => true,
                     'constraints' => [

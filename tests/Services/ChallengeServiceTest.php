@@ -48,7 +48,7 @@ class ChallengeServiceTest extends TestCase
 
     private function makeChallenge(string $name = 'rally', string $owner = 'secret'): Challenge
     {
-        $challenge = Challenge::create($name, $owner);
+        $challenge = Challenge::create($name, $name, $owner);
         $this->challenges->create($name);
         $this->challenges->save($challenge);
         return $challenge;
@@ -72,21 +72,21 @@ class ChallengeServiceTest extends TestCase
 
     public function test_createNewChallenge_with_valid_code_creates_challenge(): void
     {
-        $this->service->createNewChallenge('rally', 'secret', 'VALID-CODE');
-        $this->assertContains('rally', $this->challenges->listNames());
+        $this->service->createNewChallenge('rally', 'Rally', 'secret', 'VALID-CODE');
+        $this->assertContains('rally', array_column($this->challenges->listNames(), 'name'));
     }
 
     public function test_createNewChallenge_with_invalid_code_throws(): void
     {
         $this->expectException(\DomainException::class);
-        $this->service->createNewChallenge('rally', 'secret', 'WRONG-CODE');
+        $this->service->createNewChallenge('rally', 'Rally', 'secret', 'WRONG-CODE');
     }
 
     public function test_createNewChallenge_consumes_the_code(): void
     {
-        $this->service->createNewChallenge('rally', 'secret', 'VALID-CODE');
+        $this->service->createNewChallenge('rally', 'Rally', 'secret', 'VALID-CODE');
         $this->expectException(\DomainException::class);
-        $this->service->createNewChallenge('rally2', 'secret', 'VALID-CODE');
+        $this->service->createNewChallenge('rally2', 'Rally 2', 'secret', 'VALID-CODE');
     }
 
     // --- addCar / getCarsForChallenge ---

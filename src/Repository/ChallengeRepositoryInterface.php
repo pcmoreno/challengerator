@@ -10,5 +10,6 @@ interface ChallengeRepositoryInterface
     public function create(string $name): void;
     public function find(string $name): Challenge;
     public function save(Challenge $challenge): void;
+    /** @return list<array{name: string, displayName: string}> */
     public function listNames(): array;
 }
