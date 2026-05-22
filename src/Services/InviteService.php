@@ -5,6 +5,7 @@ namespace App\Services;
 
 use App\Entity\Auth\EmailVerification;
 use App\Entity\Auth\User;
+use App\Exception\AccountExistsException;
 use App\Exception\BusinessLogicException;
 use App\Repository\ChallengeRepositoryInterface;
 use App\Repository\EmailVerificationRepositoryInterface;
@@ -33,16 +34,6 @@ class InviteService
     {
         $existingUser = $this->userRepository->findByEmail($inviteEmail);
 
-        if ($existingUser !== null && $existingUser->isVerified()) {
-            if ($this->userRepository->isInChallenge($existingUser, $challengeName)) {
-                throw new BusinessLogicException("$inviteEmail is already a member of $challengeName.");
-            }
-            // Verified user not yet in this challenge: enroll directly, no credential setup needed.
-            $this->userRepository->addToChallenge($existingUser, $challengeName);
-            $this->sendAddedToChallengeNotification($inviteEmail, $challengeName);
-            return;
-        }
-
         if ($existingUser !== null && $this->userRepository->isInChallenge($existingUser, $challengeName)) {
             throw new BusinessLogicException("$inviteEmail is already a member of $challengeName.");
         }
@@ -52,12 +43,12 @@ class InviteService
         }
 
         $token = bin2hex(random_bytes(32));
-        $verification = new EmailVerification(
-            null,
+        $verifiedUser = ($existingUser !== null && $existingUser->isVerified()) ? $existingUser : null;
+        $verification = EmailVerification::forJoinChallenge(
+            $verifiedUser,
             $inviteEmail,
             $token,
             new \DateTimeImmutable('+48 hours'),
-            EmailVerification::TYPE_JOIN_CHALLENGE,
             $challengeName,
         );
         $this->verificationRepository->save($verification);
@@ -84,28 +75,17 @@ class InviteService
         $this->mailer->send($message);
     }
 
-    private function sendAddedToChallengeNotification(string $email, string $challengeName): void
+    public function acceptVerifiedUserInvite(EmailVerification $verification): void
     {
-        $loginUrl = $this->urlGenerator->generate(
-            'loginMenu',
-            ['challengeName' => $challengeName],
-            UrlGeneratorInterface::ABSOLUTE_URL,
-        );
+        $user = $verification->getUser()
+            ?? throw new BusinessLogicException('This is not a verified-user invite.');
+        $challengeName = $verification->getChallengeId()
+            ?? throw new BusinessLogicException('Verification is missing challenge information.');
 
-        $challengeDisplayName = $this->challengeRepository->find($challengeName)->getDisplayName();
-
-        $message = (new TemplatedEmail())
-            ->from(new Address('noreply@challengerator.local', 'Challengerator'))
-            ->to($email)
-            ->subject("You've been added to $challengeDisplayName")
-            ->htmlTemplate('email/voter_added.html.twig')
-            ->context([
-                'challengeName'        => $challengeName,
-                'challengeDisplayName' => $challengeDisplayName,
-                'loginUrl'             => $loginUrl,
-            ]);
-
-        $this->mailer->send($message);
+        $this->transaction->transactional(function () use ($user, $verification, $challengeName): void {
+            $this->userRepository->addToChallenge($user, $challengeName);
+            $this->verificationRepository->delete($verification);
+        });
     }
 
     public function requestSelfRegistration(string $email, string $username, string $challengeName): void
@@ -116,9 +96,7 @@ class InviteService
             if ($this->userRepository->isInChallenge($existingUser, $challengeName)) {
                 throw new BusinessLogicException("$email is already a member of $challengeName.");
             }
-            $this->userRepository->addToChallenge($existingUser, $challengeName);
-            $this->sendAddedToChallengeNotification($email, $challengeName);
-            return;
+            throw new AccountExistsException($challengeName);
         }
 
         if ($this->userRepository->findByUsername($username) !== null) {

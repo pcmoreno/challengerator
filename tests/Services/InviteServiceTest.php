@@ -41,7 +41,7 @@ class InviteServiceTest extends TestCase
         $urlGenerator->method('generate')->willReturn('https://example.com/accept/token');
 
         $hasher = $this->createMock(UserPasswordHasherInterface::class);
-        $hasher->method('hashPassword')->willReturnCallback(fn(User $u, string $pw) => 'hashed_' . $pw);
+        $hasher->method('hashPassword')->willReturnCallback(fn(User $user, string $pw) => 'hashed_' . $pw);
 
         $this->service = new InviteService(
             $this->users,
@@ -82,7 +82,7 @@ class InviteServiceTest extends TestCase
         $this->service->invite('alice@example.com', 'rally');
     }
 
-    public function test_invite_enrolls_verified_user_directly_without_verification_token(): void
+    public function test_invite_creates_token_for_verified_user_not_yet_in_challenge(): void
     {
         $alice = new User('alice');
         $alice->setEmail('alice@example.com');
@@ -92,8 +92,11 @@ class InviteServiceTest extends TestCase
 
         $this->service->invite('alice@example.com', 'rally');
 
-        $this->assertSame(0, $this->verifications->count(), 'No setup token should be created for a verified user');
-        $this->assertTrue($this->users->isInChallenge($alice, 'rally'), 'Verified user must be enrolled directly');
+        $this->assertSame(1, $this->verifications->count(), 'A token must be issued so the verified user can confirm via link');
+        $this->assertFalse($this->users->isInChallenge($alice, 'rally'), 'Not enrolled until the user clicks the link');
+
+        $tokens = $this->verifications->findPendingByEmailAndChallenge('alice@example.com', 'rally');
+        $this->assertSame($alice, $tokens[0]->getUser(), 'Token must carry the verified user FK');
     }
 
     public function test_invite_throws_when_verified_user_already_member_of_challenge(): void
@@ -109,7 +112,48 @@ class InviteServiceTest extends TestCase
         $this->service->invite('alice@example.com', 'rally');
     }
 
-    public function test_acceptInvite_throws_and_deletes_token_for_stale_verified_user_token(): void
+    public function test_acceptVerifiedUserInvite_enrolls_and_deletes_token(): void
+    {
+        $alice = new User('alice');
+        $alice->setEmail('alice@example.com');
+        $alice->verify();
+        $this->users->save($alice);
+        $this->users->seedChallenge('rally');
+
+        $verification = $this->makeVerificationWithUser($alice, 'rally');
+
+        $this->service->acceptVerifiedUserInvite($verification);
+
+        $this->assertSame(0, $this->verifications->count(), 'Token must be deleted after acceptance');
+        $this->assertTrue($this->users->isInChallenge($alice, 'rally'), 'Verified user must be enrolled');
+    }
+
+    public function test_requestSelfRegistration_throws_account_exists_for_verified_user_not_in_challenge(): void
+    {
+        $alice = new User('alice');
+        $alice->setEmail('alice@example.com');
+        $alice->verify();
+        $this->users->save($alice);
+        $this->users->seedChallenge('rally');
+
+        $this->expectException(\App\Exception\AccountExistsException::class);
+        $this->service->requestSelfRegistration('alice@example.com', 'alice', 'rally');
+    }
+
+    public function test_requestSelfRegistration_throws_business_logic_for_verified_user_already_in_challenge(): void
+    {
+        $alice = new User('alice');
+        $alice->setEmail('alice@example.com');
+        $alice->verify();
+        $this->users->save($alice);
+        $this->users->seedChallenge('rally');
+        $this->users->addToChallenge($alice, 'rally');
+
+        $this->expectException(BusinessLogicException::class);
+        $this->service->requestSelfRegistration('alice@example.com', 'alice', 'rally');
+    }
+
+    public function test_acceptInvite_throws_and_deletes_legacy_null_fk_token_for_verified_user(): void
     {
         $alice = new User('alice');
         $alice->setEmail('alice@example.com');
@@ -212,7 +256,7 @@ class InviteServiceTest extends TestCase
         $urlGenerator = $this->createMock(UrlGeneratorInterface::class);
         $urlGenerator->method('generate')->willReturn('https://example.com/accept/token');
         $hasher = $this->createMock(UserPasswordHasherInterface::class);
-        $hasher->method('hashPassword')->willReturnCallback(fn(User $u, string $pw) => 'hashed_' . $pw);
+        $hasher->method('hashPassword')->willReturnCallback(fn(User $user, string $pw) => 'hashed_' . $pw);
 
         $racingService = new InviteService(
             $throwingUsers,
@@ -232,7 +276,7 @@ class InviteServiceTest extends TestCase
 
     private function makeVerification(string $email, string $challengeName): EmailVerification
     {
-        $v = new EmailVerification(
+        $verification = new EmailVerification(
             null,
             $email,
             bin2hex(random_bytes(16)),
@@ -240,7 +284,20 @@ class InviteServiceTest extends TestCase
             EmailVerification::TYPE_JOIN_CHALLENGE,
             $challengeName,
         );
-        $this->verifications->save($v);
-        return $v;
+        $this->verifications->save($verification);
+        return $verification;
+    }
+
+    private function makeVerificationWithUser(User $user, string $challengeName): EmailVerification
+    {
+        $verification = EmailVerification::forJoinChallenge(
+            $user,
+            $user->getEmail() ?? '',
+            bin2hex(random_bytes(16)),
+            new \DateTimeImmutable('+48 hours'),
+            $challengeName,
+        );
+        $this->verifications->save($verification);
+        return $verification;
     }
 }

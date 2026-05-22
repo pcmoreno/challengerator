@@ -3,12 +3,13 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Exception\AccountExistsException;
 use App\Form\AcceptInviteType;
 use App\Form\ChangePasswordType;
 use App\Form\ConfirmRegistrationType;
 use App\Form\SignUpType;
-use App\Services\InviteService;
 use App\Services\ChallengeService;
+use App\Services\InviteService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -86,6 +87,10 @@ class AuthController extends AbstractController
 
             try {
                 $inviteService->requestSelfRegistration($newVoter->email, $newVoter->username, $challengeName);
+            } catch (AccountExistsException $e) {
+                $request->getSession()->set('pending_challenge_join', $e->challengeName);
+                $this->addFlash('warning', 'An account with this email already exists. Please log in to join the challenge.');
+                return $this->redirectToRoute('loginMenu', ['challengeName' => $e->challengeName]);
             } catch (\DomainException $e) {
                 $this->addFlash('error', $e->getMessage());
                 return $this->redirectToRoute('addSelfRegisteredVoterToChallengeFormPage', [
@@ -151,9 +156,30 @@ class AuthController extends AbstractController
         $verification = $inviteService->findValidVerification($token);
         if ($verification === null) {
             return $this->render('default/acceptInvite.html.twig', [
-                'invalid' => true,
+                'invalid'       => true,
                 'challengeName' => '',
-                'form' => null,
+                'form'          => null,
+            ]);
+        }
+
+        // Verified-user invite: credentials already set up, just confirm joining.
+        if ($verification->getUser() !== null) {
+            if ($request->isMethod('POST') && $this->isCsrfTokenValid('accept_invite_' . $token, $request->request->get('_csrf_token'))) {
+                try {
+                    $inviteService->acceptVerifiedUserInvite($verification);
+                    $this->addFlash('success', 'You have been added to the challenge. Please log in.');
+                    return $this->redirectToRoute('loginMenu', ['challengeName' => $verification->getChallengeId()]);
+                } catch (\DomainException $e) {
+                    $this->addFlash('error', $e->getMessage());
+                    return $this->redirectToRoute('voter_accept_invite', ['token' => $token]);
+                }
+            }
+            return $this->render('default/acceptInvite.html.twig', [
+                'verifiedUser'         => true,
+                'invalid'              => false,
+                'token'                => $token,
+                'challengeName'        => $verification->getChallengeId(),
+                'challengeDisplayName' => $this->challengeService->getDisplayNameForChallenge($verification->getChallengeId()),
             ]);
         }
 
@@ -175,6 +201,7 @@ class AuthController extends AbstractController
         }
 
         return $this->render('default/acceptInvite.html.twig', [
+            'verifiedUser'         => false,
             'form'                 => $form->createView(),
             'challengeName'        => $verification->getChallengeId(),
             'challengeDisplayName' => $this->challengeService->getDisplayNameForChallenge($verification->getChallengeId()),

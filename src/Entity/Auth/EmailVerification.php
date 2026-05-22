@@ -50,6 +50,16 @@ class EmailVerification
         $this->challengeId = $challengeId;
     }
 
+    public static function forJoinChallenge(
+        ?User $user,
+        string $email,
+        string $token,
+        \DateTimeImmutable $expiresAt,
+        string $challengeId,
+    ): self {
+        return new self($user, $email, $token, $expiresAt, self::TYPE_JOIN_CHALLENGE, $challengeId);
+    }
+
     public static function forSelfRegistration(
         string $email,
         string $token,
