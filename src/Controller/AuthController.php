@@ -5,6 +5,7 @@ namespace App\Controller;
 
 use App\Form\AcceptInviteType;
 use App\Form\ChangePasswordType;
+use App\Form\ConfirmRegistrationType;
 use App\Form\SignUpType;
 use App\Services\InviteService;
 use App\Services\ChallengeService;
@@ -53,13 +54,8 @@ class AuthController extends AbstractController
         return $this->redirectToRoute('loginMenu', ['challengeName' => $challengeName]);
     }
 
-    public function addSelfRegisteredVoterForChallengePage(Request $request, string $challengeName, string $selfRegistrationCode): Response
+    public function addSelfRegisteredVoterForChallengePage(Request $request, string $challengeName, string $selfRegistrationCode, InviteService $inviteService): Response
     {
-        $limiter = $this->selfRegistrationLimiter->create($request->getClientIp());
-        if (!$limiter->consume()->isAccepted()) {
-            return new JsonResponse('Too many registration attempts. Please try again later.', Response::HTTP_TOO_MANY_REQUESTS);
-        }
-
         $availableChallenges = $this->challengeService->listChallenges();
         if (!in_array($challengeName, $availableChallenges, true)) {
             return new JsonResponse('invalid challenge', Response::HTTP_UNAUTHORIZED);
@@ -70,26 +66,72 @@ class AuthController extends AbstractController
         }
 
         $newVoter = new \stdClass();
+        $newVoter->email = '';
         $newVoter->username = '';
-        $newVoter->password = '';
         $form = $this->createForm(SignUpType::class, $newVoter);
 
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
-            $success = $this->challengeService->AddVoterToChallengeFromIp(
-                $challengeName,
-                $newVoter->username,
-                $newVoter->password,
-                $request->getClientIp() ?? ''
-            );
-            return $success
-                ? $this->redirectToRoute('loginMenu', ['challengeName' => $challengeName])
-                : new JsonResponse('already signed up or self-registration not allowed', Response::HTTP_UNAUTHORIZED);
+            if (!$this->selfRegistrationLimiter->create($request->getClientIp())->consume()->isAccepted()) {
+                return new JsonResponse('Too many registration attempts. Please try again later.', Response::HTTP_TOO_MANY_REQUESTS);
+            }
+
+            try {
+                $inviteService->requestSelfRegistration($newVoter->email, $newVoter->username, $challengeName);
+            } catch (\DomainException $e) {
+                $this->addFlash('error', $e->getMessage());
+                return $this->redirectToRoute('addSelfRegisteredVoterToChallengeFormPage', [
+                    'challengeName'        => $challengeName,
+                    'selfRegistrationCode' => $selfRegistrationCode,
+                ]);
+            }
+
+            return $this->render('default/selfRegistrationPending.html.twig', [
+                'challengeName' => $challengeName,
+                'email'         => $newVoter->email,
+            ]);
         }
 
         return $this->render('default/signup.html.twig', [
-            'form' => $form->createView(),
+            'form'          => $form->createView(),
             'challengeName' => $challengeName,
+        ]);
+    }
+
+    public function confirmSelfRegistration(Request $request, string $token, InviteService $inviteService): Response
+    {
+        $verification = $inviteService->findValidSelfRegistrationVerification($token);
+
+        if ($verification === null) {
+            return $this->render('default/confirmRegistration.html.twig', [
+                'invalid'       => true,
+                'challengeName' => '',
+                'form'          => null,
+            ]);
+        }
+
+        $form = $this->createForm(ConfirmRegistrationType::class);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            try {
+                $challengeName = $inviteService->confirmSelfRegistration(
+                    $verification,
+                    $form->get('password')->getData(),
+                );
+                $this->addFlash('success', 'Registration confirmed. You can now log in.');
+                return $this->redirectToRoute('loginMenu', ['challengeName' => $challengeName]);
+            } catch (\DomainException $e) {
+                $this->addFlash('error', $e->getMessage());
+                return $this->redirectToRoute('voter_confirm_registration', ['token' => $token]);
+            }
+        }
+
+        return $this->render('default/confirmRegistration.html.twig', [
+            'invalid'       => false,
+            'challengeName' => $verification->getChallengeId(),
+            'username'      => $verification->getPendingUsername(),
+            'form'          => $form->createView(),
         ]);
     }
 

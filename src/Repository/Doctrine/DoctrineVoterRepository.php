@@ -79,11 +79,8 @@ class DoctrineVoterRepository implements VoterRepositoryInterface
         $rawId = $voter->getId();
         $user  = ctype_digit($rawId) ? $this->em()->find(User::class, (int)$rawId) : null;
 
-        if ($user === null) {
-            $user = $this->em()->getRepository(User::class)->findOneBy(['username' => $voter->getName()]);
-            if ($user !== null && in_array('ROLE_SUPER_ADMIN', $user->getRoles(), true)) {
-                throw new \DomainException('Cannot add a super admin as a voter.');
-            }
+        if ($user !== null && in_array('ROLE_SUPER_ADMIN', $user->getRoles(), true)) {
+            throw new \DomainException('Cannot add a super admin as a voter.');
         }
 
         if ($user === null) {

@@ -12,6 +12,9 @@ interface EmailVerificationRepositoryInterface
     /** @return EmailVerification[] */
     public function findPendingByEmailAndChallenge(string $email, string $challengeName): array;
 
+    /** @return EmailVerification[] */
+    public function findPendingByEmailChallengeAndType(string $email, string $challengeName, string $type): array;
+
     public function save(EmailVerification $verification): void;
 
     public function delete(EmailVerification $verification): void;

@@ -100,6 +100,92 @@ class InviteService
         $this->mailer->send($message);
     }
 
+    public function requestSelfRegistration(string $email, string $username, string $challengeName): void
+    {
+        $existingUser = $this->userRepository->findByEmail($email);
+
+        if ($existingUser !== null && $existingUser->isVerified()) {
+            if ($this->userRepository->isInChallenge($existingUser, $challengeName)) {
+                throw new BusinessLogicException("$email is already a member of $challengeName.");
+            }
+            $this->userRepository->addToChallenge($existingUser, $challengeName);
+            $this->sendAddedToChallengeNotification($email, $challengeName);
+            return;
+        }
+
+        if ($this->userRepository->findByUsername($username) !== null) {
+            throw new BusinessLogicException('That username is already taken. Please choose another.');
+        }
+
+        foreach ($this->verificationRepository->findPendingByEmailChallengeAndType($email, $challengeName, EmailVerification::TYPE_SELF_REGISTRATION) as $old) {
+            $this->verificationRepository->delete($old);
+        }
+
+        $token = bin2hex(random_bytes(32));
+        $verification = EmailVerification::forSelfRegistration(
+            $email,
+            $token,
+            new \DateTimeImmutable('+10 minutes'),
+            $challengeName,
+            $username,
+        );
+        $this->verificationRepository->save($verification);
+
+        $confirmUrl = $this->urlGenerator->generate(
+            'voter_confirm_registration',
+            ['token' => $token],
+            UrlGeneratorInterface::ABSOLUTE_URL,
+        );
+
+        $message = (new TemplatedEmail())
+            ->from(new Address('noreply@challengerator.local', 'Challengerator'))
+            ->to($email)
+            ->subject("Confirm your registration for $challengeName")
+            ->htmlTemplate('email/self_registration_confirm.html.twig')
+            ->context([
+                'challengeName' => $challengeName,
+                'confirmUrl'    => $confirmUrl,
+            ]);
+
+        $this->mailer->send($message);
+    }
+
+    public function findValidSelfRegistrationVerification(string $token): ?EmailVerification
+    {
+        $verification = $this->verificationRepository->findByToken($token);
+
+        if ($verification === null || $verification->isExpired() || !$verification->isSelfRegistration()) {
+            return null;
+        }
+
+        return $verification;
+    }
+
+    public function confirmSelfRegistration(EmailVerification $verification, string $plainPassword): string
+    {
+        $username      = $verification->getPendingUsername();
+        $challengeName = $verification->getChallengeId()
+            ?? throw new BusinessLogicException('Verification is missing challenge information.');
+
+        if ($this->userRepository->findByUsername($username) !== null) {
+            $this->verificationRepository->delete($verification);
+            throw new BusinessLogicException('The username you chose is no longer available. Please register again.');
+        }
+
+        $user = new User($username);
+        $user->setEmail($verification->getEmail());
+        $user->setPassword($this->passwordHasher->hashPassword($user, $plainPassword));
+        $user->verify();
+
+        $this->transaction->transactional(function () use ($user, $verification, $challengeName): void {
+            $this->userRepository->save($user);
+            $this->userRepository->addToChallenge($user, $challengeName);
+            $this->verificationRepository->delete($verification);
+        });
+
+        return $challengeName;
+    }
+
     public function findValidVerification(string $token): ?EmailVerification
     {
         $verification = $this->verificationRepository->findByToken($token);

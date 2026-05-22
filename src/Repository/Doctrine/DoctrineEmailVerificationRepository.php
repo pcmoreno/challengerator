@@ -31,6 +31,15 @@ class DoctrineEmailVerificationRepository implements EmailVerificationRepository
         ]);
     }
 
+    public function findPendingByEmailChallengeAndType(string $email, string $challengeName, string $type): array
+    {
+        return $this->em()->getRepository(EmailVerification::class)->findBy([
+            'email'       => $email,
+            'challengeId' => $challengeName,
+            'type'        => $type,
+        ]);
+    }
+
     public function save(EmailVerification $verification): void
     {
         $this->em()->persist($verification);
