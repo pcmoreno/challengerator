@@ -1,23 +1,19 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Sign Up | {{ challengeName }}{% endblock %}
+{% block title %}Sign Up | {{ challengeDisplayName }}{% endblock %}
 
 {% block body %}
     <div class="max-w-md mx-auto mt-8">
-        <h2 class="text-2xl font-bold text-center text-heading mb-6">Sign up for {{ challengeName }}</h2>
+        <h2 class="text-2xl font-bold text-center text-heading mb-6">Sign up for {{ challengeDisplayName }}</h2>
         <div class="bg-panel rounded-lg shadow p-6">
             {{ form_start(form, {'attr': {'class': 'space-y-4'}}) }}
+                {{ form_row(form.email) }}
                 {{ form_row(form.username) }}
-                {{ form_row(form.password) }}
                 {{ form_widget(form.register) }}
             {{ form_end(form) }}
         </div>
         <p class="text-center text-muted text-sm mt-4">
-            You won't be able to reset or recover your password — make sure you remember it.
-        </p>
-        <p class="text-center text-sm mt-2">
-            <a href="https://blog.avast.com/strong-password-ideas" target="_blank" rel="noreferrer noopener"
-               class="text-link hover:underline">Tips on strong passwords</a>
+            You'll receive a confirmation email with a link to set your password.
         </p>
     </div>
 {% endblock %}

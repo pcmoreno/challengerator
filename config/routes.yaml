@@ -30,6 +30,11 @@ voter_accept_invite:
     controller: App\Controller\AuthController::acceptInvite
     methods: [GET, POST]
 
+voter_confirm_registration:
+    path: /register/confirm/{token}
+    controller: App\Controller\AuthController::confirmSelfRegistration
+    methods: [GET, POST]
+
 changePasswordMenu:
     path: /voter/changePass
     controller: App\Controller\AuthController::changePasswordForVoter

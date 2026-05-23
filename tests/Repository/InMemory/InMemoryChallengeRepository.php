@@ -31,6 +31,9 @@ class InMemoryChallengeRepository implements ChallengeRepositoryInterface
 
     public function listNames(): array
     {
-        return array_keys($this->challenges);
+        return array_map(
+            fn(Challenge $c) => ['name' => $c->getName(), 'displayName' => $c->getDisplayName()],
+            array_values($this->challenges)
+        );
     }
 }

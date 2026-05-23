@@ -10,7 +10,6 @@ use App\Entity\Doctrine\DbCar;
 use App\Entity\Doctrine\DbChallenge;
 use App\Entity\Doctrine\DbVoterCarQueue;
 use App\Repository\VoterRepositoryInterface;
-use Doctrine\DBAL\ArrayParameterType;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\Persistence\ManagerRegistry;
 
@@ -79,11 +78,8 @@ class DoctrineVoterRepository implements VoterRepositoryInterface
         $rawId = $voter->getId();
         $user  = ctype_digit($rawId) ? $this->em()->find(User::class, (int)$rawId) : null;
 
-        if ($user === null) {
-            $user = $this->em()->getRepository(User::class)->findOneBy(['username' => $voter->getName()]);
-            if ($user !== null && in_array('ROLE_SUPER_ADMIN', $user->getRoles(), true)) {
-                throw new \DomainException('Cannot add a super admin as a voter.');
-            }
+        if ($user !== null && in_array('ROLE_SUPER_ADMIN', $user->getRoles(), true)) {
+            throw new \DomainException('Cannot add a super admin as a voter.');
         }
 
         if ($user === null) {
@@ -117,29 +113,35 @@ class DoctrineVoterRepository implements VoterRepositoryInterface
         if ($carIds === []) {
             return;
         }
-        $affected = $this->em()->getConnection()->executeStatement(
-            'UPDATE voter_car_queue vcq
-             INNER JOIN challenge c ON vcq.challenge_id = c.id
-             SET vcq.status = :voted
-             WHERE vcq.user_id = :userId AND c.name = :challengeName AND vcq.car_id IN (:carIds)
-               AND vcq.status = :pending',
-            [
-                'voted'         => DbVoterCarQueue::STATUS_VOTED,
-                'pending'       => DbVoterCarQueue::STATUS_PENDING,
-                'userId'        => (int) $voterId,
-                'challengeName' => $challengeName,
-                'carIds'        => $carIds,
-            ],
-            [
-                'carIds' => ArrayParameterType::STRING,
-            ]
-        );
-        if ($affected !== count($carIds)) {
+
+        // Use ORM queries (not raw DBAL) so the identity map stays in sync.
+        // The rows loaded here are the same instances toDomain already loaded;
+        // calling markVoted() on them makes the outer flush() persist the update.
+        $rows = $this->em()->createQueryBuilder()
+            ->select('vcq')
+            ->from(DbVoterCarQueue::class, 'vcq')
+            ->join('vcq.challenge', 'c')
+            ->where('vcq.user = :userId')
+            ->andWhere('c.name = :challengeName')
+            ->andWhere('vcq.car IN (:carIds)')
+            ->andWhere('vcq.status = :pending')
+            ->setParameter('userId', (int) $voterId)
+            ->setParameter('challengeName', $challengeName)
+            ->setParameter('carIds', $carIds)
+            ->setParameter('pending', DbVoterCarQueue::STATUS_PENDING)
+            ->getQuery()
+            ->getResult();
+
+        if (count($rows) !== count($carIds)) {
             throw new \RuntimeException(sprintf(
-                'markCarsVoted updated %d rows, expected %d — vote not recorded',
-                $affected,
+                'markCarsVoted found %d pending rows, expected %d — vote already recorded or cars not found',
+                count($rows),
                 count($carIds)
             ));
+        }
+
+        foreach ($rows as $row) {
+            $row->markVoted();
         }
     }
 

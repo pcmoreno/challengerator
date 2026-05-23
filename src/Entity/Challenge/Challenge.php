@@ -9,6 +9,7 @@ class Challenge
 {
     private string $id;
     private string $name;
+    private string $displayName;
     private array $cars;
     private array $voters;
     private bool $isActive;
@@ -17,10 +18,11 @@ class Challenge
     private bool $allowSelfRegistration;
     private ?string $selfRegistrationCode;
 
-    private function __construct(string $id, string $name, array $cars, array $voters, bool $isActive, string $owner)
+    private function __construct(string $id, string $name, string $displayName, array $cars, array $voters, bool $isActive, string $owner)
     {
         $this->id = $id;
         $this->name = $name;
+        $this->displayName = $displayName !== '' ? $displayName : $name;
         $this->cars = $cars;
         $this->voters = $voters;
         $this->isActive = $isActive;
@@ -30,9 +32,9 @@ class Challenge
         $this->selfRegistrationCode = null;
     }
 
-    public static function create(string $name, string $owner): Challenge
+    public static function create(string $name, string $displayName, string $owner): Challenge
     {
-        return new Challenge('info', $name, [], [], false, $owner);
+        return new Challenge('info', $name, $displayName, [], [], false, $owner);
     }
 
     public function addParticipant(Car $car, Voter $voter): void
@@ -82,6 +84,7 @@ class Challenge
         $stdclass = new \stdClass();
         $stdclass->_id = $this->id;
         $stdclass->name = $this->name;
+        $stdclass->displayName = $this->displayName;
         $stdclass->cars = $this->cars;
         $stdclass->voters = $this->voters;
         $stdclass->isActive = $this->isActive;
@@ -101,6 +104,7 @@ class Challenge
         $challenge = new Challenge(
             $doc['id'],
             $doc['name'],
+            $doc['displayName'] ?? $doc['name'],
             $doc['cars'],
             $doc['voters'],
             $doc['isActive'],
@@ -115,14 +119,15 @@ class Challenge
     public static function fromCouchDocument(array $doc): Challenge
     {
         $challenge = self::fromArray([
-            'id'                   => $doc['_id'],
-            'name'                 => $doc['name'],
-            'cars'                 => $doc['cars'],
-            'voters'               => $doc['voters'],
-            'isActive'             => $doc['isActive'],
-            'owner'                => $doc['owner'],
+            'id'                    => $doc['_id'],
+            'name'                  => $doc['name'],
+            'displayName'           => $doc['displayName'] ?? $doc['name'],
+            'cars'                  => $doc['cars'],
+            'voters'                => $doc['voters'],
+            'isActive'              => $doc['isActive'],
+            'owner'                 => $doc['owner'],
             'allowSelfRegistration' => $doc['allowSelfRegistration'] ?? false,
-            'selfRegistrationCode' => $doc['selfRegistrationCode'] ?? null,
+            'selfRegistrationCode'  => $doc['selfRegistrationCode'] ?? null,
         ]);
         $challenge->revision = $doc['_rev'] ?? null;
 
@@ -172,6 +177,11 @@ class Challenge
     public function getName(): string
     {
         return $this->name;
+    }
+
+    public function getDisplayName(): string
+    {
+        return $this->displayName;
     }
 
     public function allowsSelfRegistration(): bool

@@ -5,6 +5,7 @@ namespace App\Controller;
 
 use App\Services\ChallengeService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\UX\Turbo\TurboBundle;
@@ -21,13 +22,18 @@ class VotingController extends AbstractController
 
         $userId = (string)$this->getUser()->getId();
         [$carsToVote, $carsNotVoted] = $this->challengeService->getTwoCarsToBeVotedByUser($challengeName, $userId);
+        $challengeDisplayName = $this->challengeService->getDisplayNameForChallenge($challengeName);
         if ($carsToVote === []) {
-            return $this->render('default/votingComplete.html.twig', ['challengeName' => $challengeName]);
+            return $this->render('default/votingComplete.html.twig', [
+                'challengeName'        => $challengeName,
+                'challengeDisplayName' => $challengeDisplayName,
+            ]);
         }
         return $this->render('default/votingCarsForUser.html.twig', [
-            'carsToVote' => $carsToVote,
-            'carsNotVoted' => $carsNotVoted,
-            'challengeName' => $challengeName,
+            'carsToVote'           => $carsToVote,
+            'carsNotVoted'         => $carsNotVoted,
+            'challengeName'        => $challengeName,
+            'challengeDisplayName' => $challengeDisplayName,
         ]);
     }
 
@@ -35,6 +41,10 @@ class VotingController extends AbstractController
     {
         if ($this->isGranted('ROLE_SUPER_ADMIN')) {
             return $this->redirectToRoute('index');
+        }
+
+        if (!$this->isCsrfTokenValid('vote_' . $challengeName, $request->request->get('_token'))) {
+            return new JsonResponse('Invalid CSRF token', Response::HTTP_FORBIDDEN);
         }
 
         $userId = (string)$this->getUser()->getId();
@@ -55,9 +65,10 @@ class VotingController extends AbstractController
         if ($request->getPreferredFormat() === TurboBundle::STREAM_FORMAT) {
             $request->setRequestFormat(TurboBundle::STREAM_FORMAT);
             return $this->render('voting/_stream.html.twig', [
-                'carsToVote'    => $carsToVote,
-                'carsNotVoted'  => $carsNotVoted,
-                'challengeName' => $challengeName,
+                'carsToVote'           => $carsToVote,
+                'carsNotVoted'         => $carsNotVoted,
+                'challengeName'        => $challengeName,
+                'challengeDisplayName' => $this->challengeService->getDisplayNameForChallenge($challengeName),
             ]);
         }
 

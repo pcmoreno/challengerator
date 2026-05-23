@@ -12,20 +12,20 @@ class ChallengeTest extends TestCase
 {
     public function test_create_sets_inactive_state(): void
     {
-        $challenge = Challenge::create('rally', 'secret');
+        $challenge = Challenge::create('rally', 'Rally', 'secret');
         $this->assertFalse($challenge->isActive());
     }
 
     public function test_create_sets_name_and_owner(): void
     {
-        $challenge = Challenge::create('rally', 'secret');
+        $challenge = Challenge::create('rally', 'Rally', 'secret');
         $this->assertSame('rally', $challenge->getName());
         $this->assertSame('secret', $challenge->getOwner());
     }
 
     public function test_addCarToChallenge_adds_car(): void
     {
-        $challenge = Challenge::create('rally', 'secret');
+        $challenge = Challenge::create('rally', 'Rally', 'secret');
         $car = Car::create(['name' => 'Mustang', 'imageUrlA' => 'a', 'imageUrlB' => 'b', 'challengeId' => 'rally']);
         $challenge->addCarToChallenge($car);
         $this->assertContains($car->getId(), $challenge->getCars());
@@ -33,7 +33,7 @@ class ChallengeTest extends TestCase
 
     public function test_addCarToChallenge_throws_on_duplicate(): void
     {
-        $challenge = Challenge::create('rally', 'secret');
+        $challenge = Challenge::create('rally', 'Rally', 'secret');
         $car = Car::create(['name' => 'Mustang', 'imageUrlA' => 'a', 'imageUrlB' => 'b', 'challengeId' => 'rally']);
         $challenge->addCarToChallenge($car);
 
@@ -43,7 +43,7 @@ class ChallengeTest extends TestCase
 
     public function test_addVoterToChallenge_throws_on_duplicate(): void
     {
-        $challenge = Challenge::create('rally', 'secret');
+        $challenge = Challenge::create('rally', 'Rally', 'secret');
         $voter = Voter::createForChallenge('Paulo', 'pass', 'rally');
         $challenge->addVoterToChallenge($voter);
 
@@ -53,7 +53,7 @@ class ChallengeTest extends TestCase
 
     public function test_removeCarFromChallenge_removes_car(): void
     {
-        $challenge = Challenge::create('rally', 'secret');
+        $challenge = Challenge::create('rally', 'Rally', 'secret');
         $car = Car::create(['name' => 'Mustang', 'imageUrlA' => 'a', 'imageUrlB' => 'b', 'challengeId' => 'rally']);
         $challenge->addCarToChallenge($car);
         $challenge->removeCarFromChallenge($car->getId());
@@ -62,7 +62,7 @@ class ChallengeTest extends TestCase
 
     public function test_removeVoterFromChallenge_removes_voter(): void
     {
-        $challenge = Challenge::create('rally', 'secret');
+        $challenge = Challenge::create('rally', 'Rally', 'secret');
         $voter = Voter::createForChallenge('Paulo', 'pass', 'rally');
         $challenge->addVoterToChallenge($voter);
         $challenge->removeVoterFromChallenge($voter->getId());
@@ -71,7 +71,7 @@ class ChallengeTest extends TestCase
 
     public function test_hasVoter_returns_correct_value(): void
     {
-        $challenge = Challenge::create('rally', 'secret');
+        $challenge = Challenge::create('rally', 'Rally', 'secret');
         $voter = Voter::createForChallenge('Paulo', 'pass', 'rally');
 
         $this->assertFalse($challenge->hasVoter($voter->getId()));
@@ -81,20 +81,20 @@ class ChallengeTest extends TestCase
 
     public function test_activate_sets_active(): void
     {
-        $challenge = Challenge::create('rally', 'secret');
+        $challenge = Challenge::create('rally', 'Rally', 'secret');
         $challenge->activate();
         $this->assertTrue($challenge->isActive());
     }
 
     public function test_allowsSelfRegistration_defaults_to_false(): void
     {
-        $challenge = Challenge::create('rally', 'secret');
+        $challenge = Challenge::create('rally', 'Rally', 'secret');
         $this->assertFalse($challenge->allowsSelfRegistration());
     }
 
     public function test_toggleSelfRegistration_enables_and_returns_code(): void
     {
-        $challenge = Challenge::create('rally', 'secret');
+        $challenge = Challenge::create('rally', 'Rally', 'secret');
         $code = $challenge->toggleSelfRegistration();
 
         $this->assertTrue($challenge->allowsSelfRegistration());
@@ -104,7 +104,7 @@ class ChallengeTest extends TestCase
 
     public function test_toggleSelfRegistration_disables_on_second_call(): void
     {
-        $challenge = Challenge::create('rally', 'secret');
+        $challenge = Challenge::create('rally', 'Rally', 'secret');
         $challenge->toggleSelfRegistration();
         $challenge->toggleSelfRegistration();
 
@@ -138,13 +138,14 @@ class ChallengeTest extends TestCase
 
     public function test_toCouchDocument_roundtrip_via_fromCouchDocument(): void
     {
-        $challenge = Challenge::create('rally', 'secret');
+        $challenge = Challenge::create('rally', 'Rally', 'secret');
 
         $doc = json_decode(json_encode($challenge->toCouchDocument()), true);
         $doc['_rev'] = '1-abc';
         $restored = Challenge::fromCouchDocument($doc);
 
         $this->assertSame('rally', $restored->getName());
+        $this->assertSame('Rally', $restored->getDisplayName());
         $this->assertSame('secret', $restored->getOwner());
         $this->assertFalse($restored->isActive());
     }

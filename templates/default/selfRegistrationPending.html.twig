@@ -1,0 +1,19 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Check your email | {{ challengeDisplayName }}{% endblock %}
+
+{% block body %}
+    <div class="max-w-md mx-auto mt-8">
+        <div class="bg-surface rounded-lg shadow p-8 text-center">
+            <h2 class="text-2xl font-bold text-heading mb-4">Check your email</h2>
+            <p class="text-muted mb-2">
+                We sent a confirmation link to <strong class="text-heading">{{ email }}</strong>.
+            </p>
+            <p class="text-muted text-sm">
+                Open it within 10 minutes to complete your registration for
+                <strong>{{ challengeDisplayName }}</strong>
+                <span class="text-xs">({{ challengeName }})</span>.
+            </p>
+        </div>
+    </div>
+{% endblock %}

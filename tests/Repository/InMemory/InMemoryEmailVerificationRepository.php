@@ -27,6 +27,17 @@ class InMemoryEmailVerificationRepository implements EmailVerificationRepository
         ));
     }
 
+    public function findPendingByEmailChallengeAndType(string $email, string $challengeName, string $type): array
+    {
+        return array_values(array_filter(
+            $this->records,
+            fn(EmailVerification $ev) =>
+                $ev->getEmail() === $email &&
+                $ev->getChallengeId() === $challengeName &&
+                $ev->getType() === $type
+        ));
+    }
+
     public function save(EmailVerification $verification): void
     {
         $this->records[$verification->getToken()] = $verification;

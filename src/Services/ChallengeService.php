@@ -27,8 +27,11 @@ class ChallengeService
         private readonly LoggerInterface $loginsLogger,
     ) {}
 
-    public function createNewChallenge(string $name, string $owner, string $code): void
+    public function createNewChallenge(string $name, string $displayName, string $owner, string $code): void
     {
+        if (in_array($name, $this->listChallenges(), true)) {
+            throw new \DomainException("A challenge with the name '$name' already exists. Please choose a different name.");
+        }
         if (!$this->inviteCodeRepository->validateAndConsume($code)) {
             throw new \DomainException('Code not valid');
         }
@@ -37,7 +40,7 @@ class ChallengeService
             throw new \RuntimeException('Failed to hash admin password');
         }
         $this->challengeRepository->create($name);
-        $challenge = Challenge::create($name, $hashed);
+        $challenge = Challenge::create($name, $displayName, $hashed);
         $this->challengeRepository->save($challenge);
     }
 
@@ -150,7 +153,18 @@ class ChallengeService
 
     public function listChallenges(): array
     {
+        return array_column($this->challengeRepository->listNames(), 'name');
+    }
+
+    /** @return list<array{name: string, displayName: string}> */
+    public function listChallengesWithDisplayNames(): array
+    {
         return $this->challengeRepository->listNames();
+    }
+
+    public function getDisplayNameForChallenge(string $slug): string
+    {
+        return $this->challengeRepository->find($slug)->getDisplayName();
     }
 
     public function voteOnCars(string $cars, string $result, string $challengeId, string $userId): array

@@ -1,0 +1,39 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Complete your registration | {{ challengeDisplayName }}{% endblock %}
+
+{% block body %}
+    <div class="max-w-md mx-auto mt-8">
+
+    {% if invalid %}
+        <div class="bg-surface rounded-lg shadow p-8 text-center">
+            <h2 class="text-2xl font-bold text-heading mb-4">Invalid or expired link</h2>
+            <p class="text-muted">This confirmation link is no longer valid. Please sign up again.</p>
+        </div>
+    {% else %}
+        <h2 class="text-2xl font-bold text-center text-heading mb-2">Almost there, {{ username }}!</h2>
+        <p class="text-center text-muted mb-6">Choose a password to complete your registration for <strong>{{ challengeDisplayName }}</strong>.</p>
+
+        {% for message in app.flashes('error') %}
+            <div class="mb-4 alert-error">{{ message }}</div>
+        {% endfor %}
+
+        <div class="bg-panel rounded-lg shadow p-6">
+            {{ form_start(form, {'attr': {'class': 'space-y-4'}}) }}
+                {{ form_row(form.password.first) }}
+                {{ form_row(form.password.second) }}
+                {{ form_widget(form.confirm) }}
+            {{ form_end(form) }}
+        </div>
+
+        <p class="text-center text-muted text-sm mt-4">
+            You won't be able to reset or recover your password — make sure you remember it.
+        </p>
+        <p class="text-center text-sm mt-2">
+            <a href="https://blog.avast.com/strong-password-ideas" target="_blank" rel="noreferrer noopener"
+               class="text-link hover:underline">Tips on strong passwords</a>
+        </p>
+    {% endif %}
+
+    </div>
+{% endblock %}

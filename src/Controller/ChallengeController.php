@@ -38,7 +38,7 @@ class ChallengeController extends AbstractController
 
     public function listChallengesMenu(): Response
     {
-        $challenges = $this->challengeService->listChallenges();
+        $challenges = $this->challengeService->listChallengesWithDisplayNames();
         return $this->render('default/challengeMenu.html.twig', [
             'challenges' => $challenges,
         ]);
@@ -47,6 +47,7 @@ class ChallengeController extends AbstractController
     public function createChallenge(Request $request): Response
     {
         $createChallenge = new \stdClass();
+        $createChallenge->displayName = '';
         $createChallenge->challengeName = '';
         $createChallenge->adminPass = '';
         $createChallenge->creationToken = '';
@@ -57,6 +58,7 @@ class ChallengeController extends AbstractController
             try {
                 $this->challengeService->createNewChallenge(
                     $createChallenge->challengeName,
+                    $createChallenge->displayName,
                     $createChallenge->adminPass,
                     $createChallenge->creationToken
                 );
@@ -123,11 +125,12 @@ class ChallengeController extends AbstractController
         }
 
         return $this->render('car/carDashboard.html.twig', [
-            'form'               => $form->createView(),
-            'allCarsInChallenge' => $this->challengeService->getCarsForChallenge($challengeName),
-            'challengeName'      => $challengeName,
-            'driveConnected'     => $driveConnected,
-            'driveEmail'         => $driveEmail,
+            'form'                 => $form->createView(),
+            'allCarsInChallenge'   => $this->challengeService->getCarsForChallenge($challengeName),
+            'challengeName'        => $challengeName,
+            'challengeDisplayName' => $this->challengeService->getDisplayNameForChallenge($challengeName),
+            'driveConnected'       => $driveConnected,
+            'driveEmail'           => $driveEmail,
         ]);
     }
 
@@ -206,6 +209,7 @@ class ChallengeController extends AbstractController
             'adminDeleteForm'         => $adminDeleteVoterForm->createView(),
             'allUsersInTheChallenge'  => $allUsersInTheChallenge,
             'challengeName'           => $challengeName,
+            'challengeDisplayName'    => $this->challengeService->getDisplayNameForChallenge($challengeName),
             'selfRegistration'        => $this->challengeService->isChallengeOpenToSelfRegistration($challengeName),
             'selfRegistrationCode'    => $this->challengeService->getSelfRegistrationCodeForChallenge($challengeName),
         ]);
