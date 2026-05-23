@@ -115,6 +115,12 @@ html[data-theme="auto"] kbd {
     color: #dadada;
 }
 
+input:not([type="hidden"]):not([type="submit"]):not([type="checkbox"]):not([type="radio"]),
+textarea,
+select {
+    background-color: #f9fafb;
+}
+
 html[data-theme="auto"] input:not([type="hidden"]):not([type="submit"]):not([type="checkbox"]):not([type="radio"]),
 html[data-theme="auto"] textarea,
 html[data-theme="auto"] select {

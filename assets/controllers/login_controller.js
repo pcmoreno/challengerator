@@ -20,9 +20,9 @@ export default class extends Controller {
     }
 
     #activate(active, inactive) {
-        active.classList.add('bg-panel', 'text-white');
-        active.classList.remove('text-muted');
-        inactive.classList.remove('bg-panel', 'text-white');
-        inactive.classList.add('text-muted');
+        active.classList.add('bg-header', 'text-white');
+        active.classList.remove('text-muted', 'bg-surface');
+        inactive.classList.remove('bg-header', 'text-white');
+        inactive.classList.add('text-muted', 'bg-surface');
     }
 }
