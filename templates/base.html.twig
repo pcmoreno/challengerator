@@ -6,7 +6,7 @@
     <title>{% block title %}Challengerator{% endblock %}</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="shortcut icon" href="/favicon.svg">
-    <script>if (localStorage.getItem('theme') === 'auto') document.documentElement.dataset.theme = 'auto';</script>
+    <script>const _t=localStorage.getItem('theme');if(_t==='auto'||_t==='racing')document.documentElement.dataset.theme=_t;</script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700&display=swap" rel="stylesheet">
@@ -47,6 +47,10 @@
                 <button data-action="click->theme#select" data-theme-option="auto"
                         class="w-full text-left px-4 py-2 text-sm hover:bg-panel flex justify-between items-center gap-4 cursor-pointer bg-transparent border-0">
                     Automation <span data-theme-target="autoMark" class="text-link invisible">✓</span>
+                </button>
+                <button data-action="click->theme#select" data-theme-option="racing"
+                        class="w-full text-left px-4 py-2 text-sm hover:bg-panel flex justify-between items-center gap-4 cursor-pointer bg-transparent border-0">
+                    Racing <span data-theme-target="racingMark" class="text-link invisible">✓</span>
                 </button>
             </div>
         </div>
