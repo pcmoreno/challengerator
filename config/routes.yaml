@@ -5,8 +5,9 @@ index:
 # -----------------------------------------------
 # Auth routes:
 loginMenu:
-    path: /login/{challengeName}
+    path: /login
     controller: App\Controller\AuthController::loginFormPage
+    methods: [GET]
 
 voter_login:
     path: /voter-login
@@ -17,7 +18,7 @@ voter_logout:
     path: /voter-logout
 
 admin_login:
-    path: /admin-login/{challengeName}
+    path: /admin-login
     controller: App\Controller\AuthController::adminLogin
     methods: [POST]
 

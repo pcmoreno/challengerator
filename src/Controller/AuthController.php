@@ -25,12 +25,9 @@ class AuthController extends AbstractController
         private RateLimiterFactory $adminLoginLimiter,
     ) {}
 
-    public function loginFormPage(Request $request, string $challengeName): Response
+    public function loginFormPage(): Response
     {
-        return $this->render('default/login.html.twig', [
-            'challengeName'        => $challengeName,
-            'challengeDisplayName' => $this->challengeService->getDisplayNameForChallenge($challengeName),
-        ]);
+        return $this->render('default/login.html.twig');
     }
 
     public function voterLogin(): Response
@@ -38,9 +35,9 @@ class AuthController extends AbstractController
         return $this->redirectToRoute('listChallengesMenu');
     }
 
-    public function adminLogin(Request $request, string $challengeName): Response
+    public function adminLogin(Request $request): Response
     {
-        if (!$this->isCsrfTokenValid('admin_login_' . $challengeName, $request->request->get('_csrf_token'))) {
+        if (!$this->isCsrfTokenValid('admin_login', $request->request->get('_csrf_token'))) {
             return new JsonResponse('Invalid CSRF token', Response::HTTP_FORBIDDEN);
         }
 
@@ -49,9 +46,10 @@ class AuthController extends AbstractController
             return new Response('Too many login attempts. Please try again later.', Response::HTTP_TOO_MANY_REQUESTS);
         }
 
-        $adminPass = $request->request->get('admin_pass', '');
+        $challengeName = trim($request->request->get('challenge_slug', ''));
+        $adminPass     = $request->request->get('admin_pass', '');
 
-        if ($this->challengeService->verifyAdmin($challengeName, $adminPass)) {
+        if ($challengeName !== '' && $this->challengeService->verifyAdmin($challengeName, $adminPass)) {
             $session = $request->getSession();
             $session->migrate(true);
             $adminChallenges = $session->get('admin_challenges', []);
@@ -60,7 +58,8 @@ class AuthController extends AbstractController
             return $this->redirectToRoute('addVoterToChallengeFormPage', ['challengeName' => $challengeName]);
         }
 
-        return $this->redirectToRoute('loginMenu', ['challengeName' => $challengeName]);
+        $this->addFlash('error', 'Invalid challenge slug or admin password.');
+        return $this->redirectToRoute('loginMenu');
     }
 
     public function addSelfRegisteredVoterForChallengePage(Request $request, string $challengeName, string $selfRegistrationCode, InviteService $inviteService): Response
@@ -90,7 +89,7 @@ class AuthController extends AbstractController
             } catch (AccountExistsException $e) {
                 $request->getSession()->set('pending_challenge_join', $e->challengeName);
                 $this->addFlash('warning', 'An account with this email already exists. Please log in to join the challenge.');
-                return $this->redirectToRoute('loginMenu', ['challengeName' => $e->challengeName]);
+                return $this->redirectToRoute('loginMenu');
             } catch (\DomainException $e) {
                 $this->addFlash('error', $e->getMessage());
                 return $this->redirectToRoute('addSelfRegisteredVoterToChallengeFormPage', [
@@ -135,7 +134,7 @@ class AuthController extends AbstractController
                     $form->get('password')->getData(),
                 );
                 $this->addFlash('success', 'Registration confirmed. You can now log in.');
-                return $this->redirectToRoute('loginMenu', ['challengeName' => $challengeName]);
+                return $this->redirectToRoute('loginMenu');
             } catch (\DomainException $e) {
                 $this->addFlash('error', $e->getMessage());
                 return $this->redirectToRoute('voter_confirm_registration', ['token' => $token]);
@@ -168,7 +167,7 @@ class AuthController extends AbstractController
                 try {
                     $inviteService->acceptVerifiedUserInvite($verification);
                     $this->addFlash('success', 'You have been added to the challenge. Please log in.');
-                    return $this->redirectToRoute('loginMenu', ['challengeName' => $verification->getChallengeId()]);
+                    return $this->redirectToRoute('loginMenu');
                 } catch (\DomainException $e) {
                     $this->addFlash('error', $e->getMessage());
                     return $this->redirectToRoute('voter_accept_invite', ['token' => $token]);
@@ -193,7 +192,7 @@ class AuthController extends AbstractController
                     $form->get('username')->getData(),
                     $form->get('password')->getData(),
                 );
-                return $this->redirectToRoute('loginMenu', ['challengeName' => $verification->getChallengeId()]);
+                return $this->redirectToRoute('loginMenu');
             } catch (\DomainException $e) {
                 $this->addFlash('error', $e->getMessage());
                 return $this->redirectToRoute('voter_accept_invite', ['token' => $token]);

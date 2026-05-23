@@ -38,7 +38,10 @@ class ChallengeController extends AbstractController
 
     public function listChallengesMenu(): Response
     {
-        $challenges = $this->challengeService->listChallengesWithDisplayNames();
+        $user = $this->getUser();
+        $challenges = $user !== null
+            ? $this->challengeService->listChallengesForUser($user)
+            : [];
         return $this->render('default/challengeMenu.html.twig', [
             'challenges' => $challenges,
         ]);
@@ -62,7 +65,7 @@ class ChallengeController extends AbstractController
                     $createChallenge->adminPass,
                     $createChallenge->creationToken
                 );
-                return $this->redirectToRoute('loginMenu', ['challengeName' => $createChallenge->challengeName]);
+                return $this->redirectToRoute('loginMenu');
             } catch (\Exception $exception) {
                 return new JsonResponse($exception->getMessage(), Response::HTTP_BAD_REQUEST);
             }
@@ -76,7 +79,7 @@ class ChallengeController extends AbstractController
     public function carsDashboardPage(Request $request, string $challengeName, GoogleDriveService $driveService): Response
     {
         if (!$this->isAdminForChallenge($request, $challengeName)) {
-            return $this->redirectToRoute('loginMenu', ['challengeName' => $challengeName]);
+            return $this->redirectToRoute('loginMenu');
         }
 
         $dbChallenge    = $this->em->getRepository(DbChallenge::class)->findOneBy(['name' => $challengeName]);
@@ -155,7 +158,7 @@ class ChallengeController extends AbstractController
     public function votersDashboardPage(Request $request, string $challengeName, InviteService $inviteService): Response
     {
         if (!$this->isAdminForChallenge($request, $challengeName)) {
-            return $this->redirectToRoute('loginMenu', ['challengeName' => $challengeName]);
+            return $this->redirectToRoute('loginMenu');
         }
 
         $voterForm = $this->createForm(VoterType::class);
@@ -218,7 +221,7 @@ class ChallengeController extends AbstractController
     public function startChallenge(Request $request, string $challengeName): Response
     {
         if (!$this->isAdminForChallenge($request, $challengeName)) {
-            return $this->redirectToRoute('loginMenu', ['challengeName' => $challengeName]);
+            return $this->redirectToRoute('loginMenu');
         }
 
         if (!$this->isCsrfTokenValid('start_challenge_' . $challengeName, $request->request->get('_token'))) {

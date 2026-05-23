@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Entity\Auth\User;
 use App\Entity\Challenge\Car;
 use App\Entity\Challenge\Challenge;
 use App\Entity\Challenge\Outcome;
@@ -160,6 +161,12 @@ class ChallengeService
     public function listChallengesWithDisplayNames(): array
     {
         return $this->challengeRepository->listNames();
+    }
+
+    /** @return list<array{name: string, displayName: string}> */
+    public function listChallengesForUser(User $user): array
+    {
+        return $this->challengeRepository->listNamesForUser($user);
     }
 
     public function getDisplayNameForChallenge(string $slug): string

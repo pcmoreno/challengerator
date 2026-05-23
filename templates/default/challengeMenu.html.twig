@@ -1,14 +1,14 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Challenges{% endblock %}
+{% block title %}My Challenges{% endblock %}
 
 {% block body %}
     <div class="max-w-2xl mx-auto">
-        <h2 class="text-2xl font-bold text-heading mb-6">Ongoing Challenges</h2>
+        <h2 class="text-2xl font-bold text-heading mb-6">My Challenges</h2>
 
         {% if challenges is empty %}
             <div class="text-center py-12 bg-surface rounded-lg shadow">
-                <p class="text-muted text-lg">No challenges available at the moment.</p>
+                <p class="text-muted text-lg">You are not signed up for any challenges yet.</p>
             </div>
         {% else %}
             <div class="bg-surface rounded-lg shadow overflow-hidden">
@@ -27,9 +27,9 @@
                                     <span class="text-xs text-muted ml-1">({{ item.name }})</span>
                                 </td>
                                 <td class="px-4 py-3 text-right">
-                                    <a href="{{ path('loginMenu', {'challengeName': item.name}) }}"
+                                    <a href="{{ path('voteDashboardForUser', {'challengeName': item.name}) }}"
                                        class="btn-primary font-bold py-1 px-4 rounded text-sm">
-                                        GO TO
+                                        Go to Challenge
                                     </a>
                                 </td>
                             </tr>
@@ -38,9 +38,5 @@
                 </table>
             </div>
         {% endif %}
-
-        <div class="text-center mt-6">
-            <a href="{{ path('index') }}" class="text-link hover:underline text-sm">← Back</a>
-        </div>
     </div>
 {% endblock %}

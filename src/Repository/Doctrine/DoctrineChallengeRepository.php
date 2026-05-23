@@ -64,6 +64,18 @@ class DoctrineChallengeRepository implements ChallengeRepositoryInterface
             ->getArrayResult();
     }
 
+    public function listNamesForUser(User $user): array
+    {
+        return $this->em()->getRepository(DbChallenge::class)
+            ->createQueryBuilder('c')
+            ->select('c.name', 'c.displayName')
+            ->join('c.voters', 'u')
+            ->where('u.id = :userId')
+            ->setParameter('userId', $user->getId())
+            ->getQuery()
+            ->getArrayResult();
+    }
+
     private function toDomain(DbChallenge $dbChallenge): Challenge
     {
         $carIds   = array_map(fn($c) => $c->getId(), $dbChallenge->getCars()->toArray());

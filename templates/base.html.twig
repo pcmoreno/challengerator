@@ -12,12 +12,26 @@
     <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('styles/app.css') }}">
     {% block importmap %}{{ importmap('app') }}{% endblock %}
+    {% block head %}{% endblock %}
 </head>
 <body class="min-h-screen font-sans">
     <header class="bg-header text-white px-6 py-3 shadow-md flex justify-between items-center">
         <a href="{{ path('index') }}" class="text-xl font-bold hover:opacity-80 transition-opacity no-underline text-white">
             Challengerator
         </a>
+        <div class="flex items-center gap-3">
+        {% if app.user %}
+            <span class="text-white/60 text-sm hidden sm:inline">{{ app.user.userIdentifier }}</span>
+            <a href="{{ path('voter_logout') }}"
+               class="border border-white/30 text-white/70 hover:text-white px-3 py-1 rounded text-sm transition-colors no-underline">
+                Logout
+            </a>
+        {% else %}
+            <a href="{{ path('loginMenu') }}"
+               class="border border-white/30 text-white/70 hover:text-white px-3 py-1 rounded text-sm transition-colors no-underline">
+                Login
+            </a>
+        {% endif %}
         <div data-controller="theme" class="relative text-sm">
             <button data-action="click->theme#toggleMenu"
                     class="border border-white/30 text-white/70 hover:text-white px-3 py-1 rounded cursor-pointer bg-transparent transition-colors flex items-center gap-1">
@@ -35,6 +49,7 @@
                 </button>
             </div>
         </div>
+        </div>
     </header>
 
     <main class="max-w-5xl mx-auto px-4 py-6">
@@ -50,8 +65,8 @@
         {% block body %}{% endblock %}
     </main>
 
-    <footer class="bg-header text-white text-center text-sm py-3 mt-8">
-        &copy; pcmoreno — 2026
+    <footer class="bg-header text-white text-right text-sm py-3 mt-8">
+        &copy; pcmoreno — 2026 .
     </footer>
 
     <div data-controller="delete-confirm"

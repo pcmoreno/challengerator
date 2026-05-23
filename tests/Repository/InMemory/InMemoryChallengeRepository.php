@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Tests\Repository\InMemory;
 
+use App\Entity\Auth\User;
 use App\Entity\Challenge\Challenge;
 use App\Repository\ChallengeRepositoryInterface;
 
@@ -35,5 +36,10 @@ class InMemoryChallengeRepository implements ChallengeRepositoryInterface
             fn(Challenge $c) => ['name' => $c->getName(), 'displayName' => $c->getDisplayName()],
             array_values($this->challenges)
         );
+    }
+
+    public function listNamesForUser(User $user): array
+    {
+        return $this->listNames();
     }
 }
