@@ -33,3 +33,6 @@ assets-build:
 
 assets-watch:
 	$(APP) php bin/console tailwind:build --watch
+
+worker:
+	$(APP) php bin/console messenger:consume vote_log -v --time-limit=3600 --memory-limit=128M

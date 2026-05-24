@@ -20,6 +20,7 @@
         </testsuite>
         <testsuite name="integration">
             <directory>tests/Integration</directory>
+            <directory>tests/Repository/Couch</directory>
         </testsuite>
     </testsuites>
 

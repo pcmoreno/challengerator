@@ -78,6 +78,21 @@ resetVotesForVoterOnChallenge:
     controller: App\Controller\ChallengeController::resetVotesForVoterOnChallenge
     methods: [POST]
 
+invalidateVote:
+    path: /challenge/{challengeName}/vote/{voteId}/invalidate
+    controller: App\Controller\ChallengeController::invalidateVote
+    methods: [POST]
+
+recalculateRatings:
+    path: /challenge/{challengeName}/votes/recalculate
+    controller: App\Controller\ChallengeController::recalculateRatings
+    methods: [POST]
+
+exportVotesCsv:
+    path: /challenge/{challengeName}/votes/export.csv
+    controller: App\Controller\ChallengeController::exportVotesCsv
+    methods: [GET]
+
 # -----------------------------------------------
 # Voting routes:
 voteDashboardForUser:

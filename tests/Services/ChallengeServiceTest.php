@@ -8,12 +8,14 @@ use App\Entity\Challenge\Challenge;
 use App\Entity\Challenge\Voter;
 use App\Exception\BusinessLogicException;
 use App\Exception\ConcurrentModificationException;
+use App\Message\LogVoteMessage;
 use App\Tests\Repository\InMemory\FlakyTransaction;
 use App\Tests\Repository\InMemory\InMemoryCarRepository;
 use App\Tests\Repository\InMemory\InMemoryChallengeRepository;
 use App\Tests\Repository\InMemory\InMemoryInviteCodeRepository;
 use App\Tests\Repository\InMemory\InMemoryTransaction;
 use App\Tests\Repository\InMemory\InMemoryVoterRepository;
+use App\Tests\Support\RecordingMessageBus;
 use App\Repository\TransactionInterface;
 use App\Services\ChallengeService;
 use PHPUnit\Framework\TestCase;
@@ -26,6 +28,7 @@ class ChallengeServiceTest extends TestCase
     private InMemoryCarRepository $cars;
     private InMemoryVoterRepository $voters;
     private InMemoryInviteCodeRepository $codes;
+    private RecordingMessageBus $messageBus;
 
     protected function setUp(): void
     {
@@ -33,12 +36,14 @@ class ChallengeServiceTest extends TestCase
         $this->cars = new InMemoryCarRepository();
         $this->voters = new InMemoryVoterRepository();
         $this->codes = new InMemoryInviteCodeRepository(['VALID-CODE']);
+        $this->messageBus = new RecordingMessageBus();
         $this->service = new ChallengeService(
             $this->challenges,
             $this->cars,
             $this->voters,
             $this->codes,
             new InMemoryTransaction(),
+            $this->messageBus,
             new NullLogger(),
             new NullLogger(),
         );
@@ -419,9 +424,61 @@ class ChallengeServiceTest extends TestCase
             $this->voters,
             $this->codes,
             $tx,
+            $this->messageBus,
             new NullLogger(),
             new NullLogger(),
         );
+    }
+
+    public function test_voteOnCars_dispatches_LogVoteMessage_with_rating_before_snapshot(): void
+    {
+        $this->makeChallenge();
+        $voter = $this->makeVoter();
+        $carA = $this->makeCar();
+        $carB = $this->makeCar();
+        $voter->addCarsToSelf([$carA->getId(), $carB->getId()], 'rally');
+        $this->voters->save($voter);
+
+        $this->service->voteOnCars($carA->getId() . 'XXX' . $carB->getId(), 'left', 'rally', $voter->getId());
+
+        $messages = array_values(array_filter(
+            $this->messageBus->dispatched,
+            static fn (object $message): bool => $message instanceof LogVoteMessage,
+        ));
+
+        $this->assertCount(1, $messages, 'Exactly one LogVoteMessage should be dispatched');
+        /** @var LogVoteMessage $message */
+        $message = $messages[0];
+
+        $this->assertSame('rally', $message->challengeName);
+        $this->assertSame($voter->getId(), $message->voterId);
+        $this->assertSame($carA->getId(), $message->carAId);
+        $this->assertSame($carB->getId(), $message->carBId);
+        $this->assertSame('left', $message->outcome);
+        $this->assertSame(1500, $message->carARatingBefore, 'rating_before must be the pre-vote rating');
+        $this->assertSame(1500, $message->carBRatingBefore, 'rating_before must be the pre-vote rating');
+        $this->assertNotSame('', $message->voteId);
+    }
+
+    public function test_voteOnCars_does_not_dispatch_when_vote_throws(): void
+    {
+        $this->makeChallenge();
+        $voter = $this->makeVoter();
+        $car = $this->makeCar();
+        $voter->addCarsToSelf([$car->getId()], 'rally');
+        $this->voters->save($voter);
+
+        try {
+            $this->service->voteOnCars($car->getId() . 'XXX' . $car->getId(), 'left', 'rally', $voter->getId());
+        } catch (BusinessLogicException) {
+            // expected
+        }
+
+        $logMessages = array_filter(
+            $this->messageBus->dispatched,
+            static fn (object $message): bool => $message instanceof LogVoteMessage,
+        );
+        $this->assertCount(0, $logMessages);
     }
 
     public function test_voteOnCars_throws_ConcurrentModificationException_when_all_retries_exhausted(): void

@@ -6,8 +6,10 @@ namespace App\Controller;
 use App\Entity\Challenge\Car;
 use App\Entity\Doctrine\DbChallenge;
 use App\Entity\StorageType;
+use App\Entity\Vote\VoteLogFilters;
 use App\Exception\ImpossibleVotedCarsAmountException;
 use App\Repository\StorageResourceRepositoryInterface;
+use App\Repository\VoteLogRepositoryInterface;
 use App\Services\InviteService;
 use App\Form\AdminDeleteVoterType;
 use App\Form\CarType;
@@ -15,20 +17,25 @@ use App\Form\CreateChallengeType;
 use App\Form\VoterType;
 use App\Services\ChallengeService;
 use App\Services\GoogleDriveService;
+use App\Services\RatingRecalculationService;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ChallengeController extends AbstractController
 {
     use AdminGuardTrait;
 
+    private const VOTE_LOG_PAGE_SIZE = 50;
+
     public function __construct(
         private ChallengeService $challengeService,
         private EntityManagerInterface $em,
         private StorageResourceRepositoryInterface $storageRepository,
+        private VoteLogRepositoryInterface $voteLogRepository,
     ) {}
 
     public function index(): Response
@@ -207,6 +214,20 @@ class ChallengeController extends AbstractController
             $this->addFlash('error', 'Data corruption detected — odd vote count for: ' . implode(', ', $corruptVoters));
         }
 
+        $voteLogFilters = new VoteLogFilters(
+            voterId: $request->query->get('voterId') ?: null,
+            carId:   $request->query->get('carId') ?: null,
+            status:  $request->query->get('status') ?: null,
+        );
+        $voteLogOffset = max(0, (int) $request->query->get('offset', '0'));
+        $voteLogPage = $this->voteLogRepository->findByChallenge(
+            $challengeName,
+            $voteLogFilters,
+            self::VOTE_LOG_PAGE_SIZE,
+            $voteLogOffset,
+        );
+        $carsForFilter = $this->challengeService->getCarsForChallenge($challengeName);
+
         return $this->render('/voter/voterDashboard.html.twig', [
             'form'                   => $voterForm->createView(),
             'adminDeleteForm'         => $adminDeleteVoterForm->createView(),
@@ -215,7 +236,108 @@ class ChallengeController extends AbstractController
             'challengeDisplayName'    => $this->challengeService->getDisplayNameForChallenge($challengeName),
             'selfRegistration'        => $this->challengeService->isChallengeOpenToSelfRegistration($challengeName),
             'selfRegistrationCode'    => $this->challengeService->getSelfRegistrationCodeForChallenge($challengeName),
+            'voteLogPage'             => $voteLogPage,
+            'voteLogFilters'          => $voteLogFilters,
+            'carsForFilter'           => $carsForFilter,
         ]);
+    }
+
+    public function invalidateVote(Request $request, string $challengeName, string $voteId): Response
+    {
+        if (!$this->isAdminForChallenge($request, $challengeName)) {
+            return $this->redirectToRoute('loginMenu');
+        }
+        if (!$this->isCsrfTokenValid('invalidate_vote_' . $voteId, $request->request->get('_token'))) {
+            return new JsonResponse('Invalid CSRF token', Response::HTTP_FORBIDDEN);
+        }
+
+        try {
+            $adminName = (string) ($this->getUser()?->getUserIdentifier() ?? 'admin');
+            $this->voteLogRepository->invalidate($challengeName, $voteId, $adminName);
+            $this->addFlash('success', 'Vote invalidated. Run Recalculate to apply the change to ratings.');
+        } catch (\Throwable $exception) {
+            $this->addFlash('error', 'Could not invalidate vote: ' . $exception->getMessage());
+        }
+
+        return $this->redirectToRoute('addVoterToChallengeFormPage', ['challengeName' => $challengeName]);
+    }
+
+    public function recalculateRatings(Request $request, string $challengeName, RatingRecalculationService $recalc): Response
+    {
+        if (!$this->isAdminForChallenge($request, $challengeName)) {
+            return $this->redirectToRoute('loginMenu');
+        }
+        if (!$this->isCsrfTokenValid('recalc_ratings_' . $challengeName, $request->request->get('_token'))) {
+            return new JsonResponse('Invalid CSRF token', Response::HTTP_FORBIDDEN);
+        }
+
+        try {
+            $report = $recalc->recalculate($challengeName);
+            $this->addFlash('success', sprintf(
+                'Recalculated %d cars from %d votes (%d skipped).',
+                $report->carsUpdated,
+                $report->votesApplied,
+                $report->votesSkipped,
+            ));
+        } catch (\Throwable $exception) {
+            $this->addFlash('error', 'Recalculate failed: ' . $exception->getMessage());
+        }
+
+        return $this->redirectToRoute('addVoterToChallengeFormPage', ['challengeName' => $challengeName]);
+    }
+
+    public function exportVotesCsv(Request $request, string $challengeName): Response
+    {
+        if (!$this->isAdminForChallenge($request, $challengeName)) {
+            return $this->redirectToRoute('loginMenu');
+        }
+
+        $filters = new VoteLogFilters(
+            voterId: $request->query->get('voterId') ?: null,
+            carId:   $request->query->get('carId') ?: null,
+            status:  $request->query->get('status') ?: null,
+        );
+
+        $voteLogRepository = $this->voteLogRepository;
+        $response = new StreamedResponse(static function () use ($voteLogRepository, $challengeName, $filters): void {
+            $handle = fopen('php://output', 'wb');
+            fputcsv($handle, [
+                'Time', 'Voter', 'Car A', 'Car B',
+                'Rating A before', 'Rating B before', 'Outcome',
+                'Status', 'Invalidated at', 'Invalidated by',
+            ]);
+
+            $offset = 0;
+            $pageSize = 200;
+            while (true) {
+                $page = $voteLogRepository->findByChallenge($challengeName, $filters, $pageSize, $offset);
+                foreach ($page->entries as $entry) {
+                    fputcsv($handle, [
+                        $entry->votedAt->format(\DateTimeInterface::ATOM),
+                        $entry->voterName,
+                        $entry->carAName,
+                        $entry->carBName,
+                        $entry->carARatingBefore,
+                        $entry->carBRatingBefore,
+                        $entry->outcome,
+                        $entry->status,
+                        $entry->invalidatedAt?->format(\DateTimeInterface::ATOM) ?? '',
+                        $entry->invalidatedBy ?? '',
+                    ]);
+                }
+                if (!$page->hasMore) {
+                    break;
+                }
+                $offset += $pageSize;
+            }
+            fclose($handle);
+        });
+
+        $filename = sprintf('votes-%s-%s.csv', $challengeName, (new \DateTimeImmutable())->format('Ymd-His'));
+        $response->headers->set('Content-Type', 'text/csv; charset=UTF-8');
+        $response->headers->set('Content-Disposition', sprintf('attachment; filename="%s"', $filename));
+
+        return $response;
     }
 
     public function startChallenge(Request $request, string $challengeName): Response

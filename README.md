@@ -101,6 +101,7 @@ make test                # run unit tests
 make coverage            # run unit tests with HTML coverage report (var/coverage/)
 make fixtures            # load database fixtures
 make generate-invite-codes count=N   # generate N invite codes for new challenges
+make worker              # run the Messenger worker that writes votes to CouchDB
 ```
 
 ## Running tests
@@ -117,6 +118,26 @@ The test database is separate. Set it up once with:
 make test-db
 ```
 
+## Vote log worker
+
+Votes are persisted to CouchDB asynchronously via Symfony Messenger (Doctrine transport). Without a running worker, votes still succeed and SQL ratings still update — log entries queue up in the `messenger_messages` table until a worker picks them up.
+
+Run the worker in a separate terminal during development:
+
+```bash
+make worker
+# or, equivalently:
+docker compose exec challengeator-app php bin/console messenger:consume vote_log -v --time-limit=3600 --memory-limit=128M
+```
+
+Inspect transport state:
+
+```bash
+docker compose exec challengeator-app php bin/console messenger:stats
+docker compose exec challengeator-app php bin/console messenger:failed:show    # parked failed messages
+docker compose exec challengeator-app php bin/console messenger:failed:retry   # retry parked messages
+```
+
 ## Services
 
 | Service | Local URL |
@@ -124,3 +145,4 @@ make test-db
 | App | http://localhost:8000 |
 | Mailpit (mail catcher) | http://localhost:8025 |
 | MariaDB | localhost:3306 |
+| CouchDB (vote log) | http://localhost:5984/_utils |
