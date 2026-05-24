@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace App\Repository;
 
+use App\Entity\Auth\User;
 use App\Entity\Challenge\Challenge;
 
 interface ChallengeRepositoryInterface
@@ -12,4 +13,6 @@ interface ChallengeRepositoryInterface
     public function save(Challenge $challenge): void;
     /** @return list<array{name: string, displayName: string}> */
     public function listNames(): array;
+    /** @return list<array{name: string, displayName: string}> */
+    public function listNamesForUser(User $user): array;
 }

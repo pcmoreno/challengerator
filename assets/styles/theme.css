@@ -40,6 +40,27 @@ html[data-theme="auto"] {
     --border-subtle:    #333333;
 }
 
+/* ── Racing theme (RacingNews365-inspired) ──────── */
+html[data-theme="racing"] {
+    --bg-body:          #0e0e0e;
+    --bg-surface:       #1a1a1a;
+    --bg-header:        #cc0000;
+    --bg-panel:         #252525;
+    --bg-row-even:      #1e1e1e;
+    --bg-row-odd:       #1a1a1a;
+    --text-body:        #e8e8e8;
+    --text-heading:     #ffffff;
+    --text-muted:       #888888;
+    --text-link:        #ff4444;
+    --btn-primary-bg:   #cc0000;
+    --btn-primary-h:    #aa0000;
+    --btn-secondary-bg: #2a2a2a;
+    --btn-secondary-h:  #3a3a3a;
+    --font-heading:     'Raleway', sans-serif;
+    --ls-heading:       0.05em;
+    --border-subtle:    #2e2e2e;
+}
+
 body {
     background-color: var(--bg-body);
     color: var(--text-body);
@@ -115,12 +136,26 @@ html[data-theme="auto"] kbd {
     color: #dadada;
 }
 
+input:not([type="hidden"]):not([type="submit"]):not([type="checkbox"]):not([type="radio"]),
+textarea,
+select {
+    background-color: #f9fafb;
+}
+
 html[data-theme="auto"] input:not([type="hidden"]):not([type="submit"]):not([type="checkbox"]):not([type="radio"]),
 html[data-theme="auto"] textarea,
 html[data-theme="auto"] select {
     background-color: #2a2a2a;
     border-color: #555;
     color: #dadada;
+}
+
+html[data-theme="racing"] input:not([type="hidden"]):not([type="submit"]):not([type="checkbox"]):not([type="radio"]),
+html[data-theme="racing"] textarea,
+html[data-theme="racing"] select {
+    background-color: #252525;
+    border-color: #444;
+    color: #e8e8e8;
 }
 
 html[data-theme="auto"] input[type="file"] {

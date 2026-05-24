@@ -16,18 +16,19 @@ security:
             lazy: true
             provider: app_user_provider
             form_login:
-                login_path: voter_login
+                login_path: loginMenu
                 check_path: voter_login
                 username_parameter: login[user]
                 password_parameter: login[pass]
                 enable_csrf: true
                 default_target_path: listChallengesMenu
+                always_use_default_target_path: true
             login_throttling:
                 max_attempts: 5
                 interval: '1 hour'
             logout:
                 path: voter_logout
-                target: listChallengesMenu
+                target: index
 
     access_control:
         - { path: ^/challenge/new$, roles: ROLE_SUPER_ADMIN }

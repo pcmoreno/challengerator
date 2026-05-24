@@ -27,7 +27,7 @@ class DriveOAuthController extends AbstractController
     public function connect(Request $request, string $challengeName): Response
     {
         if (!$this->isAdminForChallenge($request, $challengeName)) {
-            return $this->redirectToRoute('loginMenu', ['challengeName' => $challengeName]);
+            return $this->redirectToRoute('loginMenu');
         }
 
         $nonce = bin2hex(random_bytes(16));
@@ -52,7 +52,7 @@ class DriveOAuthController extends AbstractController
         $nonce         = $stateData['nonce'];
 
         if (!$this->isAdminForChallenge($request, $challengeName)) {
-            return $this->redirectToRoute('loginMenu', ['challengeName' => $challengeName]);
+            return $this->redirectToRoute('loginMenu');
         }
 
         $sessionKey  = 'drive_oauth_nonce_' . $challengeName;

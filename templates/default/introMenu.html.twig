@@ -1,23 +1,44 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Challengerator{% endblock %}
+{% block title %}Challengerator — Car Design Voting Platform{% endblock %}
 
 {% block body %}
-    <div class="max-w-lg mx-auto mt-12 text-center">
-        <div class="bg-surface rounded-lg shadow p-8">
-            <h2 class="text-xl font-semibold text-muted mb-6">
-                A voting platform for car design competitions
-            </h2>
-            <div class="space-y-4">
-                <a href="{{ path('createChallengeMenu') }}"
-                   class="btn-primary block font-bold py-3 px-4 rounded">
-                    I have a token and want to create a new challenge
-                </a>
-                <a href="{{ path('listChallengesMenu') }}"
-                   class="btn-secondary block font-bold py-3 px-4 rounded">
-                    I want to login as a voter or admin for a challenge
-                </a>
+    <div class="max-w-3xl mx-auto mt-10 space-y-12 text-center">
+
+        <div class="space-y-4">
+            <img src="{{ asset('favicon.svg') }}" alt="Challengerator logo" class="w-28 h-28 mx-auto drop-shadow-lg">
+            <h1 class="text-4xl font-bold text-heading tracking-tight">Challengerator</h1>
+            <p class="text-lg text-muted max-w-xl mx-auto">
+                A head-to-head voting platform for car design competitions.
+                Admins create challenges, upload cars, and invite voters —
+                voters compare randomised pairs until every car has been ranked.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-left">
+            <div class="bg-surface rounded-xl p-5 shadow space-y-2">
+                <h3 class="font-semibold text-heading">Challenges</h3>
+                <p class="text-sm text-muted">Isolated spaces with their own cars, voters, and results. Password-protected for admins.</p>
+            </div>
+            <div class="bg-surface rounded-xl p-5 shadow space-y-2">
+                <h3 class="font-semibold text-heading">Head-to-head voting</h3>
+                <p class="text-sm text-muted">Voters work through randomised side-by-side pairs. ELO-style rating builds the final ranking.</p>
             </div>
         </div>
+
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+            {% if app.user %}
+                <a href="{{ path('listChallengesMenu') }}"
+                   class="btn-primary font-bold py-3 px-8 rounded-lg text-base">
+                    My Challenges
+                </a>
+            {% else %}
+                <a href="{{ path('loginMenu') }}"
+                   class="btn-primary font-bold py-3 px-8 rounded-lg text-base">
+                    Login
+                </a>
+            {% endif %}
+        </div>
+
     </div>
 {% endblock %}

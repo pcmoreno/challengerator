@@ -1,7 +1,7 @@
 import { Controller } from '@hotwired/stimulus';
 
 export default class extends Controller {
-    static targets = ['menu', 'defaultMark', 'autoMark'];
+    static targets = ['menu', 'defaultMark', 'autoMark', 'racingMark'];
 
     connect() {
         this.#apply(localStorage.getItem('theme') ?? 'default');
@@ -27,15 +27,14 @@ export default class extends Controller {
     }
 
     #apply(theme) {
-        if (theme === 'auto') {
-            document.documentElement.dataset.theme = 'auto';
-            this.defaultMarkTarget.classList.add('invisible');
-            this.autoMarkTarget.classList.remove('invisible');
+        if (theme === 'auto' || theme === 'racing') {
+            document.documentElement.dataset.theme = theme;
         } else {
             delete document.documentElement.dataset.theme;
-            this.defaultMarkTarget.classList.remove('invisible');
-            this.autoMarkTarget.classList.add('invisible');
         }
+        this.defaultMarkTarget.classList.toggle('invisible', theme !== 'default');
+        this.autoMarkTarget.classList.toggle('invisible', theme !== 'auto');
+        this.racingMarkTarget.classList.toggle('invisible', theme !== 'racing');
         localStorage.setItem('theme', theme);
     }
 }
