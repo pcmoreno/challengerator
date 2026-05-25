@@ -87,4 +87,157 @@
             </button>
         </form>
     </div>
+
+    <section class="mt-10">
+        <div class="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <h3 class="font-semibold text-muted text-lg">Vote log</h3>
+            <div class="flex items-center gap-3">
+                <a href="{{ path('exportVotesCsv', {
+                    'challengeName': challengeName,
+                    'voterId': voteLogFilters.voterId,
+                    'carId': voteLogFilters.carId,
+                    'status': voteLogFilters.status
+                }) }}"
+                   class="text-link hover:underline text-sm">Export CSV</a>
+                <form method="post"
+                      action="{{ path('recalculateRatings', {'challengeName': challengeName}) }}"
+                      data-turbo-confirm="This rewrites every car's rating from scratch based on the valid votes in the log. Continue?"
+                      class="inline">
+                    <input type="hidden" name="_token" value="{{ csrf_token('recalc_ratings_' ~ challengeName) }}">
+                    <button type="submit" class="btn-primary text-sm font-semibold py-1.5 px-4 rounded">
+                        Recalculate ratings
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <form method="get"
+              action="{{ path('addVoterToChallengeFormPage', {'challengeName': challengeName}) }}"
+              class="bg-panel rounded-lg shadow p-4 mb-4 flex flex-wrap items-end gap-3 text-sm">
+            <label class="flex flex-col">
+                <span class="text-muted text-xs mb-1">Voter</span>
+                <select name="voterId" class="bg-surface text-sm rounded border border-gray-700 px-2 py-1">
+                    <option value="">All voters</option>
+                    {% for voter in allUsersInTheChallenge %}
+                        <option value="{{ voter.id }}" {{ voteLogFilters.voterId == voter.id ? 'selected' : '' }}>
+                            {{ voter.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label class="flex flex-col">
+                <span class="text-muted text-xs mb-1">Car</span>
+                <select name="carId" class="bg-surface text-sm rounded border border-gray-700 px-2 py-1">
+                    <option value="">All cars</option>
+                    {% for car in carsForFilter %}
+                        <option value="{{ car.id }}" {{ voteLogFilters.carId == car.id ? 'selected' : '' }}>
+                            {{ car.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </label>
+            <label class="flex flex-col">
+                <span class="text-muted text-xs mb-1">Status</span>
+                <select name="status" class="bg-surface text-sm rounded border border-gray-700 px-2 py-1">
+                    <option value="">Any</option>
+                    <option value="valid" {{ voteLogFilters.status == 'valid' ? 'selected' : '' }}>Valid</option>
+                    <option value="invalidated" {{ voteLogFilters.status == 'invalidated' ? 'selected' : '' }}>Invalidated</option>
+                </select>
+            </label>
+            <button type="submit" class="btn-primary text-sm font-semibold py-1.5 px-4 rounded">Apply</button>
+            <a href="{{ path('addVoterToChallengeFormPage', {'challengeName': challengeName}) }}"
+               class="text-link hover:underline text-sm">Clear</a>
+        </form>
+
+        <div class="bg-surface rounded-lg shadow overflow-hidden">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-panel text-white text-xs uppercase tracking-wider">
+                        <th class="px-3 py-2 text-left">Time</th>
+                        <th class="px-3 py-2 text-left">Voter</th>
+                        <th class="px-3 py-2 text-left">Car A</th>
+                        <th class="px-3 py-2 text-left">Car B</th>
+                        <th class="px-3 py-2 text-right">Rating A</th>
+                        <th class="px-3 py-2 text-right">Rating B</th>
+                        <th class="px-3 py-2 text-left">Outcome</th>
+                        <th class="px-3 py-2 text-left">Status</th>
+                        <th class="px-3 py-2"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in voteLogPage.entries %}
+                        <tr class="border-t {{ loop.index is even ? 'bg-row-even' : 'bg-row-odd' }}">
+                            <td class="px-3 py-2 font-mono text-xs whitespace-nowrap">
+                                {{ entry.votedAt|date('Y-m-d H:i:s') }}
+                            </td>
+                            <td class="px-3 py-2">{{ entry.voterName }}</td>
+                            <td class="px-3 py-2">{{ entry.carAName }}</td>
+                            <td class="px-3 py-2">{{ entry.carBName }}</td>
+                            <td class="px-3 py-2 text-right font-mono">{{ entry.carARatingBefore }}</td>
+                            <td class="px-3 py-2 text-right font-mono">{{ entry.carBRatingBefore }}</td>
+                            <td class="px-3 py-2">
+                                {% if entry.outcome == 'left' %}A wins
+                                {% elseif entry.outcome == 'right' %}B wins
+                                {% else %}Draw{% endif %}
+                            </td>
+                            <td class="px-3 py-2">
+                                {% if entry.status == 'valid' %}
+                                    <span class="text-green-500 font-semibold">valid</span>
+                                {% else %}
+                                    <span class="text-red-500 font-semibold">invalidated</span>
+                                    {% if entry.invalidatedBy %}
+                                        <div class="text-muted text-xs">by {{ entry.invalidatedBy }}{% if entry.invalidatedAt %} on {{ entry.invalidatedAt|date('Y-m-d H:i') }}{% endif %}</div>
+                                    {% endif %}
+                                {% endif %}
+                            </td>
+                            <td class="px-3 py-2">
+                                {% if entry.status == 'valid' %}
+                                    <form method="post"
+                                          action="{{ path('invalidateVote', {'challengeName': challengeName, 'voteId': entry.voteId}) }}"
+                                          data-turbo-confirm="Invalidate this vote?">
+                                        <input type="hidden" name="_token" value="{{ csrf_token('invalidate_vote_' ~ entry.voteId) }}">
+                                        <button type="submit" class="text-link hover:underline text-xs bg-transparent border-0 p-0 cursor-pointer">
+                                            invalidate
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr><td colspan="9" class="px-3 py-6 text-center text-muted">No votes recorded yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-3 flex items-center justify-between text-sm">
+            <div class="text-muted">
+                {% if voteLogPage.entries|length > 0 %}
+                    Showing {{ voteLogPage.offset + 1 }}–{{ voteLogPage.offset + voteLogPage.entries|length }}
+                {% endif %}
+            </div>
+            <div class="flex gap-3">
+                {% if voteLogPage.previousOffset is not null %}
+                    <a class="text-link hover:underline"
+                       href="{{ path('addVoterToChallengeFormPage', {
+                           'challengeName': challengeName,
+                           'voterId': voteLogFilters.voterId,
+                           'carId': voteLogFilters.carId,
+                           'status': voteLogFilters.status,
+                           'offset': voteLogPage.previousOffset
+                       }) }}">← Previous</a>
+                {% endif %}
+                {% if voteLogPage.nextOffset is not null %}
+                    <a class="text-link hover:underline"
+                       href="{{ path('addVoterToChallengeFormPage', {
+                           'challengeName': challengeName,
+                           'voterId': voteLogFilters.voterId,
+                           'carId': voteLogFilters.carId,
+                           'status': voteLogFilters.status,
+                           'offset': voteLogPage.nextOffset
+                       }) }}">Next →</a>
+                {% endif %}
+            </div>
+        </div>
+    </section>
 {% endblock %}

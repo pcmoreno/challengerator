@@ -1,0 +1,17 @@
+framework:
+    messenger:
+        failure_transport: vote_log_failed
+
+        transports:
+            vote_log:
+                dsn: 'doctrine://default?queue_name=vote_log'
+                retry_strategy:
+                    max_retries: 5
+                    multiplier: 2
+                    delay: 1000
+                    max_delay: 60000
+            vote_log_failed:
+                dsn: 'doctrine://default?queue_name=vote_log_failed'
+
+        routing:
+            App\Message\LogVoteMessage: vote_log

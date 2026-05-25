@@ -46,34 +46,6 @@ class Car
         );
     }
 
-    public static function fromCouchData($data): Car
-    {
-        return new Car(
-            $data['_id'],
-            $data['name'],
-            Rating::fromInt($data['rating']),
-            $data['imageUrlA'],
-            $data['imageUrlB'],
-            new \DateTime($data['addedOn']['date']), //TODO make this be well
-            new \DateTime(),
-            $data['challengeId'],
-        );
-    }
-
-    public function toCouchDocument(): \stdClass
-    {
-        $stdClass = new \stdClass();
-        $stdClass->_id = $this->id;
-        $stdClass->name = $this->name;
-        $stdClass->rating = $this->rating->getRating();
-        $stdClass->imageUrlA = $this->imageUrlA;
-        $stdClass->imageUrlB = $this->imageUrlB;
-        $stdClass->addedOn = $this->addedOn;
-        $stdClass->updatedOn = $this->updatedOn;
-        $stdClass->challengeId = $this->challengeId;
-        return $stdClass;
-    }
-
     public static function empty(): Car
     {
         return Car::create([

@@ -136,17 +136,4 @@ class ChallengeTest extends TestCase
         $this->assertSame('code-xyz', $challenge->getSelfRegistrationCode());
     }
 
-    public function test_toCouchDocument_roundtrip_via_fromCouchDocument(): void
-    {
-        $challenge = Challenge::create('rally', 'Rally', 'secret');
-
-        $doc = json_decode(json_encode($challenge->toCouchDocument()), true);
-        $doc['_rev'] = '1-abc';
-        $restored = Challenge::fromCouchDocument($doc);
-
-        $this->assertSame('rally', $restored->getName());
-        $this->assertSame('Rally', $restored->getDisplayName());
-        $this->assertSame('secret', $restored->getOwner());
-        $this->assertFalse($restored->isActive());
-    }
 }

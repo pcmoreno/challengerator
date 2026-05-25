@@ -1,0 +1,5 @@
+framework:
+    messenger:
+        transports:
+            vote_log: 'sync://'
+            vote_log_failed: 'in-memory://'

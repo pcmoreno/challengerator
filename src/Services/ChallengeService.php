@@ -8,13 +8,16 @@ use App\Entity\Challenge\Car;
 use App\Entity\Challenge\Challenge;
 use App\Entity\Challenge\Outcome;
 use App\Entity\Challenge\Voter;
+use App\Entity\Vote\VoteLogEntry;
 use App\Exception\BusinessLogicException;
+use App\Message\LogVoteMessage;
 use App\Repository\CarRepositoryInterface;
 use App\Repository\ChallengeRepositoryInterface;
 use App\Repository\InviteCodeRepositoryInterface;
 use App\Repository\TransactionInterface;
 use App\Repository\VoterRepositoryInterface;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\Uid\Uuid;
 
 class ChallengeService
 {
@@ -24,6 +27,7 @@ class ChallengeService
         private readonly VoterRepositoryInterface $voterRepository,
         private readonly InviteCodeRepositoryInterface $inviteCodeRepository,
         private readonly TransactionInterface $transaction,
+        private readonly VoteRecorder $voteRecorder,
         private readonly LoggerInterface $votesLogger,
         private readonly LoggerInterface $loginsLogger,
     ) {}
@@ -183,8 +187,11 @@ class ChallengeService
             throw new BusinessLogicException('Pair must contain two distinct cars');
         }
 
+        $voteId = Uuid::v7()->jsonSerialize();
+        $votedAt = new \DateTimeImmutable();
+
         [$voterName, $carAName, $carBName] = $this->transaction->transactionalWithRetry(
-            function () use ($carIds, $challengeId, $userId, $outcome): array {
+            function () use ($carIds, $challengeId, $userId, $outcome, $voteId, $votedAt): array {
                 $voter = $this->voterRepository->find($userId);
                 $unvotedCars = $voter->getUnvotedCarsForChallenge($challengeId);
 
@@ -200,13 +207,31 @@ class ChallengeService
                     throw new \InvalidArgumentException('Car does not belong to this challenge');
                 }
 
-                $ratingA = $carA->getRating();
-                $ratingB = $carB->getRating();
-                RatingService::compareAndAdjust($ratingA, $ratingB, $outcome);
+                $carARatingBefore = $carA->getRating()->getRating();
+                $carBRatingBefore = $carB->getRating()->getRating();
+                RatingService::compareAndAdjust($carA->getRating(), $carB->getRating(), $outcome);
 
                 $this->carRepository->save($carA);
                 $this->carRepository->save($carB);
                 $this->voterRepository->markCarsVoted($userId, $challengeId, $carIds);
+
+                // Record inside the transaction so the messenger_messages INSERT commits
+                // atomically with the rating update — closes the outbox hole where a
+                // process death between commit and dispatch would lose the vote.
+                $this->voteRecorder->record(new LogVoteMessage(
+                    voteId: $voteId,
+                    challengeName: $challengeId,
+                    voterId: $userId,
+                    voterName: $voter->getName(),
+                    carAId: $carIds[0],
+                    carAName: $carA->getName(),
+                    carARatingBefore: $carARatingBefore,
+                    carBId: $carIds[1],
+                    carBName: $carB->getName(),
+                    carBRatingBefore: $carBRatingBefore,
+                    outcome: $outcome->value,
+                    votedAtIso8601: $votedAt->format(VoteLogEntry::TIMESTAMP_FORMAT),
+                ));
 
                 return [$voter->getName(), $carA->getName(), $carB->getName()];
             }

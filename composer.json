@@ -18,6 +18,7 @@
         "symfony/asset": "6.4.*",
         "symfony/asset-mapper": "6.4.*",
         "symfony/console": "6.4.*",
+        "symfony/doctrine-messenger": "6.4.*",
         "symfony/dotenv": "6.4.*",
         "symfony/expression-language": "6.4.*",
         "symfony/finder": "6.4.*",
@@ -28,6 +29,7 @@
         "symfony/intl": "6.4.*",
         "symfony/lock": "6.4.*",
         "symfony/mailer": "6.4.*",
+        "symfony/messenger": "6.4.*",
         "symfony/mime": "6.4.*",
         "symfony/monolog-bundle": "^3.6",
         "symfony/notifier": "6.4.*",
@@ -54,7 +56,6 @@
     },
     "require-dev": {
         "doctrine/doctrine-fixtures-bundle": "^3.4",
-        "php-on-couch/php-on-couch": "^3.0",
         "mockery/mockery": "^1.4",
         "phpunit/phpunit": "^10.5",
         "symfony/browser-kit": "6.4.*",

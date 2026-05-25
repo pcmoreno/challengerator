@@ -28,28 +28,6 @@ services:
         resource: '../src/Controller/'
         tags: ['controller.service_arguments']
 
-    # add more service definitions when explicit configuration is needed
-    # please note that last definitions always *replace* previous ones
-    # App\Repository\ChallengeRepositoryInterface:
-    #     class: App\Repository\Couch\CouchChallengeRepository
-    #     arguments:
-    #         $dsn: '%couchDsn%'
-
-    # App\Repository\CarRepositoryInterface:
-    #     class: App\Repository\Couch\CouchCarRepository
-    #     arguments:
-    #         $dsn: '%couchDsn%'
-
-    # App\Repository\VoterRepositoryInterface:
-    #     class: App\Repository\Couch\CouchVoterRepository
-    #     arguments:
-    #         $dsn: '%couchDsn%'
-
-    # App\Repository\InviteCodeRepositoryInterface:
-    #     class: App\Repository\Couch\CouchInviteCodeRepository
-    #     arguments:
-    #         $dsn: '%couchDsn%'
-
     App\Repository\ChallengeRepositoryInterface:
         class: App\Repository\Doctrine\DoctrineChallengeRepository
 
@@ -70,6 +48,10 @@ services:
             $votesLogger: '@monolog.logger.votes'
             $loginsLogger: '@monolog.logger.logins'
 
+    App\Services\RatingRecalculationService:
+        arguments:
+            $votesLogger: '@monolog.logger.votes'
+
     App\Controller\DriveImageController:
         arguments:
             $cacheDir: '%kernel.project_dir%/var/drive_image_cache'
@@ -82,6 +64,13 @@ services:
 
     App\Repository\EmailVerificationRepositoryInterface:
         class: App\Repository\Doctrine\DoctrineEmailVerificationRepository
+
+    App\Repository\Couch\CouchDsn:
+        factory: ['App\Repository\Couch\CouchDsn', 'fromString']
+        arguments:
+            - '%couchDsn%'
+
+    App\Repository\VoteLogRepositoryInterface: '@App\Repository\Couch\CouchVoteLogRepository'
 
     App\Services\GoogleDriveService:
         arguments:
