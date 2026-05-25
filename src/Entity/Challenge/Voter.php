@@ -47,40 +47,6 @@ class Voter
         return $this->name;
     }
 
-    public function toCouchDocument(): \stdClass
-    {
-        $stdClass = new \stdClass();
-        $stdClass->_id = $this->id;
-        $stdClass->name = $this->name;
-        $stdClass->challenges = $this->roundsOfComparison->toArray();
-        $stdClass->key = $this->authKey;
-        $stdClass->ipAddress = $this->ipAddress ?? null;
-        return $stdClass;
-    }
-
-    public static function fromCouchDocument($data): self
-    {
-        $data = json_decode(json_encode($data), true);
-        $voter = new Voter();
-        $voter->id = $data['_id'];
-        $voter->name = $data['name'];
-        $roundsOfComparisons = new RoundOfComparisons();
-        foreach ($data['challenges'] as $id => $challenge) {
-            $roundsOfComparisons->setCarsToBeVotedForChallenge(
-                isset($challenge['carsToVote']) ? $challenge['carsToVote'] : [],
-                $id
-            );
-            $roundsOfComparisons->setCarsAlreadyComparedForChallenge(
-                isset($challenge['carsCompared']) ? $challenge['carsCompared'] : [],
-                $id
-            );
-        }
-        $voter->roundsOfComparison = $roundsOfComparisons;
-        $voter->authKey = $data['key'];
-        $voter->ipAddress = $data['ipAddress'] ?? null;
-        return $voter;
-    }
-
     public function addCarsToSelf(array $cars, string $challengeId): void
     {
         if (!$this->roundsOfComparison->has($challengeId)) {

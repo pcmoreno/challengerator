@@ -14,7 +14,6 @@ class Challenge
     private array $voters;
     private bool $isActive;
     private string $owner;
-    private ?string $revision;
     private bool $allowSelfRegistration;
     private ?string $selfRegistrationCode;
 
@@ -27,7 +26,6 @@ class Challenge
         $this->voters = $voters;
         $this->isActive = $isActive;
         $this->owner = $owner;
-        $this->revision = null;
         $this->allowSelfRegistration = false;
         $this->selfRegistrationCode = null;
     }
@@ -79,26 +77,6 @@ class Challenge
         }
     }
 
-    public function toCouchDocument(): \stdClass
-    {
-        $stdclass = new \stdClass();
-        $stdclass->_id = $this->id;
-        $stdclass->name = $this->name;
-        $stdclass->displayName = $this->displayName;
-        $stdclass->cars = $this->cars;
-        $stdclass->voters = $this->voters;
-        $stdclass->isActive = $this->isActive;
-        $stdclass->owner = $this->owner;
-        if ($this->revision !== null) {
-            $stdclass->_rev = $this->revision;
-        }
-        $stdclass->allowSelfRegistration = $this->allowSelfRegistration;
-         if (null !== $this->selfRegistrationCode) {
-             $stdclass->selfRegistrationCode =  $this->selfRegistrationCode;
-        };
-        return $stdclass;
-    }
-
     public static function fromArray(array $doc): Challenge
     {
         $challenge = new Challenge(
@@ -112,24 +90,6 @@ class Challenge
         );
         $challenge->allowSelfRegistration = $doc['allowSelfRegistration'] ?? false;
         $challenge->selfRegistrationCode = $doc['selfRegistrationCode'] ?? null;
-
-        return $challenge;
-    }
-
-    public static function fromCouchDocument(array $doc): Challenge
-    {
-        $challenge = self::fromArray([
-            'id'                    => $doc['_id'],
-            'name'                  => $doc['name'],
-            'displayName'           => $doc['displayName'] ?? $doc['name'],
-            'cars'                  => $doc['cars'],
-            'voters'                => $doc['voters'],
-            'isActive'              => $doc['isActive'],
-            'owner'                 => $doc['owner'],
-            'allowSelfRegistration' => $doc['allowSelfRegistration'] ?? false,
-            'selfRegistrationCode'  => $doc['selfRegistrationCode'] ?? null,
-        ]);
-        $challenge->revision = $doc['_rev'] ?? null;
 
         return $challenge;
     }
@@ -152,11 +112,6 @@ class Challenge
     public function getOwner(): string
     {
         return $this->owner;
-    }
-
-    public function setRevisionNumber(string $rev)
-    {
-        $this->revision = $rev;
     }
 
     public function activate()

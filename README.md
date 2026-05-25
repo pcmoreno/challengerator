@@ -64,12 +64,13 @@ Open [http://localhost:8000](http://localhost:8000).
 
 ## Environment variables
 
-Set these in `.env.local`. Never commit `.env.local`.
+Set these in `.env.local` for local dev (never commit it), and via the deployment platform's secret/env mechanism in production. The committed `.env` documents the expected format; never commit real production values.
 
 | Variable | Description |
 |---|---|
 | `APP_SECRET` | Symfony app secret — generate with `openssl rand -hex 32` |
 | `DATABASE_URL` | MariaDB DSN — default in `.env` already points to the Docker service |
+| `COUCHDB_URL` | CouchDB instance used for the vote log. Format `http[s]://USER:PASS@HOST:PORT`. In docker-compose dev/test the value is supplied by the compose env block. |
 | `MAILER_DSN` | SMTP DSN — default in `.env` points to Mailpit on port 1025 |
 | `GOOGLE_CLIENT_ID` | OAuth 2.0 client ID from Google Cloud Console |
 | `GOOGLE_CLIENT_SECRET` | OAuth 2.0 client secret from Google Cloud Console |

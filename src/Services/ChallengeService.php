@@ -8,6 +8,7 @@ use App\Entity\Challenge\Car;
 use App\Entity\Challenge\Challenge;
 use App\Entity\Challenge\Outcome;
 use App\Entity\Challenge\Voter;
+use App\Entity\Vote\VoteLogEntry;
 use App\Exception\BusinessLogicException;
 use App\Message\LogVoteMessage;
 use App\Repository\CarRepositoryInterface;
@@ -16,7 +17,6 @@ use App\Repository\InviteCodeRepositoryInterface;
 use App\Repository\TransactionInterface;
 use App\Repository\VoterRepositoryInterface;
 use Psr\Log\LoggerInterface;
-use Symfony\Component\Messenger\MessageBusInterface;
 use Symfony\Component\Uid\Uuid;
 
 class ChallengeService
@@ -27,7 +27,7 @@ class ChallengeService
         private readonly VoterRepositoryInterface $voterRepository,
         private readonly InviteCodeRepositoryInterface $inviteCodeRepository,
         private readonly TransactionInterface $transaction,
-        private readonly MessageBusInterface $messageBus,
+        private readonly VoteRecorder $voteRecorder,
         private readonly LoggerInterface $votesLogger,
         private readonly LoggerInterface $loginsLogger,
     ) {}
@@ -190,8 +190,8 @@ class ChallengeService
         $voteId = Uuid::v7()->jsonSerialize();
         $votedAt = new \DateTimeImmutable();
 
-        [$voterName, $carAName, $carBName, $carARatingBefore, $carBRatingBefore] = $this->transaction->transactionalWithRetry(
-            function () use ($carIds, $challengeId, $userId, $outcome): array {
+        [$voterName, $carAName, $carBName] = $this->transaction->transactionalWithRetry(
+            function () use ($carIds, $challengeId, $userId, $outcome, $voteId, $votedAt): array {
                 $voter = $this->voterRepository->find($userId);
                 $unvotedCars = $voter->getUnvotedCarsForChallenge($challengeId);
 
@@ -215,24 +215,27 @@ class ChallengeService
                 $this->carRepository->save($carB);
                 $this->voterRepository->markCarsVoted($userId, $challengeId, $carIds);
 
-                return [$voter->getName(), $carA->getName(), $carB->getName(), $carARatingBefore, $carBRatingBefore];
+                // Record inside the transaction so the messenger_messages INSERT commits
+                // atomically with the rating update — closes the outbox hole where a
+                // process death between commit and dispatch would lose the vote.
+                $this->voteRecorder->record(new LogVoteMessage(
+                    voteId: $voteId,
+                    challengeName: $challengeId,
+                    voterId: $userId,
+                    voterName: $voter->getName(),
+                    carAId: $carIds[0],
+                    carAName: $carA->getName(),
+                    carARatingBefore: $carARatingBefore,
+                    carBId: $carIds[1],
+                    carBName: $carB->getName(),
+                    carBRatingBefore: $carBRatingBefore,
+                    outcome: $outcome->value,
+                    votedAtIso8601: $votedAt->format(VoteLogEntry::TIMESTAMP_FORMAT),
+                ));
+
+                return [$voter->getName(), $carA->getName(), $carB->getName()];
             }
         );
-
-        $this->messageBus->dispatch(new LogVoteMessage(
-            voteId: $voteId,
-            challengeName: $challengeId,
-            voterId: $userId,
-            voterName: $voterName,
-            carAId: $carIds[0],
-            carAName: $carAName,
-            carARatingBefore: $carARatingBefore,
-            carBId: $carIds[1],
-            carBName: $carBName,
-            carBRatingBefore: $carBRatingBefore,
-            outcome: $outcome->value,
-            votedAtIso8601: $votedAt->format(\DateTimeInterface::ATOM),
-        ));
 
         $this->votesLogger->notice("Voting received on Challenge: " . $challengeId);
         $this->votesLogger->notice($voterName . " voted -- " . $result . " -- between " . $carAName . " and " . $carBName);

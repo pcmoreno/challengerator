@@ -7,6 +7,11 @@ use App\Message\LogVoteMessage;
 
 final readonly class VoteLogEntry
 {
+    // Microsecond precision keeps recalculation deterministic when two votes
+    // share a wall-clock second (Elo math is non-commutative across vote pairs
+    // that share a car).
+    public const TIMESTAMP_FORMAT = 'Y-m-d\TH:i:s.uP';
+
     public function __construct(
         public string $voteId,
         public string $challengeName,
@@ -95,9 +100,9 @@ final readonly class VoteLogEntry
                 'rating_before' => $this->carBRatingBefore,
             ],
             'outcome' => $this->outcome,
-            'voted_at' => $this->votedAt->format(\DateTimeInterface::ATOM),
+            'voted_at' => $this->votedAt->format(self::TIMESTAMP_FORMAT),
             'status' => $this->status,
-            'invalidated_at' => $this->invalidatedAt?->format(\DateTimeInterface::ATOM),
+            'invalidated_at' => $this->invalidatedAt?->format(self::TIMESTAMP_FORMAT),
             'invalidated_by' => $this->invalidatedBy,
         ];
 

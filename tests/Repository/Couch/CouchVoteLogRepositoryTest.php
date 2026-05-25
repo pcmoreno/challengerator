@@ -5,9 +5,11 @@ namespace App\Tests\Repository\Couch;
 
 use App\Entity\Vote\VoteLogEntry;
 use App\Entity\Vote\VoteLogFilters;
+use App\Repository\Couch\CouchClient;
+use App\Repository\Couch\CouchDsn;
 use App\Repository\Couch\CouchVoteLogRepository;
-use PHPOnCouch\CouchClient;
 use PHPUnit\Framework\TestCase;
+use Symfony\Component\HttpClient\HttpClient;
 
 /**
  * Integration test against a running CouchDB container. Skips when COUCHDB_URL is unset.
@@ -15,8 +17,8 @@ use PHPUnit\Framework\TestCase;
  */
 class CouchVoteLogRepositoryTest extends TestCase
 {
-    private string $dsn;
     private string $challengeName;
+    private CouchClient $couchClient;
     private CouchVoteLogRepository $repository;
 
     protected function setUp(): void
@@ -26,18 +28,15 @@ class CouchVoteLogRepositoryTest extends TestCase
             $this->markTestSkipped('COUCHDB_URL not set');
         }
         $dsn = str_contains((string) $dsn, '://') ? (string) $dsn : 'http://' . $dsn;
-        $this->dsn = $dsn;
         $this->challengeName = 'test_' . bin2hex(random_bytes(4));
-        $this->repository = new CouchVoteLogRepository($this->dsn);
+        $this->couchClient = new CouchClient(CouchDsn::fromString($dsn), HttpClient::create());
+        $this->repository = new CouchVoteLogRepository($this->couchClient);
     }
 
     protected function tearDown(): void
     {
         try {
-            $client = new CouchClient($this->dsn, 'votes_' . $this->challengeName);
-            if ($client->databaseExists()) {
-                $client->deleteDatabase();
-            }
+            $this->couchClient->deleteDatabase('votes_' . $this->challengeName);
         } catch (\Throwable) {
             // best effort cleanup
         }
@@ -48,8 +47,7 @@ class CouchVoteLogRepositoryTest extends TestCase
         $this->repository->ensureDatabaseForChallenge($this->challengeName);
         $this->repository->ensureDatabaseForChallenge($this->challengeName);
 
-        $client = new CouchClient($this->dsn, 'votes_' . $this->challengeName);
-        $this->assertTrue($client->databaseExists());
+        $this->assertTrue($this->couchClient->databaseExists('votes_' . $this->challengeName));
     }
 
     public function test_logVote_then_findByChallenge_round_trips(): void

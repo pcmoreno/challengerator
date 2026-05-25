@@ -6,9 +6,8 @@ namespace App\Repository\Couch;
 use App\Entity\Vote\VoteLogEntry;
 use App\Entity\Vote\VoteLogFilters;
 use App\Entity\Vote\VoteLogPage;
+use App\Exception\CouchDBException;
 use App\Repository\VoteLogRepositoryInterface;
-use PHPOnCouch\CouchClient;
-use PHPOnCouch\Exceptions\CouchNotFoundException;
 
 final class CouchVoteLogRepository implements VoteLogRepositoryInterface
 {
@@ -18,9 +17,7 @@ final class CouchVoteLogRepository implements VoteLogRepositoryInterface
     /** @var array<string,true> */
     private array $ensuredDatabases = [];
 
-    public function __construct(private readonly string $dsn)
-    {
-    }
+    public function __construct(private readonly CouchClient $couchClient) {}
 
     public function ensureDatabaseForChallenge(string $challengeName): void
     {
@@ -29,19 +26,17 @@ final class CouchVoteLogRepository implements VoteLogRepositoryInterface
             return;
         }
 
-        $client = $this->client($dbName);
-        if (!$client->databaseExists()) {
-            $client->createDatabase();
+        if (!$this->couchClient->databaseExists($dbName)) {
+            $this->couchClient->createDatabase($dbName);
         }
-        $this->ensureIndexes($client);
+        $this->ensureIndexes($dbName);
 
         $this->ensuredDatabases[$dbName] = true;
     }
 
     public function logVote(VoteLogEntry $entry): void
     {
-        $client = $this->client($this->dbName($entry->challengeName));
-        $client->storeDoc((object) $entry->toCouchDocument());
+        $this->couchClient->storeDoc($this->dbName($entry->challengeName), $entry->toCouchDocument());
     }
 
     public function findByChallenge(
@@ -51,28 +46,17 @@ final class CouchVoteLogRepository implements VoteLogRepositoryInterface
         int $offset = 0,
     ): VoteLogPage {
         $dbName = $this->dbName($challengeName);
-        $client = $this->client($dbName);
-
-        if (!$client->databaseExists()) {
+        if (!$this->couchClient->databaseExists($dbName)) {
             return new VoteLogPage([], $offset, $pageSize, false);
         }
 
-        $selector = $this->buildSelector($filters);
-        $client->asArray();
-        $client->setQueryParameters([
-            'limit' => $pageSize + 1,
-            'skip' => $offset,
-            'sort' => [['voted_at' => 'desc']],
-        ]);
-
-        try {
-            $documents = $client->find($selector);
-        } catch (\Throwable $exception) {
-            throw new \RuntimeException(
-                sprintf('CouchDB find failed for challenge "%s": %s', $challengeName, $exception->getMessage()),
-                previous: $exception,
-            );
-        }
+        $documents = $this->couchClient->find(
+            db: $dbName,
+            selector: $this->buildSelector($filters),
+            sort: [['voted_at' => 'desc']],
+            limit: $pageSize + 1,
+            skip: $offset,
+        );
 
         $hasMore = count($documents) > $pageSize;
         if ($hasMore) {
@@ -86,13 +70,10 @@ final class CouchVoteLogRepository implements VoteLogRepositoryInterface
 
     public function invalidate(string $challengeName, string $voteId, string $invalidatedBy): void
     {
-        $client = $this->client($this->dbName($challengeName));
-        $client->asArray();
-
-        try {
-            $document = $client->getDoc($voteId);
-        } catch (CouchNotFoundException $exception) {
-            throw new \RuntimeException(sprintf('Vote "%s" not found in challenge "%s"', $voteId, $challengeName), previous: $exception);
+        $dbName = $this->dbName($challengeName);
+        $document = $this->couchClient->getDoc($dbName, $voteId);
+        if ($document === null) {
+            throw new CouchDBException(sprintf('Vote "%s" not found in challenge "%s"', $voteId, $challengeName));
         }
 
         $entry = VoteLogEntry::fromCouchDocument($document);
@@ -101,15 +82,13 @@ final class CouchVoteLogRepository implements VoteLogRepositoryInterface
         }
 
         $updated = $entry->withInvalidation(new \DateTimeImmutable(), $invalidatedBy);
-        $client->storeDoc((object) $updated->toCouchDocument());
+        $this->couchClient->storeDoc($dbName, $updated->toCouchDocument());
     }
 
     public function findAllValid(string $challengeName): iterable
     {
         $dbName = $this->dbName($challengeName);
-        $client = $this->client($dbName);
-
-        if (!$client->databaseExists()) {
+        if (!$this->couchClient->databaseExists($dbName)) {
             return;
         }
 
@@ -117,17 +96,13 @@ final class CouchVoteLogRepository implements VoteLogRepositoryInterface
         $offset = 0;
 
         while (true) {
-            $client->asArray();
-            $client->setQueryParameters([
-                'limit' => $pageSize,
-                'skip' => $offset,
-                'sort' => [['voted_at' => 'asc']],
-            ]);
-
-            $documents = $client->find([
-                'status' => 'valid',
-                'voted_at' => ['$gt' => null],
-            ]);
+            $documents = $this->couchClient->find(
+                db: $dbName,
+                selector: ['status' => 'valid', 'voted_at' => ['$gt' => null]],
+                sort: [['voted_at' => 'asc'], ['_id' => 'asc']],
+                limit: $pageSize,
+                skip: $offset,
+            );
 
             if ($documents === []) {
                 return;
@@ -144,13 +119,13 @@ final class CouchVoteLogRepository implements VoteLogRepositoryInterface
         }
     }
 
-    private function ensureIndexes(CouchClient $client): void
+    private function ensureIndexes(string $db): void
     {
-        $client->createIndex(['voted_at'], 'idx_voted_at');
-        $client->createIndex(['voter.id', 'voted_at'], 'idx_voter_voted_at');
-        $client->createIndex(['car_a.id', 'voted_at'], 'idx_car_a_voted_at');
-        $client->createIndex(['car_b.id', 'voted_at'], 'idx_car_b_voted_at');
-        $client->createIndex(['status', 'voted_at'], 'idx_status_voted_at');
+        $this->couchClient->createIndex($db, ['voted_at'], 'idx_voted_at');
+        $this->couchClient->createIndex($db, ['voter.id', 'voted_at'], 'idx_voter_voted_at');
+        $this->couchClient->createIndex($db, ['car_a.id', 'voted_at'], 'idx_car_a_voted_at');
+        $this->couchClient->createIndex($db, ['car_b.id', 'voted_at'], 'idx_car_b_voted_at');
+        $this->couchClient->createIndex($db, ['status', 'voted_at', '_id'], 'idx_status_voted_at');
     }
 
     /**
@@ -187,10 +162,5 @@ final class CouchVoteLogRepository implements VoteLogRepositoryInterface
         }
 
         return $name;
-    }
-
-    private function client(string $db): CouchClient
-    {
-        return new CouchClient($this->dsn, $db);
     }
 }

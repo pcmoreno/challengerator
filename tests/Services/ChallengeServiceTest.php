@@ -18,6 +18,7 @@ use App\Tests\Repository\InMemory\InMemoryVoterRepository;
 use App\Tests\Support\RecordingMessageBus;
 use App\Repository\TransactionInterface;
 use App\Services\ChallengeService;
+use App\Services\VoteRecorder;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\NullLogger;
 
@@ -43,7 +44,7 @@ class ChallengeServiceTest extends TestCase
             $this->voters,
             $this->codes,
             new InMemoryTransaction(),
-            $this->messageBus,
+            new VoteRecorder($this->messageBus),
             new NullLogger(),
             new NullLogger(),
         );
@@ -424,7 +425,7 @@ class ChallengeServiceTest extends TestCase
             $this->voters,
             $this->codes,
             $tx,
-            $this->messageBus,
+            new VoteRecorder($this->messageBus),
             new NullLogger(),
             new NullLogger(),
         );
